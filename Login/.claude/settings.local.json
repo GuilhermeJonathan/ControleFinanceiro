@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet list:*)",
+      "Bash(dotnet remove:*)",
+      "Bash(del \"C:\\\\Repositorio\\\\Login\\\\Login\\\\WeatherForecast.cs\")",
+      "Bash(dir \"C:\\\\Repositorio\\\\Login\\\\Login\\\\Controllers\\\\\")",
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Repositorio\\\\Login\\\\Login\\\\WeatherForecast.cs' -Force -ErrorAction SilentlyContinue; Get-ChildItem 'C:\\\\Repositorio\\\\Login\\\\Login\\\\Controllers'\")",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet script:*)",
+      "Bash(dotnet fsi:*)",
+      "Bash(powershell -Command ':*)",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\guilh\\\\.nuget\\\\packages\\\\bcrypt.net-next' -Recurse -Filter '*.dll' | Select-Object FullName\")",
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Repositorio\\\\Login\\\\HashGen' -Recurse -Force\")",
+      "Bash(powershell -Command \"[Convert]::ToBase64String\\([System.Security.Cryptography.RandomNumberGenerator]::GetBytes\\(32\\)\\)\")",
+      "Bash(powershell -Command \"Remove-Item 'C:\\\\Repositorio\\\\Login\\\\KeyGen' -Recurse -Force\")"
+    ]
+  }
+}
