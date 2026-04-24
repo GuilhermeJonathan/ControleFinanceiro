@@ -16,7 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 // Swagger com suporte a JWT
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "plataforma.security.api", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "controlefinanceiro.security.api", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -83,7 +83,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "plataforma.security.api v1"));
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "controlefinanceiro.security.api v1"));
 }
 
 // Preflight CORS — deve ser o primeiro middleware da pipeline
