@@ -1,0 +1,31 @@
+# ── Build ──────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copia os .csproj e restaura dependências (cache de layer)
+COPY ControleFinanceiro.Domain/ControleFinanceiro.Domain.csproj             ControleFinanceiro.Domain/
+COPY ControleFinanceiro.Application/ControleFinanceiro.Application.csproj   ControleFinanceiro.Application/
+COPY ControleFinanceiro.Infrastructure/ControleFinanceiro.Infrastructure.csproj ControleFinanceiro.Infrastructure/
+COPY ControleFinanceiro.Api/ControleFinanceiro.Api.csproj                   ControleFinanceiro.Api/
+
+RUN dotnet restore ControleFinanceiro.Api/ControleFinanceiro.Api.csproj
+
+# Copia o resto e publica
+COPY ControleFinanceiro.Domain/        ControleFinanceiro.Domain/
+COPY ControleFinanceiro.Application/   ControleFinanceiro.Application/
+COPY ControleFinanceiro.Infrastructure/ ControleFinanceiro.Infrastructure/
+COPY ControleFinanceiro.Api/           ControleFinanceiro.Api/
+
+RUN dotnet publish ControleFinanceiro.Api/ControleFinanceiro.Api.csproj \
+    -c Release -o /app/publish --no-restore
+
+# ── Runtime ────────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/publish .
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "ControleFinanceiro.Api.dll"]

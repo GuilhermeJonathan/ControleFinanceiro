@@ -23,35 +23,43 @@ public class AtualizarSituacaoCommandHandler(
         var seraConfirmado = IsConfirmado(request.Situacao);
 
         // ── Rollback: estava confirmado e vai ser desconfirmado ──────────────
-        if (eraConfirmado && !seraConfirmado && lancamento.ContaBancariaId.HasValue)
+        if (eraConfirmado && !seraConfirmado)
         {
-            var contaAntiga = await contaRepository.GetByIdAsync(lancamento.ContaBancariaId.Value, cancellationToken);
-            if (contaAntiga is not null)
+            if (lancamento.ContaBancariaId.HasValue)
             {
-                // Reverte: receita → subtrai, despesa → soma
-                var estorno = lancamento.Tipo == TipoLancamento.Credito
-                    ? -lancamento.Valor
-                    : lancamento.Valor;
-                contaAntiga.Movimentar(estorno);
-                contaRepository.Update(contaAntiga);
+                var contaAntiga = await contaRepository.GetByIdAsync(lancamento.ContaBancariaId.Value, cancellationToken);
+                if (contaAntiga is not null)
+                {
+                    // Reverte: receita → subtrai, despesa → soma
+                    var estorno = lancamento.Tipo == TipoLancamento.Credito
+                        ? -lancamento.Valor
+                        : lancamento.Valor;
+                    contaAntiga.Movimentar(estorno);
+                    contaRepository.Update(contaAntiga);
+                }
+                lancamento.SetContaBancaria(null);
             }
-            lancamento.SetContaBancaria(null);
+            lancamento.SetDataPagamento(null);
         }
 
         // ── Confirmação: não estava confirmado e vai ser confirmado ──────────
-        if (!eraConfirmado && seraConfirmado && request.ContaBancariaId.HasValue)
+        if (!eraConfirmado && seraConfirmado)
         {
-            var conta = await contaRepository.GetByIdAsync(request.ContaBancariaId.Value, cancellationToken);
-            if (conta is not null)
+            if (request.ContaBancariaId.HasValue)
             {
-                // Receita → soma, despesa → subtrai
-                var movimento = lancamento.Tipo == TipoLancamento.Credito
-                    ? lancamento.Valor
-                    : -lancamento.Valor;
-                conta.Movimentar(movimento);
-                contaRepository.Update(conta);
+                var conta = await contaRepository.GetByIdAsync(request.ContaBancariaId.Value, cancellationToken);
+                if (conta is not null)
+                {
+                    // Receita → soma, despesa → subtrai
+                    var movimento = lancamento.Tipo == TipoLancamento.Credito
+                        ? lancamento.Valor
+                        : -lancamento.Valor;
+                    conta.Movimentar(movimento);
+                    contaRepository.Update(conta);
+                }
+                lancamento.SetContaBancaria(request.ContaBancariaId);
             }
-            lancamento.SetContaBancaria(request.ContaBancariaId);
+            lancamento.SetDataPagamento(DateTime.UtcNow);
         }
 
         lancamento.AtualizarSituacao(request.Situacao);

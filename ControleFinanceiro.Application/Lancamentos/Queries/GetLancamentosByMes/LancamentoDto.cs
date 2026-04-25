@@ -28,5 +28,7 @@ public record LancamentoDto(
     bool IsRecorrente,
     // Conta bancária
     Guid? ContaBancariaId,
-    string? ContaBancariaNome
+    string? ContaBancariaNome,
+    // Pagamento
+    DateTime? DataPagamento
 );

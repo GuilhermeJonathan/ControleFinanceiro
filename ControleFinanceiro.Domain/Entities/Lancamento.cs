@@ -20,6 +20,7 @@ public class Lancamento : Entity
     public Guid? ReceitaRecorrenteId { get; private set; }
     public bool IsRecorrente { get; private set; }
     public Guid? ContaBancariaId { get; private set; }
+    public DateTime? DataPagamento { get; private set; }
 
     public Categoria? Categoria { get; private set; }
     public CartaoCredito? Cartao { get; private set; }
@@ -73,6 +74,12 @@ public class Lancamento : Entity
     public void SetContaBancaria(Guid? contaBancariaId)
     {
         ContaBancariaId = contaBancariaId;
+        SetUpdated();
+    }
+
+    public void SetDataPagamento(DateTime? data)
+    {
+        DataPagamento = data;
         SetUpdated();
     }
 

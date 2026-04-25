@@ -20,6 +20,7 @@ public class GetLancamentosByMesQueryHandler(ILancamentoRepository repository)
             l.ReceitaRecorrente?.QuantidadeHoras,
             l.IsRecorrente,
             l.ContaBancariaId,
-            l.ContaBancaria?.Banco));
+            l.ContaBancaria?.Banco,
+            l.DataPagamento));
     }
 }

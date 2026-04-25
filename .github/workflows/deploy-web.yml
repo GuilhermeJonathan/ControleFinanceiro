@@ -1,0 +1,40 @@
+name: Deploy – Web (Vercel)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/deploy-web.yml"
+
+jobs:
+  deploy:
+    name: Build Expo Web & Deploy Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: mobile/package.json
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm install
+
+      - name: Build Expo Web
+        working-directory: mobile
+        run: npx expo export --platform web
+        # Gera a pasta mobile/dist
+
+      - name: Deploy para Vercel
+        working-directory: mobile
+        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

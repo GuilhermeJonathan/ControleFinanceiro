@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Login.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,13 +15,13 @@ namespace Login.Infrastructure.Migrations
                 name: "AcceptedTerms",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TermName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    IpAddress = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    UserAgent = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TermName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IpAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -32,13 +32,13 @@ namespace Login.Infrastructure.Migrations
                 name: "CargoAgentClients",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CargoAgentCompanyId = table.Column<int>(type: "int", nullable: false),
-                    CargoAgentClientCompanyId = table.Column<int>(type: "int", nullable: false),
-                    Associated = table.Column<bool>(type: "bit", nullable: false),
-                    UnassociatedReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CargoAgentCompanyId = table.Column<int>(type: "integer", nullable: false),
+                    CargoAgentClientCompanyId = table.Column<int>(type: "integer", nullable: false),
+                    Associated = table.Column<bool>(type: "boolean", nullable: false),
+                    UnassociatedReason = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -49,13 +49,13 @@ namespace Login.Infrastructure.Migrations
                 name: "FreightForwarders",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CompanyName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Document = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Document = table.Column<string>(type: "character varying(14)", maxLength: 14, nullable: false),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -66,11 +66,11 @@ namespace Login.Infrastructure.Migrations
                 name: "Hierarchies",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,12 +81,12 @@ namespace Login.Infrastructure.Migrations
                 name: "Modules",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    HiddenMenu = table.Column<bool>(type: "bit", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    HiddenMenu = table.Column<bool>(type: "boolean", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -97,12 +97,12 @@ namespace Login.Infrastructure.Migrations
                 name: "Profiles",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    UserTypeId = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    UserTypeId = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -113,11 +113,11 @@ namespace Login.Infrastructure.Migrations
                 name: "CargoAgentPermissions",
                 columns: table => new
                 {
-                    CargoAgentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Documents = table.Column<bool>(type: "bit", nullable: false),
-                    Tracking = table.Column<bool>(type: "bit", nullable: false),
-                    Booking = table.Column<bool>(type: "bit", nullable: false),
-                    Bl = table.Column<bool>(type: "bit", nullable: false)
+                    CargoAgentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Documents = table.Column<bool>(type: "boolean", nullable: false),
+                    Tracking = table.Column<bool>(type: "boolean", nullable: false),
+                    Booking = table.Column<bool>(type: "boolean", nullable: false),
+                    Bl = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -134,17 +134,17 @@ namespace Login.Infrastructure.Migrations
                 name: "FreightForwarderPermissions",
                 columns: table => new
                 {
-                    FreightForwarderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Documents = table.Column<bool>(type: "bit", nullable: false),
-                    Tracking = table.Column<bool>(type: "bit", nullable: false),
-                    Booking = table.Column<bool>(type: "bit", nullable: false),
-                    Bl = table.Column<bool>(type: "bit", nullable: false)
+                    FreightForwarderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Documents = table.Column<bool>(type: "boolean", nullable: false),
+                    Tracking = table.Column<bool>(type: "boolean", nullable: false),
+                    Booking = table.Column<bool>(type: "boolean", nullable: false),
+                    Bl = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FreightForwarderPermissions", x => x.FreightForwarderId);
                     table.ForeignKey(
-                        name: "FK_FreightForwarderPermissions_FreightForwarders_FreightForwarderId",
+                        name: "FK_FreightForwarderPermissions_FreightForwarders_FreightForwar~",
                         column: x => x.FreightForwarderId,
                         principalTable: "FreightForwarders",
                         principalColumn: "Id",
@@ -155,8 +155,8 @@ namespace Login.Infrastructure.Migrations
                 name: "HierarchyCompanies",
                 columns: table => new
                 {
-                    HierarchyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ClientId = table.Column<int>(type: "int", nullable: false)
+                    HierarchyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClientId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -173,11 +173,11 @@ namespace Login.Infrastructure.Migrations
                 name: "ModuleFunctions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ModuleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -194,9 +194,9 @@ namespace Login.Infrastructure.Migrations
                 name: "Permissions",
                 columns: table => new
                 {
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ModuleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FunctionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FunctionId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -213,26 +213,26 @@ namespace Login.Infrastructure.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    Document = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
-                    Cellphone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Occupation = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserTypeId = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    IsBlocked = table.Column<bool>(type: "bit", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    HierarchyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FreightForwarderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CountryId = table.Column<int>(type: "int", nullable: true),
-                    Region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Document = table.Column<string>(type: "character varying(14)", maxLength: 14, nullable: false),
+                    Cellphone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Occupation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    AvatarUrl = table.Column<string>(type: "text", nullable: true),
+                    UserTypeId = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: true),
+                    HierarchyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FreightForwarderId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CountryId = table.Column<int>(type: "integer", nullable: true),
+                    Region = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -249,9 +249,9 @@ namespace Login.Infrastructure.Migrations
                 name: "UserRestrictions",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ModuleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CompanyId = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CompanyId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

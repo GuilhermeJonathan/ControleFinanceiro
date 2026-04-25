@@ -1,0 +1,34 @@
+name: Deploy – Login API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Login/**"
+      - "Dockerfile.login"
+      - ".github/workflows/deploy-login.yml"
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy para Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore Login/Login/Login.csproj
+
+      - name: Build
+        run: dotnet build Login/Login/Login.csproj -c Release --no-restore
+
+      - name: Trigger deploy no Render
+        # Adicione RENDER_DEPLOY_HOOK_LOGIN nos Secrets do repositório GitHub.
+        # (Render Dashboard → seu serviço → Settings → Deploy Hook)
+        run: curl -fsSL "${{ secrets.RENDER_DEPLOY_HOOK_LOGIN }}"
