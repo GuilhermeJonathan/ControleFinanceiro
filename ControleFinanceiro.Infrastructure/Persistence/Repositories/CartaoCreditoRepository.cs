@@ -6,14 +6,14 @@ namespace ControleFinanceiro.Infrastructure.Persistence.Repositories;
 
 public class CartaoCreditoRepository(AppDbContext context) : ICartaoCreditoRepository
 {
-    public async Task<CartaoCredito?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await context.CartoesCredito.FindAsync([id], cancellationToken);
+    public async Task<CartaoCredito?> GetByIdAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.CartoesCredito.FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<CartaoCredito?> GetByIdWithParcelasAsync(Guid id, CancellationToken cancellationToken = default)
-        => await context.CartoesCredito.Include(c => c.Parcelas).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    public async Task<CartaoCredito?> GetByIdWithParcelasAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.CartoesCredito.Include(c => c.Parcelas).FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<IEnumerable<CartaoCredito>> GetAllWithParcelasAsync(CancellationToken cancellationToken = default)
-        => await context.CartoesCredito.Include(c => c.Parcelas).OrderBy(c => c.Nome).ToListAsync(cancellationToken);
+    public async Task<IEnumerable<CartaoCredito>> GetAllWithParcelasAsync(Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.CartoesCredito.Include(c => c.Parcelas).Where(c => c.UsuarioId == usuarioId).OrderBy(c => c.Nome).ToListAsync(cancellationToken);
 
     public async Task AddAsync(CartaoCredito cartao, CancellationToken cancellationToken = default)
         => await context.CartoesCredito.AddAsync(cartao, cancellationToken);

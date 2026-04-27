@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
@@ -9,17 +10,20 @@ namespace ControleFinanceiro.Application.ReceitasRecorrentes.Commands.CreateRece
 public class CreateReceitaRecorrenteCommandHandler(
     IReceitaRecorrenteRepository receitaRepository,
     ILancamentoRepository lancamentoRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICurrentUser currentUser)
     : IRequestHandler<CreateReceitaRecorrenteCommand, Guid>
 {
     public async Task<Guid> Handle(CreateReceitaRecorrenteCommand request, CancellationToken cancellationToken)
     {
+        var usuarioId = currentUser.UserId;
         var hoje = DateTime.Today;
         var dataInicio = new DateTime(hoje.Year, hoje.Month, 1);
 
         var receita = new ReceitaRecorrente(
             request.Nome, request.Tipo, request.Dia, dataInicio,
-            request.Valor, request.ValorHora, request.QuantidadeHoras);
+            request.Valor, request.ValorHora, request.QuantidadeHoras,
+            usuarioId: usuarioId);
 
         await receitaRepository.AddAsync(receita, cancellationToken);
 
@@ -40,7 +44,8 @@ public class CreateReceitaRecorrenteCommandHandler(
                 situacao: dataLancamento.Date <= hoje ? SituacaoLancamento.Recebido : SituacaoLancamento.AReceber,
                 mes: data.Month,
                 ano: data.Year,
-                receitaRecorrenteId: receita.Id
+                receitaRecorrenteId: receita.Id,
+                usuarioId: usuarioId
             );
             lancamentos.Add(lancamento);
         }

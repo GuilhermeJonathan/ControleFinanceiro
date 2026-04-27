@@ -6,25 +6,25 @@ namespace ControleFinanceiro.Infrastructure.Persistence.Repositories;
 
 public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
 {
-    public async Task<Lancamento?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Lancamento?> GetByIdAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
             .Include(l => l.Categoria)
             .Include(l => l.Cartao)
-            .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(l => l.Id == id && l.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<IEnumerable<Lancamento>> GetByMesAnoAsync(int mes, int ano, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Lancamento>> GetByMesAnoAsync(int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
             .Include(l => l.Categoria)
             .Include(l => l.Cartao)
             .Include(l => l.ReceitaRecorrente)
             .Include(l => l.ContaBancaria)
-            .Where(l => l.Mes == mes && l.Ano == ano)
+            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
-    public async Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
-            .Where(l => l.CartaoId == cartaoId && l.Mes == mes && l.Ano == ano)
+            .Where(l => l.CartaoId == cartaoId && l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
@@ -39,9 +39,10 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
     public void Delete(Lancamento lancamento) => context.Lancamentos.Remove(lancamento);
 
     public async Task<IEnumerable<Lancamento>> GetFutureByReceitaRecorrenteIdAsync(
-        Guid receitaRecorrenteId, int mesAtual, int anoAtual, CancellationToken cancellationToken = default)
+        Guid receitaRecorrenteId, int mesAtual, int anoAtual, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
             .Where(l => l.ReceitaRecorrenteId == receitaRecorrenteId
+                && l.UsuarioId == usuarioId
                 && (l.Ano > anoAtual || (l.Ano == anoAtual && l.Mes >= mesAtual)))
             .ToListAsync(cancellationToken);
 
@@ -49,8 +50,8 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
         => context.Lancamentos.RemoveRange(lancamentos);
 
     public async Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(
-        Guid grupoParcelas, int parcelaAtualFrom, CancellationToken cancellationToken = default)
+        Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
-            .Where(l => l.GrupoParcelas == grupoParcelas && l.ParcelaAtual >= parcelaAtualFrom)
+            .Where(l => l.GrupoParcelas == grupoParcelas && l.ParcelaAtual >= parcelaAtualFrom && l.UsuarioId == usuarioId)
             .ToListAsync(cancellationToken);
 }

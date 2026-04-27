@@ -12,5 +12,8 @@ public class SaldoContaConfiguration : IEntityTypeConfiguration<SaldoConta>
         builder.Property(s => s.Banco).IsRequired().HasMaxLength(100);
         builder.Property(s => s.Saldo).HasPrecision(18, 2);
         builder.Property(s => s.Tipo).IsRequired();
+
+        builder.Property(s => s.UsuarioId).IsRequired();
+        builder.HasIndex(s => s.UsuarioId);
     }
 }

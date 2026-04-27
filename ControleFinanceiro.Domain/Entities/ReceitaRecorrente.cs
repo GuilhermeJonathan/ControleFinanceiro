@@ -12,13 +12,16 @@ public class ReceitaRecorrente : Entity
     public decimal? QuantidadeHoras { get; private set; } // Apenas para Horista
     public int Dia { get; private set; }                // Dia do mês (1-28)
     public DateTime DataInicio { get; private set; }
+    public Guid UsuarioId { get; private set; }
 
     private ReceitaRecorrente() : base(Guid.NewGuid()) { Nome = string.Empty; }
 
     public ReceitaRecorrente(string nome, TipoReceita tipo, int dia, DateTime dataInicio,
-        decimal? valor = null, decimal? valorHora = null, decimal? quantidadeHoras = null)
+        decimal? valor = null, decimal? valorHora = null, decimal? quantidadeHoras = null,
+        Guid usuarioId = default)
         : base(Guid.NewGuid())
     {
+        UsuarioId = usuarioId;
         Nome = nome;
         Tipo = tipo;
         Dia = Math.Clamp(dia, 1, 28);

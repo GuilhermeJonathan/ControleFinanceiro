@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
@@ -8,7 +9,8 @@ namespace ControleFinanceiro.Application.Lancamentos.Commands.AtualizarSituacao;
 public class AtualizarSituacaoCommandHandler(
     ILancamentoRepository lancamentoRepository,
     ISaldoContaRepository contaRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICurrentUser currentUser)
     : IRequestHandler<AtualizarSituacaoCommand>
 {
     private static bool IsConfirmado(SituacaoLancamento s)
@@ -16,7 +18,9 @@ public class AtualizarSituacaoCommandHandler(
 
     public async Task Handle(AtualizarSituacaoCommand request, CancellationToken cancellationToken)
     {
-        var lancamento = await lancamentoRepository.GetByIdAsync(request.Id, cancellationToken)
+        var usuarioId = currentUser.UserId;
+
+        var lancamento = await lancamentoRepository.GetByIdAsync(request.Id, usuarioId, cancellationToken)
             ?? throw new KeyNotFoundException($"Lançamento {request.Id} não encontrado.");
 
         var eraConfirmado  = IsConfirmado(lancamento.Situacao);
@@ -27,7 +31,7 @@ public class AtualizarSituacaoCommandHandler(
         {
             if (lancamento.ContaBancariaId.HasValue)
             {
-                var contaAntiga = await contaRepository.GetByIdAsync(lancamento.ContaBancariaId.Value, cancellationToken);
+                var contaAntiga = await contaRepository.GetByIdAsync(lancamento.ContaBancariaId.Value, usuarioId, cancellationToken);
                 if (contaAntiga is not null)
                 {
                     // Reverte: receita → subtrai, despesa → soma
@@ -47,7 +51,7 @@ public class AtualizarSituacaoCommandHandler(
         {
             if (request.ContaBancariaId.HasValue)
             {
-                var conta = await contaRepository.GetByIdAsync(request.ContaBancariaId.Value, cancellationToken);
+                var conta = await contaRepository.GetByIdAsync(request.ContaBancariaId.Value, usuarioId, cancellationToken);
                 if (conta is not null)
                 {
                     // Receita → soma, despesa → subtrai

@@ -6,12 +6,12 @@ namespace ControleFinanceiro.Infrastructure.Persistence.Repositories;
 
 public class HorasTrabalhadasRepository(AppDbContext context) : IHorasTrabalhadasRepository
 {
-    public async Task<HorasTrabalhadas?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await context.HorasTrabalhadas.FindAsync([id], cancellationToken);
+    public async Task<HorasTrabalhadas?> GetByIdAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.HorasTrabalhadas.FirstOrDefaultAsync(h => h.Id == id && h.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<IEnumerable<HorasTrabalhadas>> GetByMesAnoAsync(int mes, int ano, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<HorasTrabalhadas>> GetByMesAnoAsync(int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.HorasTrabalhadas
-            .Where(h => h.Mes == mes && h.Ano == ano)
+            .Where(h => h.Mes == mes && h.Ano == ano && h.UsuarioId == usuarioId)
             .OrderBy(h => h.Descricao)
             .ToListAsync(cancellationToken);
 

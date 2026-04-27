@@ -21,6 +21,7 @@ public class Lancamento : Entity
     public bool IsRecorrente { get; private set; }
     public Guid? ContaBancariaId { get; private set; }
     public DateTime? DataPagamento { get; private set; }
+    public Guid UsuarioId { get; private set; }
 
     public Categoria? Categoria { get; private set; }
     public CartaoCredito? Cartao { get; private set; }
@@ -33,9 +34,10 @@ public class Lancamento : Entity
         SituacaoLancamento situacao, int mes, int ano, Guid? categoriaId = null,
         Guid? cartaoId = null, int? parcelaAtual = null, int? totalParcelas = null,
         Guid? grupoParcelas = null, Guid? receitaRecorrenteId = null,
-        bool isRecorrente = false)
+        bool isRecorrente = false, Guid usuarioId = default)
         : base(Guid.NewGuid())
     {
+        UsuarioId = usuarioId;
         Descricao = descricao;
         Data = data;
         Valor = valor;

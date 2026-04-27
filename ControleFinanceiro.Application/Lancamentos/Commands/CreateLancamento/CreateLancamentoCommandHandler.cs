@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
@@ -6,11 +7,15 @@ using MediatR;
 
 namespace ControleFinanceiro.Application.Lancamentos.Commands.CreateLancamento;
 
-public class CreateLancamentoCommandHandler(ILancamentoRepository repository, IUnitOfWork unitOfWork)
+public class CreateLancamentoCommandHandler(
+    ILancamentoRepository repository,
+    IUnitOfWork unitOfWork,
+    ICurrentUser currentUser)
     : IRequestHandler<CreateLancamentoCommand, Guid>
 {
     public async Task<Guid> Handle(CreateLancamentoCommand request, CancellationToken cancellationToken)
     {
+        var usuarioId = currentUser.UserId;
         var totalParcelas = request.TotalParcelas < 1 ? 1 : request.TotalParcelas;
 
         if (totalParcelas == 1)
@@ -18,7 +23,8 @@ public class CreateLancamentoCommandHandler(ILancamentoRepository repository, IU
             var lancamento = new Lancamento(
                 request.Descricao, request.Data, request.Valor,
                 request.Tipo, request.Situacao, request.Mes, request.Ano,
-                request.CategoriaId, request.CartaoId);
+                request.CategoriaId, request.CartaoId,
+                usuarioId: usuarioId);
 
             await repository.AddAsync(lancamento, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -63,7 +69,8 @@ public class CreateLancamentoCommandHandler(ILancamentoRepository repository, IU
                 request.Tipo, situacao, mesAtual, anoAtual,
                 request.CategoriaId, request.CartaoId,
                 i + 1, totalParcelas, grupo,
-                isRecorrente: request.IsRecorrente);
+                isRecorrente: request.IsRecorrente,
+                usuarioId: usuarioId);
 
             lancamentos.Add(l);
             if (i == 0) primeiroId = l.Id;

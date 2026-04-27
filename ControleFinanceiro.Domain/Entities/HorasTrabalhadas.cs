@@ -9,14 +9,17 @@ public class HorasTrabalhadas : Entity
     public decimal Quantidade { get; private set; }
     public int Mes { get; private set; }
     public int Ano { get; private set; }
+    public Guid UsuarioId { get; private set; }
 
     public decimal ValorTotal => ValorHora * Quantidade;
 
     private HorasTrabalhadas() : base(Guid.NewGuid()) { Descricao = string.Empty; }
 
-    public HorasTrabalhadas(string descricao, decimal valorHora, decimal quantidade, int mes, int ano)
+    public HorasTrabalhadas(string descricao, decimal valorHora, decimal quantidade, int mes, int ano,
+        Guid usuarioId = default)
         : base(Guid.NewGuid())
     {
+        UsuarioId = usuarioId;
         Descricao = descricao;
         ValorHora = valorHora;
         Quantidade = quantidade;

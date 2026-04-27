@@ -13,5 +13,8 @@ public class CartaoCreditoConfiguration : IEntityTypeConfiguration<CartaoCredito
         builder.Property(c => c.DiaVencimento).IsRequired(false);
         builder.HasMany(c => c.Parcelas).WithOne(p => p.CartaoCredito)
             .HasForeignKey(p => p.CartaoCreditoId).OnDelete(DeleteBehavior.Cascade);
+
+        builder.Property(c => c.UsuarioId).IsRequired();
+        builder.HasIndex(c => c.UsuarioId);
     }
 }

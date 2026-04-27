@@ -16,5 +16,8 @@ public class ReceitaRecorrenteConfiguration : IEntityTypeConfiguration<ReceitaRe
         builder.Property(r => r.QuantidadeHoras).HasPrecision(18, 2).IsRequired(false);
         builder.Property(r => r.Dia).IsRequired();
         builder.Property(r => r.DataInicio).IsRequired();
+
+        builder.Property(r => r.UsuarioId).IsRequired();
+        builder.HasIndex(r => r.UsuarioId);
     }
 }

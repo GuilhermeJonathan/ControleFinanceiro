@@ -11,5 +11,8 @@ public class CategoriaConfiguration : IEntityTypeConfiguration<Categoria>
         builder.HasKey(c => c.Id);
         builder.Property(c => c.Nome).IsRequired().HasMaxLength(100);
         builder.Property(c => c.Tipo).IsRequired();
+
+        builder.Property(c => c.UsuarioId).IsRequired();
+        builder.HasIndex(c => c.UsuarioId);
     }
 }

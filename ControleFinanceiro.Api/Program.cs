@@ -1,6 +1,8 @@
 using System.Text;
 using ControleFinanceiro.Application;
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Api.Middleware;
+using ControleFinanceiro.Api.Services;
 using ControleFinanceiro.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -28,6 +30,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    // Mantém os nomes curtos do JWT (nameid, unique_name, email) sem remapear para URLs longos
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -41,6 +45,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 

@@ -13,5 +13,8 @@ public class HorasTrabalhadasConfiguration : IEntityTypeConfiguration<HorasTraba
         builder.Property(h => h.ValorHora).HasPrecision(18, 2);
         builder.Property(h => h.Quantidade).HasPrecision(10, 2);
         builder.Ignore(h => h.ValorTotal);
+
+        builder.Property(h => h.UsuarioId).IsRequired();
+        builder.HasIndex(h => h.UsuarioId);
     }
 }

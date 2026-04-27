@@ -25,5 +25,8 @@ public class LancamentoConfiguration : IEntityTypeConfiguration<Lancamento>
 
         builder.HasOne(l => l.ContaBancaria).WithMany()
             .HasForeignKey(l => l.ContaBancariaId).OnDelete(DeleteBehavior.SetNull);
+
+        builder.Property(l => l.UsuarioId).IsRequired();
+        builder.HasIndex(l => l.UsuarioId);
     }
 }

@@ -6,11 +6,11 @@ namespace ControleFinanceiro.Infrastructure.Persistence.Repositories;
 
 public class CategoriaRepository(AppDbContext context) : ICategoriaRepository
 {
-    public async Task<Categoria?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await context.Categorias.FindAsync([id], cancellationToken);
+    public async Task<Categoria?> GetByIdAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Categorias.FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == usuarioId, cancellationToken);
 
-    public async Task<IEnumerable<Categoria>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await context.Categorias.OrderBy(c => c.Nome).ToListAsync(cancellationToken);
+    public async Task<IEnumerable<Categoria>> GetAllAsync(Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Categorias.Where(c => c.UsuarioId == usuarioId).OrderBy(c => c.Nome).ToListAsync(cancellationToken);
 
     public async Task AddAsync(Categoria categoria, CancellationToken cancellationToken = default)
         => await context.Categorias.AddAsync(categoria, cancellationToken);

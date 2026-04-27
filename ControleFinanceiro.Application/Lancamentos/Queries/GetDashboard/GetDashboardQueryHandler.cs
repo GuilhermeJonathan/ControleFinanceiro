@@ -1,15 +1,16 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 
 namespace ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
 
-public class GetDashboardQueryHandler(ILancamentoRepository repository)
+public class GetDashboardQueryHandler(ILancamentoRepository repository, ICurrentUser currentUser)
     : IRequestHandler<GetDashboardQuery, DashboardDto>
 {
     public async Task<DashboardDto> Handle(GetDashboardQuery request, CancellationToken cancellationToken)
     {
-        var lancamentos = (await repository.GetByMesAnoAsync(request.Mes, request.Ano, cancellationToken)).ToList();
+        var lancamentos = (await repository.GetByMesAnoAsync(request.Mes, request.Ano, currentUser.UserId, cancellationToken)).ToList();
 
         var creditos = lancamentos.Where(l => l.Tipo == TipoLancamento.Credito).Sum(l => l.Valor);
         var debitos = lancamentos.Where(l => l.Tipo == TipoLancamento.Debito || l.Tipo == TipoLancamento.Pix).Sum(l => l.Valor);

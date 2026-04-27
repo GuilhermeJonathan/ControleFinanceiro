@@ -9,11 +9,13 @@ public class SaldoConta : Entity
     public decimal Saldo { get; private set; }
     public TipoConta Tipo { get; private set; }
     public DateTime DataAtualizacao { get; private set; }
+    public Guid UsuarioId { get; private set; }
 
     private SaldoConta() : base(Guid.NewGuid()) { Banco = string.Empty; }
 
-    public SaldoConta(string banco, decimal saldo, TipoConta tipo) : base(Guid.NewGuid())
+    public SaldoConta(string banco, decimal saldo, TipoConta tipo, Guid usuarioId = default) : base(Guid.NewGuid())
     {
+        UsuarioId = usuarioId;
         Banco = banco;
         Saldo = saldo;
         Tipo = tipo;
