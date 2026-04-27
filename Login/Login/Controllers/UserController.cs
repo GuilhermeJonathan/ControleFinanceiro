@@ -1,4 +1,5 @@
 using Login.Application.Users.Commands.Authenticate;
+using Login.Application.Users.Commands.BlockUser;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.RegisterUser;
@@ -187,6 +188,15 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Bloqueia ou desbloqueia um usuário.</summary>
+    [HttpPatch("{id:guid}/block")]
+    [Authorize]
+    public async Task<IActionResult> SetBlock(Guid id, [FromBody] SetBlockRequest body, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new BlockUserCommand(id, body.Block), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Exclui um usuário e invalida seu token.</summary>
     [HttpDelete("{id:guid}")]
     [Authorize]
@@ -196,3 +206,5 @@ public class UserController : ControllerBase
         return Ok();
     }
 }
+
+public record SetBlockRequest(bool Block);

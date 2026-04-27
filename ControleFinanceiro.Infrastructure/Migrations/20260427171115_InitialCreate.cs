@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ControleFinanceiro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialPostgres : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,6 +18,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     DiaVencimento = table.Column<int>(type: "integer", nullable: true),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -33,6 +34,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Tipo = table.Column<int>(type: "integer", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -51,6 +53,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     Quantidade = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
                     Mes = table.Column<int>(type: "integer", nullable: false),
                     Ano = table.Column<int>(type: "integer", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -71,6 +74,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     QuantidadeHoras = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     Dia = table.Column<int>(type: "integer", nullable: false),
                     DataInicio = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -88,6 +92,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     Saldo = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Tipo = table.Column<int>(type: "integer", nullable: false),
                     DataAtualizacao = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -142,6 +147,7 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     IsRecorrente = table.Column<bool>(type: "boolean", nullable: false),
                     ContaBancariaId = table.Column<Guid>(type: "uuid", nullable: true),
                     DataPagamento = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -175,6 +181,21 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CartoesCredito_UsuarioId",
+                table: "CartoesCredito",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Categorias_UsuarioId",
+                table: "Categorias",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_HorasTrabalhadas_UsuarioId",
+                table: "HorasTrabalhadas",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Lancamentos_CartaoId",
                 table: "Lancamentos",
                 column: "CartaoId");
@@ -195,9 +216,24 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                 column: "ReceitaRecorrenteId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Lancamentos_UsuarioId",
+                table: "Lancamentos",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ParcelasCartao_CartaoCreditoId",
                 table: "ParcelasCartao",
                 column: "CartaoCreditoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReceitasRecorrentes_UsuarioId",
+                table: "ReceitasRecorrentes",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SaldosContas_UsuarioId",
+                table: "SaldosContas",
+                column: "UsuarioId");
         }
 
         /// <inheritdoc />

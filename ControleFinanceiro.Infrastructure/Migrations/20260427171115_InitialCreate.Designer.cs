@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ControleFinanceiro.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260425112850_InitialPostgres")]
-    partial class InitialPostgres
+    [Migration("20260427171115_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,7 +45,12 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("CartoesCredito");
                 });
@@ -70,7 +75,12 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Categorias");
                 });
@@ -102,11 +112,16 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("ValorHora")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("HorasTrabalhadas");
                 });
@@ -170,6 +185,9 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("Valor")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -183,6 +201,8 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasIndex("ContaBancariaId");
 
                     b.HasIndex("ReceitaRecorrenteId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Lancamentos");
                 });
@@ -257,6 +277,9 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("Valor")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -266,6 +289,8 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("ReceitasRecorrentes");
                 });
@@ -297,7 +322,12 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("SaldosContas");
                 });

@@ -4,9 +4,13 @@ using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Api.Middleware;
 using ControleFinanceiro.Api.Services;
 using ControleFinanceiro.Infrastructure;
+using ControleFinanceiro.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 

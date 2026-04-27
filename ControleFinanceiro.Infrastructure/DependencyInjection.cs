@@ -14,8 +14,15 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Configura comportamento legacy do timestamp para aceitar DateTime com qualquer Kind
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsql =>
+            {
+                npgsql.CommandTimeout(120);
+                npgsql.EnableRetryOnFailure(maxRetryCount: 3);
+            }));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
 

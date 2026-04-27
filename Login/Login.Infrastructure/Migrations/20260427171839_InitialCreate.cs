@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Login.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialPostgres : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -75,6 +75,24 @@ namespace Login.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Hierarchies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Invites",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    UsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Invites", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -276,6 +294,12 @@ namespace Login.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Invites_Token",
+                table: "Invites",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ModuleFunctions_ModuleId",
                 table: "ModuleFunctions",
                 column: "ModuleId");
@@ -311,6 +335,9 @@ namespace Login.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "HierarchyCompanies");
+
+            migrationBuilder.DropTable(
+                name: "Invites");
 
             migrationBuilder.DropTable(
                 name: "ModuleFunctions");
