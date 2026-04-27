@@ -6,6 +6,7 @@ using ControleFinanceiro.Application.Lancamentos.Commands.UpdateLancamento;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosByMes;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetParceladosVigentes;
+using ControleFinanceiro.Application.Lancamentos.Queries.GetResumoAnual;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,10 @@ public class LancamentosController(IMediator mediator) : ControllerBase
     [HttpGet("parcelados-vigentes")]
     public async Task<IActionResult> GetParceladosVigentes(CancellationToken ct)
         => Ok(await mediator.Send(new GetParceladosVigentesQuery(), ct));
+
+    [HttpGet("resumo-anual/{ano}")]
+    public async Task<IActionResult> GetResumoAnual(int ano, CancellationToken ct)
+        => Ok(await mediator.Send(new GetResumoAnualQuery(ano), ct));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateLancamentoCommand command, CancellationToken ct)

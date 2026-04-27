@@ -63,6 +63,13 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
+    public async Task<IEnumerable<Lancamento>> GetByAnoAsync(int ano, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Lancamentos
+            .Include(l => l.Categoria)
+            .Where(l => l.Ano == ano && l.UsuarioId == usuarioId)
+            .OrderBy(l => l.Mes).ThenBy(l => l.Data)
+            .ToListAsync(cancellationToken);
+
     public async Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(
         Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
