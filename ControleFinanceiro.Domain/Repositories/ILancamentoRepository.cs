@@ -14,4 +14,5 @@ public interface ILancamentoRepository
     Task<IEnumerable<Lancamento>> GetFutureByReceitaRecorrenteIdAsync(Guid receitaRecorrenteId, int mesAtual, int anoAtual, Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default);
     void DeleteRange(IEnumerable<Lancamento> lancamentos);
+    Task<IEnumerable<Lancamento>> GetParceladosVigentesAsync(Guid usuarioId, CancellationToken cancellationToken = default);
 }

@@ -24,6 +24,7 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
 
     public async Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
+            .Include(l => l.Categoria)
             .Where(l => l.CartaoId == cartaoId && l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
@@ -48,6 +49,19 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
 
     public void DeleteRange(IEnumerable<Lancamento> lancamentos)
         => context.Lancamentos.RemoveRange(lancamentos);
+
+    public async Task<IEnumerable<Lancamento>> GetParceladosVigentesAsync(Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Lancamentos
+            .Include(l => l.Categoria)
+            .Include(l => l.Cartao)
+            .Where(l => l.UsuarioId == usuarioId
+                && l.ParcelaAtual != null
+                && !l.IsRecorrente
+                && l.TotalParcelas < 120          // exclui recorrentes criados antes do flag existir
+                && (l.Situacao == Domain.Enums.SituacaoLancamento.AVencer
+                    || l.Situacao == Domain.Enums.SituacaoLancamento.Vencido))
+            .OrderBy(l => l.Data)
+            .ToListAsync(cancellationToken);
 
     public async Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(
         Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default)

@@ -9,5 +9,6 @@ public record CartaoLancamentoDto(
     DateTime Data,
     SituacaoLancamento Situacao,
     int? ParcelaAtual,
-    int? TotalParcelas
+    int? TotalParcelas,
+    string? CategoriaNome
 );
