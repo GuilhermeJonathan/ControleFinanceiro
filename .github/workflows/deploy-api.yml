@@ -33,8 +33,5 @@ jobs:
           dotnet build ControleFinanceiro.Api/ControleFinanceiro.Api.csproj
           -c Release --no-restore
 
-      - name: Trigger deploy no Render
-        # O Render redeployer automaticamente via webhook.
-        # Adicione RENDER_DEPLOY_HOOK_API nos Secrets do repositório GitHub.
-        # (Render Dashboard → seu serviço → Settings → Deploy Hook)
-        run: curl -fsSL "${{ secrets.RENDER_DEPLOY_HOOK_API }}"
+      # O Render detecta o push no GitHub e faz o deploy automaticamente.
+      # Não é necessário disparar via webhook.

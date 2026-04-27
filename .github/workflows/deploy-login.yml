@@ -28,7 +28,4 @@ jobs:
       - name: Build
         run: dotnet build Login/Login/Login.csproj -c Release --no-restore
 
-      - name: Trigger deploy no Render
-        # Adicione RENDER_DEPLOY_HOOK_LOGIN nos Secrets do repositório GitHub.
-        # (Render Dashboard → seu serviço → Settings → Deploy Hook)
-        run: curl -fsSL "${{ secrets.RENDER_DEPLOY_HOOK_LOGIN }}"
+      # O Render detecta o push no GitHub e faz o deploy automaticamente.
