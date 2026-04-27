@@ -28,9 +28,6 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<IModuleRepository, ModuleRepository>();
-        services.AddScoped<IHierarchyRepository, HierarchyRepository>();
-        services.AddScoped<IFreightForwarderRepository, FreightForwarderRepository>();
-        services.AddScoped<ICargoAgentRepository, CargoAgentRepository>();
         services.AddScoped<ITermRepository, TermRepository>();
         services.AddScoped<IInviteRepository, InviteRepository>();
 

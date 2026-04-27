@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Login.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260427171839_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260427183252_InitialCleanSchema")]
+    partial class InitialCleanSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "9.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -60,97 +60,10 @@ namespace Login.Infrastructure.Migrations
                     b.ToTable("AcceptedTerms", (string)null);
                 });
 
-            modelBuilder.Entity("Login.Domain.Entities.CargoAgentClient", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Associated")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("CargoAgentClientCompanyId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CargoAgentCompanyId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UnassociatedReason")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CargoAgentClients", (string)null);
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.CargoAgentPermission", b =>
-                {
-                    b.Property<Guid>("CargoAgentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Bl")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("Booking")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("Documents")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("Tracking")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("CargoAgentId");
-
-                    b.ToTable("CargoAgentPermissions", (string)null);
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.FreightForwarder", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Document")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("character varying(14)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Document")
-                        .IsUnique();
-
-                    b.ToTable("FreightForwarders", (string)null);
-                });
-
             modelBuilder.Entity("Login.Domain.Entities.FreightForwarderPermission", b =>
                 {
                     b.Property<Guid>("FreightForwarderId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<bool>("Bl")
@@ -168,44 +81,6 @@ namespace Login.Infrastructure.Migrations
                     b.HasKey("FreightForwarderId");
 
                     b.ToTable("FreightForwarderPermissions", (string)null);
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.Hierarchy", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Hierarchies", (string)null);
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.HierarchyCompany", b =>
-                {
-                    b.Property<Guid>("HierarchyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("HierarchyId", "ClientId");
-
-                    b.ToTable("HierarchyCompanies", (string)null);
                 });
 
             modelBuilder.Entity("Login.Domain.Entities.Invite", b =>
@@ -376,12 +251,6 @@ namespace Login.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid?>("FreightForwarderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("HierarchyId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -446,33 +315,6 @@ namespace Login.Infrastructure.Migrations
                     b.ToTable("UserRestrictions", (string)null);
                 });
 
-            modelBuilder.Entity("Login.Domain.Entities.CargoAgentPermission", b =>
-                {
-                    b.HasOne("Login.Domain.Entities.CargoAgentClient", null)
-                        .WithOne("Permissions")
-                        .HasForeignKey("Login.Domain.Entities.CargoAgentPermission", "CargoAgentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.FreightForwarderPermission", b =>
-                {
-                    b.HasOne("Login.Domain.Entities.FreightForwarder", null)
-                        .WithOne("Permissions")
-                        .HasForeignKey("Login.Domain.Entities.FreightForwarderPermission", "FreightForwarderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.HierarchyCompany", b =>
-                {
-                    b.HasOne("Login.Domain.Entities.Hierarchy", null)
-                        .WithMany("Companies")
-                        .HasForeignKey("HierarchyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Login.Domain.Entities.ModuleFunction", b =>
                 {
                     b.HasOne("Login.Domain.Entities.Module", null)
@@ -508,21 +350,6 @@ namespace Login.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.CargoAgentClient", b =>
-                {
-                    b.Navigation("Permissions");
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.FreightForwarder", b =>
-                {
-                    b.Navigation("Permissions");
-                });
-
-            modelBuilder.Entity("Login.Domain.Entities.Hierarchy", b =>
-                {
-                    b.Navigation("Companies");
                 });
 
             modelBuilder.Entity("Login.Domain.Entities.Module", b =>

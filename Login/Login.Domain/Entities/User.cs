@@ -17,8 +17,6 @@ public class User : Entity
     public bool IsBlocked { get; private set; }
     public string PasswordHash { get; private set; } = string.Empty;
     public Guid? ProfileId { get; private set; }
-    public Guid? HierarchyId { get; private set; }
-    public Guid? FreightForwarderId { get; private set; }
     public int? CountryId { get; private set; }
     public string? Region { get; private set; }
 
@@ -35,8 +33,7 @@ public class User : Entity
         string document,
         string passwordHash,
         UserType userTypeId,
-        Guid? profileId = null,
-        Guid? hierarchyId = null)
+        Guid? profileId = null)
         : base(id)
     {
         Name = name;
@@ -45,7 +42,6 @@ public class User : Entity
         PasswordHash = passwordHash;
         UserTypeId = userTypeId;
         ProfileId = profileId;
-        HierarchyId = hierarchyId;
         IsActive = true;
         IsBlocked = false;
     }

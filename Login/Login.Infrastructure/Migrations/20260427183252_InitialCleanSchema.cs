@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Login.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCleanSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -29,52 +29,18 @@ namespace Login.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CargoAgentClients",
+                name: "FreightForwarderPermissions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CargoAgentCompanyId = table.Column<int>(type: "integer", nullable: false),
-                    CargoAgentClientCompanyId = table.Column<int>(type: "integer", nullable: false),
-                    Associated = table.Column<bool>(type: "boolean", nullable: false),
-                    UnassociatedReason = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    FreightForwarderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Documents = table.Column<bool>(type: "boolean", nullable: false),
+                    Tracking = table.Column<bool>(type: "boolean", nullable: false),
+                    Booking = table.Column<bool>(type: "boolean", nullable: false),
+                    Bl = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CargoAgentClients", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "FreightForwarders",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CompanyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Document = table.Column<string>(type: "character varying(14)", maxLength: 14, nullable: false),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FreightForwarders", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Hierarchies",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Hierarchies", x => x.Id);
+                    table.PrimaryKey("PK_FreightForwarderPermissions", x => x.FreightForwarderId);
                 });
 
             migrationBuilder.CreateTable(
@@ -125,66 +91,6 @@ namespace Login.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Profiles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CargoAgentPermissions",
-                columns: table => new
-                {
-                    CargoAgentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Documents = table.Column<bool>(type: "boolean", nullable: false),
-                    Tracking = table.Column<bool>(type: "boolean", nullable: false),
-                    Booking = table.Column<bool>(type: "boolean", nullable: false),
-                    Bl = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CargoAgentPermissions", x => x.CargoAgentId);
-                    table.ForeignKey(
-                        name: "FK_CargoAgentPermissions_CargoAgentClients_CargoAgentId",
-                        column: x => x.CargoAgentId,
-                        principalTable: "CargoAgentClients",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "FreightForwarderPermissions",
-                columns: table => new
-                {
-                    FreightForwarderId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Documents = table.Column<bool>(type: "boolean", nullable: false),
-                    Tracking = table.Column<bool>(type: "boolean", nullable: false),
-                    Booking = table.Column<bool>(type: "boolean", nullable: false),
-                    Bl = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FreightForwarderPermissions", x => x.FreightForwarderId);
-                    table.ForeignKey(
-                        name: "FK_FreightForwarderPermissions_FreightForwarders_FreightForwar~",
-                        column: x => x.FreightForwarderId,
-                        principalTable: "FreightForwarders",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "HierarchyCompanies",
-                columns: table => new
-                {
-                    HierarchyId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_HierarchyCompanies", x => new { x.HierarchyId, x.ClientId });
-                    table.ForeignKey(
-                        name: "FK_HierarchyCompanies_Hierarchies_HierarchyId",
-                        column: x => x.HierarchyId,
-                        principalTable: "Hierarchies",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -245,8 +151,6 @@ namespace Login.Infrastructure.Migrations
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     ProfileId = table.Column<Guid>(type: "uuid", nullable: true),
-                    HierarchyId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FreightForwarderId = table.Column<Guid>(type: "uuid", nullable: true),
                     CountryId = table.Column<int>(type: "integer", nullable: true),
                     Region = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -288,12 +192,6 @@ namespace Login.Infrastructure.Migrations
                 columns: new[] { "UserId", "TermName" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_FreightForwarders_Document",
-                table: "FreightForwarders",
-                column: "Document",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Invites_Token",
                 table: "Invites",
                 column: "Token",
@@ -328,13 +226,7 @@ namespace Login.Infrastructure.Migrations
                 name: "AcceptedTerms");
 
             migrationBuilder.DropTable(
-                name: "CargoAgentPermissions");
-
-            migrationBuilder.DropTable(
                 name: "FreightForwarderPermissions");
-
-            migrationBuilder.DropTable(
-                name: "HierarchyCompanies");
 
             migrationBuilder.DropTable(
                 name: "Invites");
@@ -347,15 +239,6 @@ namespace Login.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRestrictions");
-
-            migrationBuilder.DropTable(
-                name: "CargoAgentClients");
-
-            migrationBuilder.DropTable(
-                name: "FreightForwarders");
-
-            migrationBuilder.DropTable(
-                name: "Hierarchies");
 
             migrationBuilder.DropTable(
                 name: "Modules");

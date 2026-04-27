@@ -38,8 +38,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
             document: request.Document,
             passwordHash: tempPassword,
             userTypeId: (UserType)request.UserTypeId,
-            profileId: request.ProfileId,
-            hierarchyId: request.HierarchyId);
+            profileId: request.ProfileId);
 
         await _userRepository.AddAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

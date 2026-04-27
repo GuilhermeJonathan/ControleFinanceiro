@@ -28,7 +28,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
             user.IsBlocked,
             user.AvatarUrl,
             user.ProfileId,
-            user.HierarchyId,
+            null,
             user.CreatedAt);
     }
 }

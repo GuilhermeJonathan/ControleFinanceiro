@@ -15,10 +15,6 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<DomainModule> Modules => Set<DomainModule>();
     public DbSet<ModuleFunction> ModuleFunctions => Set<ModuleFunction>();
-    public DbSet<Hierarchy> Hierarchies => Set<Hierarchy>();
-    public DbSet<HierarchyCompany> HierarchyCompanies => Set<HierarchyCompany>();
-    public DbSet<FreightForwarder> FreightForwarders => Set<FreightForwarder>();
-    public DbSet<CargoAgentClient> CargoAgentClients => Set<CargoAgentClient>();
     public DbSet<AcceptedTerm> AcceptedTerms => Set<AcceptedTerm>();
     public DbSet<UserRestriction> UserRestrictions => Set<UserRestriction>();
     public DbSet<Permission> Permissions => Set<Permission>();

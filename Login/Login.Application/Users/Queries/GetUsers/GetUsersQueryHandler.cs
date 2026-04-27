@@ -35,9 +35,6 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
         if (request.ProfileId.HasValue)
             filtered = filtered.Where(u => u.ProfileId == request.ProfileId.Value);
 
-        if (request.HierarchyId.HasValue)
-            filtered = filtered.Where(u => u.HierarchyId == request.HierarchyId.Value);
-
         var totalCount = filtered.Count();
         var items = filtered
             .Skip((request.CurrentPage - 1) * request.PageSize)
@@ -52,7 +49,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                 u.IsBlocked,
                 u.AvatarUrl,
                 u.ProfileId,
-                u.HierarchyId,
+                null,
                 u.CreatedAt))
             .ToList();
 
