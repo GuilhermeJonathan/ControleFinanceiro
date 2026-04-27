@@ -38,13 +38,6 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
 
         var modules = await _moduleRepository.GetByProfileAsync(user.ProfileId ?? Guid.Empty, cancellationToken);
 
-        // Oculta módulo Docs no menu para FreightForwarder
-        var moduleDtos = modules
-            .Select(m => new ModuleDto(
-                m.Id,
-                m.Name,
-                m.HiddenMenu || (user.UserTypeId == Domain.Entities.UserType.FreightForwarder && m.Name == "Docs")))
-            .ToList();
 
         var restrictions = user.Restrictions
             .Select(r => new RestrictionDto(r.ModuleId, r.CompanyId))
@@ -53,7 +46,6 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
         return new AuthenticateResult(
             AccessToken: token,
             AvatarUrl: user.AvatarUrl,
-            Modules: moduleDtos,
             Hierarchies: new List<HierarchyDto>(),
             Restrictions: restrictions,
             SelectedCompanies: new List<int>());

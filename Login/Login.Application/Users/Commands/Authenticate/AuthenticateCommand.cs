@@ -11,14 +11,12 @@ public record AuthenticateCommand(
 
 public record AuthenticateResult(
     string AccessToken,
-    string? AvatarUrl,
-    IReadOnlyList<ModuleDto> Modules,
+    string? AvatarUrl,    
     IReadOnlyList<HierarchyDto> Hierarchies,
     IReadOnlyList<RestrictionDto> Restrictions,
     IReadOnlyList<int> SelectedCompanies
 );
 
-public record ModuleDto(Guid Id, string Name, bool HiddenMenu);
 public record HierarchyDto(IReadOnlyList<CompanyDto> Companies);
 public record CompanyDto(int ClientId);
 public record RestrictionDto(Guid ModuleId, int CompanyId);

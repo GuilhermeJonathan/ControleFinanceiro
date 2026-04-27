@@ -11,6 +11,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Invite> Invites => Set<Invite>();
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<DomainModule> Modules => Set<DomainModule>();
     public DbSet<ModuleFunction> ModuleFunctions => Set<ModuleFunction>();
@@ -28,7 +29,7 @@ public class AppDbContext : DbContext, IUnitOfWork
         base.OnModelCreating(modelBuilder);
     }
 
-    public new async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         await base.SaveChangesAsync(cancellationToken);
     }

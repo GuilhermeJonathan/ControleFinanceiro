@@ -1,6 +1,7 @@
 using Login.Application.Users.Commands.Authenticate;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
+using Login.Application.Users.Commands.RegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
 using Login.Application.Users.Commands.UpdateUser;
 using Login.Application.Users.Queries.GetUserById;
@@ -20,6 +21,17 @@ public class UserController : ControllerBase
     public UserController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>Auto-cadastro via convite.</summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Register(
+        [FromBody] RegisterUserCommand command,
+        CancellationToken cancellationToken)
+    {
+        var accessToken = await _mediator.Send(command, cancellationToken);
+        return Ok(new { accessToken });
     }
 
     /// <summary>Autentica o usuário e retorna o token JWT.</summary>

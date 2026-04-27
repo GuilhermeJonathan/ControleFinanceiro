@@ -1,5 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using System.Security.Claims;  // mantido para Claim()
 using System.Text;
 using Login.Application.Common.Interfaces;
 using Login.Domain.Entities;
@@ -31,9 +31,9 @@ public class JwtTokenManager : ITokenManager
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.Name),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("userType", ((int)user.UserTypeId).ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };

@@ -17,7 +17,9 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"),
+                o => o.EnableRetryOnFailure(3)));
 
         // UnitOfWork
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
@@ -30,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IFreightForwarderRepository, FreightForwarderRepository>();
         services.AddScoped<ICargoAgentRepository, CargoAgentRepository>();
         services.AddScoped<ITermRepository, TermRepository>();
+        services.AddScoped<IInviteRepository, InviteRepository>();
 
         // Serviços cross-cutting
         services.AddScoped<ITokenManager, JwtTokenManager>();
