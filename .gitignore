@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Environment / secrets
+.env.local
+.env*.local
+mobile/.env.local
+migrate_sqlserver_to_postgres.py
+dados_para_postgres.sql
