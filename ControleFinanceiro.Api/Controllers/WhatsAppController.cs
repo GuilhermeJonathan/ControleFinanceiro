@@ -16,6 +16,7 @@ namespace ControleFinanceiro.Api.Controllers;
 public class WhatsAppController(
     IMediator mediator,
     IWhatsAppVinculoRepository vinculoRepo,
+    ICategoriaRepository categoriaRepo,
     WhatsAppSenderService sender,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
@@ -151,6 +152,20 @@ public class WhatsAppController(
             HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
             HttpContext.Items["RealUserId"]      = vinculo.UserId;
 
+            // Tenta inferir a categoria pelo dicionário de palavras-chave
+            var categorias   = await categoriaRepo.GetAllAsync(vinculo.UserId, ct);
+            var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao);
+
+            var match = nomeCategoria is not null
+                ? categorias.FirstOrDefault(c => string.Equals(c.Nome, nomeCategoria, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            // Fallback para "Outros" se não encontrou match
+            match ??= categorias.FirstOrDefault(c =>
+                string.Equals(c.Nome, "Outros", StringComparison.OrdinalIgnoreCase));
+
+            Guid? categoriaId = match?.Id;
+
             var situacao = parsed.Tipo == TipoLancamento.Credito
                 ? SituacaoLancamento.Recebido
                 : SituacaoLancamento.Pago;
@@ -163,7 +178,7 @@ public class WhatsAppController(
                 Situacao:      situacao,
                 Mes:           parsed.Data.Month,
                 Ano:           parsed.Data.Year,
-                CategoriaId:   null), ct);
+                CategoriaId:   categoriaId), ct);
 
             var tipoIcon  = parsed.Tipo == TipoLancamento.Credito ? "📈" : "💸";
             var dataLabel = parsed.Data.Date == DateTime.Today          ? "hoje"
