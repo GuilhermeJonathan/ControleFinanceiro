@@ -7,7 +7,6 @@ namespace ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
 
 public class GetDashboardQueryHandler(
     ILancamentoRepository repository,
-    ISaldoContaRepository saldoRepo,
     ICurrentUser currentUser)
     : IRequestHandler<GetDashboardQuery, DashboardDto>
 {
@@ -47,28 +46,24 @@ public class GetDashboardQueryHandler(
             ? Math.Round(debitos / creditos * 100, 1)
             : null;
 
-        // Dias de reserva: saldo total em contas ÷ gasto médio diário (últimos 3 meses)
+        // Dias de reserva: saldo acumulado dos lançamentos ÷ gasto médio diário (últimos 3 meses)
         int? diasReserva = null;
-        var saldos = (await saldoRepo.GetAllAsync(userId, cancellationToken)).ToList();
-        if (saldos.Count > 0)
+        var saldoAcumulado = await repository.GetSaldoAcumuladoAsync(request.Mes, request.Ano, userId, cancellationToken);
+        if (saldoAcumulado > 0)
         {
-            var totalSaldos = saldos.Sum(s => s.Saldo);
-            if (totalSaldos > 0)
-            {
-                // Coleta débitos dos últimos 3 meses (atual + 2 anteriores)
-                var mes2 = mesAnt == 1 ? 12 : mesAnt - 1;
-                var ano2 = mesAnt == 1 ? anoAnt - 1 : anoAnt;
-                var doisMesesAtras = (await repository.GetByMesAnoAsync(mes2, ano2, userId, cancellationToken)).ToList();
+            // Coleta débitos dos últimos 3 meses (atual + 2 anteriores)
+            var mes2 = mesAnt == 1 ? 12 : mesAnt - 1;
+            var ano2 = mesAnt == 1 ? anoAnt - 1 : anoAnt;
+            var doisMesesAtras = (await repository.GetByMesAnoAsync(mes2, ano2, userId, cancellationToken)).ToList();
 
-                var totalDebitos3Meses =
-                    debitos +
-                    debAnt +
-                    doisMesesAtras.Where(l => l.Tipo == TipoLancamento.Debito || l.Tipo == TipoLancamento.Pix).Sum(l => l.Valor);
+            var totalDebitos3Meses =
+                debitos +
+                debAnt +
+                doisMesesAtras.Where(l => l.Tipo == TipoLancamento.Debito || l.Tipo == TipoLancamento.Pix).Sum(l => l.Valor);
 
-                var gastoMedioDiario = totalDebitos3Meses / 90m;
-                if (gastoMedioDiario > 0)
-                    diasReserva = (int)(totalSaldos / gastoMedioDiario);
-            }
+            var gastoMedioDiario = totalDebitos3Meses / 90m;
+            if (gastoMedioDiario > 0)
+                diasReserva = (int)(saldoAcumulado / gastoMedioDiario);
         }
 
         return new DashboardDto(

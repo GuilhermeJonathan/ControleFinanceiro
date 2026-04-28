@@ -96,6 +96,25 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .Where(l => l.GrupoParcelas == grupoParcelas && l.UsuarioId == usuarioId)
             .ToListAsync(cancellationToken);
 
+    public async Task<decimal> GetSaldoAcumuladoAsync(int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
+    {
+        var ate = ano * 100 + mes;
+
+        var creditos = await context.Lancamentos
+            .Where(l => l.UsuarioId == usuarioId
+                && (l.Ano * 100 + l.Mes) <= ate
+                && l.Tipo == Domain.Enums.TipoLancamento.Credito)
+            .SumAsync(l => l.Valor, cancellationToken);
+
+        var debitos = await context.Lancamentos
+            .Where(l => l.UsuarioId == usuarioId
+                && (l.Ano * 100 + l.Mes) <= ate
+                && (l.Tipo == Domain.Enums.TipoLancamento.Debito || l.Tipo == Domain.Enums.TipoLancamento.Pix))
+            .SumAsync(l => l.Valor, cancellationToken);
+
+        return creditos - debitos;
+    }
+
     public async Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(
         string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default)
     {
