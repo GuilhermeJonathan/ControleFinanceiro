@@ -57,7 +57,6 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .Where(l => l.UsuarioId == usuarioId
                 && l.ParcelaAtual != null
                 && !l.IsRecorrente
-                && l.TotalParcelas < 120          // exclui recorrentes criados antes do flag existir
                 && (l.Situacao == Domain.Enums.SituacaoLancamento.AVencer
                     || l.Situacao == Domain.Enums.SituacaoLancamento.Vencido))
             .OrderBy(l => l.Data)
