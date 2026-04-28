@@ -4,6 +4,7 @@ using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.RegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
+using Login.Application.Users.Commands.UpdateAvatar;
 using Login.Application.Users.Commands.UpdateUser;
 using Login.Application.Users.Queries.GetUserById;
 using Login.Application.Users.Queries.GetUsers;
@@ -175,6 +176,17 @@ public class UserController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, null);
     }
 
+    /// <summary>Atualiza o avatar do usuário autenticado (base64 data URL).</summary>
+    [HttpPatch("me/avatar")]
+    [Authorize]
+    public async Task<IActionResult> UpdateAvatar(
+        [FromBody] UpdateAvatarRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new UpdateAvatarCommand(body.AvatarUrl), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Atualiza perfil de um usuário.</summary>
     [HttpPut("{id:guid}")]
     [Authorize]
@@ -208,3 +220,4 @@ public class UserController : ControllerBase
 }
 
 public record SetBlockRequest(bool Block);
+public record UpdateAvatarRequest(string? AvatarUrl);
