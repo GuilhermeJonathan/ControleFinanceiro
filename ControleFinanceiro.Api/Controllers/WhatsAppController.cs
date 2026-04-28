@@ -136,6 +136,9 @@ public class WhatsAppController(
                 return;
             }
 
+            // Usa o número cadastrado no vínculo (não o from do webhook, que pode ter formato diferente)
+            var replyTo = vinculo.PhoneNumber;
+
             // Faz o parse da mensagem
             var parsed = WhatsAppMessageParser.Parse(text);
             if (!parsed.Success)
@@ -167,7 +170,7 @@ public class WhatsAppController(
                           : parsed.Data.Date == DateTime.Today.AddDays(-1) ? "ontem"
                           : parsed.Data.ToString("dd/MM");
 
-            await sender.SendTextAsync(from,
+            await sender.SendTextAsync(replyTo,
                 $"{tipoIcon} *{parsed.Descricao}* registrado!\n" +
                 $"Valor: R$ {parsed.Valor:N2}\n" +
                 $"Data: {dataLabel}", ct);
