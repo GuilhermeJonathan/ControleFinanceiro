@@ -67,6 +67,23 @@ public class Lancamento : Entity
         SetUpdated();
     }
 
+    /// <summary>
+    /// Atualiza apenas os campos "template" de um recorrente futuro:
+    /// descrição, valor, tipo, categoria e cartão — preserva mês/ano/situação próprios.
+    /// </summary>
+    public void UpdateRecorrente(string descricao, decimal valor, TipoLancamento tipo,
+        Guid? categoriaId, Guid? cartaoId, int dia)
+    {
+        Descricao   = descricao;
+        Valor       = valor;
+        Tipo        = tipo;
+        CategoriaId = categoriaId;
+        CartaoId    = cartaoId;
+        var diaMax  = DateTime.DaysInMonth(Data.Year, Data.Month);
+        Data        = new DateTime(Data.Year, Data.Month, Math.Min(dia, diaMax));
+        SetUpdated();
+    }
+
     public void AtualizarSituacao(SituacaoLancamento situacao)
     {
         Situacao = situacao;

@@ -4,6 +4,7 @@ using ControleFinanceiro.Application.Lancamentos.Commands.DeleteParcelasFuturas;
 using ControleFinanceiro.Application.Lancamentos.Commands.CreateLancamento;
 using ControleFinanceiro.Application.Lancamentos.Commands.DeleteLancamento;
 using ControleFinanceiro.Application.Lancamentos.Commands.UpdateLancamento;
+using ControleFinanceiro.Application.Lancamentos.Commands.UpdateLancamentoRecorrenteFuturas;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosByMes;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetParceladosVigentes;
@@ -49,6 +50,13 @@ public class LancamentosController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLancamentoCommand command, CancellationToken ct)
+    {
+        await mediator.Send(command with { Id = id }, ct);
+        return NoContent();
+    }
+
+    [HttpPut("{id}/recorrente-futuras")]
+    public async Task<IActionResult> UpdateRecorrenteFuturas(Guid id, [FromBody] UpdateLancamentoRecorrenteFuturasCommand command, CancellationToken ct)
     {
         await mediator.Send(command with { Id = id }, ct);
         return NoContent();
