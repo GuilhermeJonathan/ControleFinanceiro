@@ -7,6 +7,7 @@ public class Categoria : Entity
 {
     public string Nome { get; private set; }
     public TipoLancamento Tipo { get; private set; }
+    public decimal? LimiteMensal { get; private set; }
     public Guid UsuarioId { get; private set; }
 
     public ICollection<Lancamento> Lancamentos { get; private set; } = [];
@@ -24,6 +25,12 @@ public class Categoria : Entity
     {
         Nome = nome;
         Tipo = tipo;
+        SetUpdated();
+    }
+
+    public void AtualizarLimite(decimal? limite)
+    {
+        LimiteMensal = limite;
         SetUpdated();
     }
 }

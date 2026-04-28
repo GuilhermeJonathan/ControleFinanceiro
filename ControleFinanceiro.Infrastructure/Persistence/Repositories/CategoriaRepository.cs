@@ -15,5 +15,6 @@ public class CategoriaRepository(AppDbContext context) : ICategoriaRepository
     public async Task AddAsync(Categoria categoria, CancellationToken cancellationToken = default)
         => await context.Categorias.AddAsync(categoria, cancellationToken);
 
+    public void Update(Categoria categoria) => context.Categorias.Update(categoria);
     public void Delete(Categoria categoria) => context.Categorias.Remove(categoria);
 }

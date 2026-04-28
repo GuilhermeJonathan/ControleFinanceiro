@@ -10,6 +10,6 @@ public class GetCategoriasQueryHandler(ICategoriaRepository repository, ICurrent
     public async Task<IEnumerable<CategoriaDto>> Handle(GetCategoriasQuery request, CancellationToken cancellationToken)
     {
         var categorias = await repository.GetAllAsync(currentUser.UserId, cancellationToken);
-        return categorias.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo));
+        return categorias.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo, c.LimiteMensal));
     }
 }
