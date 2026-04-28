@@ -70,6 +70,21 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .OrderBy(l => l.Mes).ThenBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
+    public async Task<IEnumerable<Lancamento>> GetProjecaoAsync(
+        int mesInicio, int anoInicio, int mesFim, int anoFim,
+        Guid usuarioId, CancellationToken cancellationToken = default)
+    {
+        // Converte para número inteiro AnoMes (ex: 202603) para comparação simples
+        var de  = anoInicio * 100 + mesInicio;
+        var ate = anoFim    * 100 + mesFim;
+
+        return await context.Lancamentos
+            .Where(l => l.UsuarioId == usuarioId
+                && (l.Ano * 100 + l.Mes) >= de
+                && (l.Ano * 100 + l.Mes) <= ate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(
         Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
