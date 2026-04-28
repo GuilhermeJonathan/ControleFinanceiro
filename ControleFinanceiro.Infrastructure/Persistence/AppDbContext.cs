@@ -17,6 +17,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<HorasTrabalhadas> HorasTrabalhadas => Set<HorasTrabalhadas>();
     public DbSet<ReceitaRecorrente> ReceitasRecorrentes => Set<ReceitaRecorrente>();
     public DbSet<VinculoFamiliar> VinculosFamiliares => Set<VinculoFamiliar>();
+    public DbSet<Meta> Metas => Set<Meta>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
