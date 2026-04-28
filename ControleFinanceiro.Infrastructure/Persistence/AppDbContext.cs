@@ -18,6 +18,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<ReceitaRecorrente> ReceitasRecorrentes => Set<ReceitaRecorrente>();
     public DbSet<VinculoFamiliar> VinculosFamiliares => Set<VinculoFamiliar>();
     public DbSet<Meta> Metas => Set<Meta>();
+    public DbSet<WhatsAppVinculo> WhatsAppVinculos => Set<WhatsAppVinculo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

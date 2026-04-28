@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IReceitaRecorrenteRepository, ReceitaRecorrenteRepository>();
         services.AddScoped<IVinculoFamiliarRepository, VinculoFamiliarRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
+        services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
 
         return services;
     }
