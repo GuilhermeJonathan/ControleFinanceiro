@@ -1,6 +1,7 @@
 using System.Text;
 using ControleFinanceiro.Application;
 using ControleFinanceiro.Application.Common.Interfaces;
+using ControleFinanceiro.Api.BackgroundServices;
 using ControleFinanceiro.Api.Middleware;
 using ControleFinanceiro.Api.Services;
 using ControleFinanceiro.Infrastructure;
@@ -53,6 +54,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHostedService<DailyJobService>();
 
 var app = builder.Build();
 
