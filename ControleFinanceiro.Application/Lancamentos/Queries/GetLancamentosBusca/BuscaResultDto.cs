@@ -20,5 +20,7 @@ public record LancamentoBuscaItemDto(
     int? ParcelaAtual,
     int? TotalParcelas,
     bool IsRecorrente,
-    Guid? GrupoParcelas
+    Guid? GrupoParcelas,
+    Guid? CriadoPorId,
+    string? CriadoPorNome
 );

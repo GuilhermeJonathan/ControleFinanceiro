@@ -25,6 +25,8 @@ public class GetLancamentosByMesQueryHandler(
             l.IsRecorrente,
             l.ContaBancariaId,
             l.ContaBancaria?.Banco,
-            l.DataPagamento));
+            l.DataPagamento,
+            l.CriadoPorId,
+            l.CriadoPorNome));
     }
 }

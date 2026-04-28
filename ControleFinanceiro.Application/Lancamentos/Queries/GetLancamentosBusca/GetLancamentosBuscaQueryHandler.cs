@@ -33,7 +33,9 @@ public class GetLancamentosBuscaQueryHandler(
             l.ParcelaAtual,
             l.TotalParcelas,
             l.IsRecorrente,
-            l.GrupoParcelas
+            l.GrupoParcelas,
+            l.CriadoPorId,
+            l.CriadoPorNome
         ));
 
         return new BuscaResultDto(total, dtos);

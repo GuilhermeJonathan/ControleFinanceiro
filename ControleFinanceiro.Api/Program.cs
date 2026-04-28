@@ -68,6 +68,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAll");
 if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseMiddleware<FamiliaContextMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

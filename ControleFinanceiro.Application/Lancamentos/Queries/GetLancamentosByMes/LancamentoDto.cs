@@ -30,5 +30,8 @@ public record LancamentoDto(
     Guid? ContaBancariaId,
     string? ContaBancariaNome,
     // Pagamento
-    DateTime? DataPagamento
+    DateTime? DataPagamento,
+    // Autoria
+    Guid? CriadoPorId,
+    string? CriadoPorNome
 );

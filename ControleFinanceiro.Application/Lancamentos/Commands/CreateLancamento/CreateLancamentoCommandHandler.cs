@@ -15,7 +15,9 @@ public class CreateLancamentoCommandHandler(
 {
     public async Task<Guid> Handle(CreateLancamentoCommand request, CancellationToken cancellationToken)
     {
-        var usuarioId = currentUser.UserId;
+        var usuarioId    = currentUser.UserId;
+        var criadoPorId  = currentUser.RealUserId;
+        var criadoPorNome = currentUser.RealUserName;
         var totalParcelas = request.TotalParcelas < 1 ? 1 : request.TotalParcelas;
 
         if (totalParcelas == 1)
@@ -24,7 +26,9 @@ public class CreateLancamentoCommandHandler(
                 request.Descricao, request.Data, request.Valor,
                 request.Tipo, request.Situacao, request.Mes, request.Ano,
                 request.CategoriaId, request.CartaoId,
-                usuarioId: usuarioId);
+                usuarioId: usuarioId,
+                criadoPorId: criadoPorId,
+                criadoPorNome: criadoPorNome);
 
             await repository.AddAsync(lancamento, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -70,7 +74,9 @@ public class CreateLancamentoCommandHandler(
                 request.CategoriaId, request.CartaoId,
                 i + 1, totalParcelas, grupo,
                 isRecorrente: request.IsRecorrente,
-                usuarioId: usuarioId);
+                usuarioId: usuarioId,
+                criadoPorId: criadoPorId,
+                criadoPorNome: criadoPorNome);
 
             lancamentos.Add(l);
             if (i == 0) primeiroId = l.Id;

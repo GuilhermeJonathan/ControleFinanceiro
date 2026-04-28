@@ -22,6 +22,10 @@ public class Lancamento : Entity
     public Guid? ContaBancariaId { get; private set; }
     public DateTime? DataPagamento { get; private set; }
     public Guid UsuarioId { get; private set; }
+    /// <summary>ID de quem realmente criou o lançamento (pode ser membro da família)</summary>
+    public Guid? CriadoPorId { get; private set; }
+    /// <summary>Nome/email de quem criou — desnormalizado para evitar lookup no Login API</summary>
+    public string? CriadoPorNome { get; private set; }
 
     public Categoria? Categoria { get; private set; }
     public CartaoCredito? Cartao { get; private set; }
@@ -34,10 +38,13 @@ public class Lancamento : Entity
         SituacaoLancamento situacao, int mes, int ano, Guid? categoriaId = null,
         Guid? cartaoId = null, int? parcelaAtual = null, int? totalParcelas = null,
         Guid? grupoParcelas = null, Guid? receitaRecorrenteId = null,
-        bool isRecorrente = false, Guid usuarioId = default)
+        bool isRecorrente = false, Guid usuarioId = default,
+        Guid? criadoPorId = null, string? criadoPorNome = null)
         : base(Guid.NewGuid())
     {
         UsuarioId = usuarioId;
+        CriadoPorId = criadoPorId;
+        CriadoPorNome = criadoPorNome;
         Descricao = descricao;
         Data = data;
         Valor = valor;
