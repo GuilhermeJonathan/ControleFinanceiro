@@ -36,6 +36,10 @@ public static partial class WhatsAppMessageParser
         RegexOptions.IgnoreCase)]
     private static partial Regex ValueRegex();
 
+    // Aceita: 15/04 | 15/04/2025 | 15-04 | 15-04-2025
+    [GeneratedRegex(@"\b(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{2,4}))?\b")]
+    private static partial Regex DateRegex();
+
     [GeneratedRegex(@"\s+")]
     private static partial Regex SpaceRegex();
 
@@ -60,7 +64,8 @@ public static partial class WhatsAppMessageParser
                 • Renda aluguel 1200
 
                 ℹ️ Se não informar a data, registra como *hoje*.
-                Palavras aceitas para data: _hoje_, _ontem_, _amanhã_.
+                Palavras aceitas: _hoje_, _ontem_, _amanhã_.
+                Ou informe a data: _15/04_ ou _15/04/2025_.
                 """;
             return true;
         }
@@ -99,13 +104,28 @@ public static partial class WhatsAppMessageParser
                 "Valor inválido 🤔\nTente: *Gasolina 150 reais*");
 
         // 3. Data
-        var data = lower.Contains("ontem")                     ? DateTime.Today.AddDays(-1)
-                 : lower.Contains("amanhã") || lower.Contains("amanha") ? DateTime.Today.AddDays(1)
-                 : DateTime.Today;
+        DateTime data;
+        var dateMatch = DateRegex().Match(text);
+        if (lower.Contains("ontem"))
+            data = DateTime.Today.AddDays(-1);
+        else if (lower.Contains("amanhã") || lower.Contains("amanha"))
+            data = DateTime.Today.AddDays(1);
+        else if (dateMatch.Success &&
+                 int.TryParse(dateMatch.Groups[1].Value, out var dia) &&
+                 int.TryParse(dateMatch.Groups[2].Value, out var mes))
+        {
+            var ano = DateTime.Today.Year;
+            if (dateMatch.Groups[3].Success && int.TryParse(dateMatch.Groups[3].Value, out var anoRaw))
+                ano = anoRaw < 100 ? 2000 + anoRaw : anoRaw;
+            data = IsValidDate(dia, mes, ano) ? new DateTime(ano, mes, dia) : DateTime.Today;
+        }
+        else
+            data = DateTime.Today;
 
         // 4. Descrição — remove valor, data, indicadores e ruído
         var desc = text;
         desc = ValueRegex().Replace(desc, " ");
+        desc = DateRegex().Replace(desc, " ");   // remove data explícita da descrição
 
         var wordsToRemove = _dateWords
             .Concat(_noiseWords)
@@ -122,5 +142,11 @@ public static partial class WhatsAppMessageParser
             desc = char.ToUpper(desc[0]) + desc[1..];
 
         return new(true, desc, valor, data, tipo);
+    }
+
+    private static bool IsValidDate(int dia, int mes, int ano)
+    {
+        try { _ = new DateTime(ano, mes, dia); return true; }
+        catch { return false; }
     }
 }

@@ -39,12 +39,15 @@ public class WhatsAppSenderService(IHttpClientFactory httpFactory, IConfiguratio
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
         var response = await http.SendAsync(request, ct);
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
 
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            logger.LogError("Meta API erro {Status}: {Body}", (int)response.StatusCode, body);
+            logger.LogError("Meta API erro {Status}: {Body}", (int)response.StatusCode, responseBody);
             response.EnsureSuccessStatusCode();
         }
+
+        // Loga a resposta completa para diagnóstico (wamid, wa_id, status)
+        logger.LogInformation("Meta API resposta: {Body}", responseBody);
     }
 }
