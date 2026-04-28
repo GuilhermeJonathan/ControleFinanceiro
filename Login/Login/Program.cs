@@ -1,6 +1,7 @@
 using System.Text;
 using Login.Application;
 using Login.Application.Common.Interfaces;
+using Login.Extensions;
 using Login.Infrastructure;
 using Login.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,8 @@ using Microsoft.OpenApi.Models;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLoginRateLimiting();
 
 // Controllers
 builder.Services.AddControllers();
@@ -108,6 +111,7 @@ app.Use(async (context, next) =>
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAll");
 if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

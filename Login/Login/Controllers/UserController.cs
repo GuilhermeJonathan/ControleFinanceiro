@@ -11,6 +11,7 @@ using Login.Application.Users.Queries.GetUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Login.Controllers;
 
@@ -28,6 +29,7 @@ public class UserController : ControllerBase
     /// <summary>Auto-cadastro via convite.</summary>
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterUserCommand command,
         CancellationToken cancellationToken)
@@ -39,6 +41,7 @@ public class UserController : ControllerBase
     /// <summary>Autentica o usuário e retorna o token JWT.</summary>
     [HttpPost("authenticate")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Authenticate(
         [FromBody] AuthenticateCommand command,
         CancellationToken cancellationToken)
@@ -50,6 +53,7 @@ public class UserController : ControllerBase
     /// <summary>Solicita redefinição de senha (envia e-mail/SMS).</summary>
     [HttpPost("forgotPassword")]
     [AllowAnonymous]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> ForgotPassword(
         [FromBody] ForgotPasswordCommand command,
         CancellationToken cancellationToken)
