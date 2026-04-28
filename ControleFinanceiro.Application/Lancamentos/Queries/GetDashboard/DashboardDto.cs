@@ -10,7 +10,10 @@ public record DashboardDto(
     // Variação percentual vs mês anterior (null = sem dados anteriores)
     decimal? VariacaoCreditos,
     decimal? VariacaoDebitos,
-    decimal? VariacaoSaldo
+    decimal? VariacaoSaldo,
+    // Saúde financeira
+    int?     DiasReserva,          // Total saldos ÷ (gasto médio diário). Null se sem saldo.
+    decimal? ComprometimentoRenda  // Débitos ÷ Créditos × 100. Null se sem receita.
 );
 
 public record ResumoCategoriaDto(string Categoria, decimal Total);
