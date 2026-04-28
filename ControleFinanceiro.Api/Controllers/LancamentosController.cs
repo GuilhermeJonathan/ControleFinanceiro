@@ -6,6 +6,7 @@ using ControleFinanceiro.Application.Lancamentos.Commands.DeleteLancamento;
 using ControleFinanceiro.Application.Lancamentos.Commands.UpdateLancamento;
 using ControleFinanceiro.Application.Lancamentos.Commands.UpdateLancamentoRecorrenteFuturas;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
+using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosBusca;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosByMes;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetParceladosVigentes;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetProjecao;
@@ -40,6 +41,15 @@ public class LancamentosController(IMediator mediator) : ControllerBase
     [HttpGet("projecao/{mes}/{ano}")]
     public async Task<IActionResult> GetProjecao(int mes, int ano, CancellationToken ct)
         => Ok(await mediator.Send(new GetProjecaoQuery(mes, ano), ct));
+
+    [HttpGet("busca")]
+    public async Task<IActionResult> Busca([FromQuery] string q, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
+            return BadRequest("Informe ao menos 2 caracteres para buscar.");
+
+        return Ok(await mediator.Send(new GetLancamentosBuscaQuery(q, page, pageSize), ct));
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateLancamentoCommand command, CancellationToken ct)

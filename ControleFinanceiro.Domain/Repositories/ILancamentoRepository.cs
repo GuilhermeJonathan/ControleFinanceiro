@@ -18,4 +18,5 @@ public interface ILancamentoRepository
     Task<IEnumerable<Lancamento>> GetParceladosVigentesAsync(Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByAnoAsync(int ano, Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetProjecaoAsync(int mesInicio, int anoInicio, int mesFim, int anoFim, Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default);
 }

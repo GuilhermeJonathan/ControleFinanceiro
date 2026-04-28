@@ -95,4 +95,22 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
         => await context.Lancamentos
             .Where(l => l.GrupoParcelas == grupoParcelas && l.UsuarioId == usuarioId)
             .ToListAsync(cancellationToken);
+
+    public async Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(
+        string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default)
+    {
+        var query = context.Lancamentos
+            .Include(l => l.Categoria)
+            .Include(l => l.Cartao)
+            .Where(l => l.UsuarioId == usuarioId && l.Descricao.Contains(q))
+            .OrderByDescending(l => l.Data);
+
+        var total = await query.CountAsync(cancellationToken);
+        var itens = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (itens, total);
+    }
 }
