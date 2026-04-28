@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ControleFinanceiro.Api.WhatsApp;
 
-public class WhatsAppSenderService(IHttpClientFactory httpFactory, IConfiguration config)
+public class WhatsAppSenderService(IHttpClientFactory httpFactory, IConfiguration config, ILogger<WhatsAppSenderService> logger)
 {
     private static readonly JsonSerializerOptions _json = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
@@ -39,6 +39,12 @@ public class WhatsAppSenderService(IHttpClientFactory httpFactory, IConfiguratio
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
         var response = await http.SendAsync(request, ct);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            logger.LogError("Meta API erro {Status}: {Body}", (int)response.StatusCode, body);
+            response.EnsureSuccessStatusCode();
+        }
     }
 }
