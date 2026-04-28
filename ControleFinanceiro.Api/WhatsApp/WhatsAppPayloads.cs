@@ -19,7 +19,7 @@ public record WhatsAppChange(
 public record WhatsAppValue(
     [property: JsonPropertyName("messaging_product")] string MessagingProduct,
     [property: JsonPropertyName("messages")]          List<WhatsAppMessage>? Messages,
-    [property: JsonPropertyName("statuses")]          List<object>? Statuses);
+    [property: JsonPropertyName("statuses")]          List<WhatsAppStatus>? Statuses);
 
 public record WhatsAppMessage(
     [property: JsonPropertyName("from")]      string From,
@@ -30,3 +30,15 @@ public record WhatsAppMessage(
 
 public record WhatsAppText(
     [property: JsonPropertyName("body")] string Body);
+
+public record WhatsAppStatus(
+    [property: JsonPropertyName("id")]           string Id,
+    [property: JsonPropertyName("status")]       string Status,
+    [property: JsonPropertyName("timestamp")]    string Timestamp,
+    [property: JsonPropertyName("recipient_id")] string RecipientId,
+    [property: JsonPropertyName("errors")]       List<WhatsAppStatusError>? Errors);
+
+public record WhatsAppStatusError(
+    [property: JsonPropertyName("code")]    int    Code,
+    [property: JsonPropertyName("title")]   string Title,
+    [property: JsonPropertyName("message")] string? Message);

@@ -57,6 +57,20 @@ public class WhatsAppController(
         foreach (var msg in messages)
             await ProcessMessageAsync(msg.From, msg.Text!.Body, ct);
 
+        // Loga status de entrega para diagnóstico
+        var statuses = payload.Entry
+            .SelectMany(e => e.Changes)
+            .Where(c => c.Field == "messages")
+            .SelectMany(c => c.Value.Statuses ?? []);
+
+        foreach (var st in statuses)
+        {
+            if (st.Errors?.Count > 0)
+                Console.WriteLine($"[WhatsApp][ERRO ENTREGA] id={st.Id} status={st.Status} recipient={st.RecipientId} erro={st.Errors[0].Title}");
+            else
+                Console.WriteLine($"[WhatsApp][STATUS] id={st.Id} status={st.Status} recipient={st.RecipientId}");
+        }
+
         // A Meta exige HTTP 200 independente de erros internos
         return Ok();
     }
