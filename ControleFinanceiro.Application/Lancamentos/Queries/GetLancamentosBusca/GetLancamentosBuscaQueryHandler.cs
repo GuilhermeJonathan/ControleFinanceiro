@@ -26,11 +26,14 @@ public class GetLancamentosBuscaQueryHandler(
             l.Situacao,
             l.Mes,
             l.Ano,
+            l.CategoriaId,
             l.Categoria?.Nome,
+            l.CartaoId,
             l.Cartao?.Nome,
             l.ParcelaAtual,
             l.TotalParcelas,
-            l.IsRecorrente
+            l.IsRecorrente,
+            l.GrupoParcelas
         ));
 
         return new BuscaResultDto(total, dtos);

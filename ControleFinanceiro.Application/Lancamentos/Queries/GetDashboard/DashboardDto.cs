@@ -6,7 +6,11 @@ public record DashboardDto(
     decimal TotalCreditos,
     decimal TotalDebitos,
     decimal Saldo,
-    IEnumerable<ResumoCategoriaDto> ResumoDebitos
+    IEnumerable<ResumoCategoriaDto> ResumoDebitos,
+    // Variação percentual vs mês anterior (null = sem dados anteriores)
+    decimal? VariacaoCreditos,
+    decimal? VariacaoDebitos,
+    decimal? VariacaoSaldo
 );
 
 public record ResumoCategoriaDto(string Categoria, decimal Total);

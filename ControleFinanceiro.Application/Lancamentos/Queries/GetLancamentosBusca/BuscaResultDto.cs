@@ -13,9 +13,12 @@ public record LancamentoBuscaItemDto(
     SituacaoLancamento Situacao,
     int Mes,
     int Ano,
+    Guid? CategoriaId,
     string? CategoriaNome,
+    Guid? CartaoId,
     string? CartaoNome,
     int? ParcelaAtual,
     int? TotalParcelas,
-    bool IsRecorrente
+    bool IsRecorrente,
+    Guid? GrupoParcelas
 );

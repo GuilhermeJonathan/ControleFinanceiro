@@ -99,11 +99,23 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
     public async Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(
         string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default)
     {
+        var pattern = $"%{q}%";
+
+        // ILike = ILIKE do PostgreSQL (case-insensitive)
+        // Busca em: descrição, nome da categoria e nome do cartão
         var query = context.Lancamentos
             .Include(l => l.Categoria)
             .Include(l => l.Cartao)
-            .Where(l => l.UsuarioId == usuarioId && l.Descricao.Contains(q))
-            .OrderByDescending(l => l.Data);
+            .Where(l => l.UsuarioId == usuarioId && (
+                EF.Functions.ILike(l.Descricao, pattern) ||
+                (l.Categoria != null && EF.Functions.ILike(l.Categoria.Nome, pattern)) ||
+                (l.Cartao    != null && EF.Functions.ILike(l.Cartao.Nome,    pattern))
+            ))
+            .OrderBy(l =>
+                l.Situacao == Domain.Enums.SituacaoLancamento.Vencido  ? 0 :
+                l.Situacao == Domain.Enums.SituacaoLancamento.AVencer  ? 1 :
+                l.Situacao == Domain.Enums.SituacaoLancamento.AReceber ? 2 : 3)
+            .ThenBy(l => l.Data);
 
         var total = await query.CountAsync(cancellationToken);
         var itens = await query
