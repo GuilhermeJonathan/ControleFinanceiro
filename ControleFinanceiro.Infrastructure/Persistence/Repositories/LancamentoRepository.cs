@@ -90,4 +90,10 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
         => await context.Lancamentos
             .Where(l => l.GrupoParcelas == grupoParcelas && l.ParcelaAtual >= parcelaAtualFrom && l.UsuarioId == usuarioId)
             .ToListAsync(cancellationToken);
+
+    public async Task<IEnumerable<Lancamento>> GetByGrupoParcelasAsync(
+        Guid grupoParcelas, Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Lancamentos
+            .Where(l => l.GrupoParcelas == grupoParcelas && l.UsuarioId == usuarioId)
+            .ToListAsync(cancellationToken);
 }

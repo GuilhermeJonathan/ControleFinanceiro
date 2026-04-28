@@ -13,6 +13,7 @@ public interface ILancamentoRepository
     void Delete(Lancamento lancamento);
     Task<IEnumerable<Lancamento>> GetFutureByReceitaRecorrenteIdAsync(Guid receitaRecorrenteId, int mesAtual, int anoAtual, Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByGrupoParcelasFromAsync(Guid grupoParcelas, int parcelaAtualFrom, Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Lancamento>> GetByGrupoParcelasAsync(Guid grupoParcelas, Guid usuarioId, CancellationToken cancellationToken = default);
     void DeleteRange(IEnumerable<Lancamento> lancamentos);
     Task<IEnumerable<Lancamento>> GetParceladosVigentesAsync(Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByAnoAsync(int ano, Guid usuarioId, CancellationToken cancellationToken = default);

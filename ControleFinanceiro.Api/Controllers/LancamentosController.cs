@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Lancamentos.Commands.AtualizarSituacao;
+using ControleFinanceiro.Application.Lancamentos.Commands.DeleteGrupoParcelas;
 using ControleFinanceiro.Application.Lancamentos.Commands.DeleteParcelasFuturas;
 using ControleFinanceiro.Application.Lancamentos.Commands.CreateLancamento;
 using ControleFinanceiro.Application.Lancamentos.Commands.DeleteLancamento;
@@ -78,6 +79,13 @@ public class LancamentosController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> DeleteParcelasFuturas(Guid grupoParcelas, int parcelaAtualFrom, CancellationToken ct)
     {
         await mediator.Send(new DeleteParcelasFuturasCommand(grupoParcelas, parcelaAtualFrom), ct);
+        return NoContent();
+    }
+
+    [HttpDelete("grupo/{grupoParcelas}")]
+    public async Task<IActionResult> DeleteGrupoParcelas(Guid grupoParcelas, CancellationToken ct)
+    {
+        await mediator.Send(new DeleteGrupoParcelasCommand(grupoParcelas), ct);
         return NoContent();
     }
 }
