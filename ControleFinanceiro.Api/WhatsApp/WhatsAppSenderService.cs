@@ -30,7 +30,7 @@ public class WhatsAppSenderService(IHttpClientFactory httpFactory, IConfiguratio
     private async Task PostAsync(object payload, CancellationToken ct)
     {
         var http = httpFactory.CreateClient("whatsapp");
-        var url  = $"https://graph.facebook.com/v22.0/{PhoneNumberId}/messages";
+        var url  = $"https://graph.facebook.com/v25.0/{PhoneNumberId}/messages";
 
         var request = new HttpRequestMessage(HttpMethod.Post, url)
         {

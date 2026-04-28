@@ -116,6 +116,8 @@ public class WhatsAppController(
 
     private async Task ProcessMessageAsync(string from, string text, CancellationToken ct)
     {
+        Console.WriteLine($"[WhatsApp] from={from} | text={text}");
+
         try
         {
             // Comandos especiais (ajuda, etc.)
