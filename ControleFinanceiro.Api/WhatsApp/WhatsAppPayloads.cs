@@ -26,10 +26,18 @@ public record WhatsAppMessage(
     [property: JsonPropertyName("id")]        string Id,
     [property: JsonPropertyName("timestamp")] string Timestamp,
     [property: JsonPropertyName("type")]      string Type,
-    [property: JsonPropertyName("text")]      WhatsAppText? Text);
+    [property: JsonPropertyName("text")]      WhatsAppText?  Text,
+    [property: JsonPropertyName("audio")]     WhatsAppMedia? Audio,
+    [property: JsonPropertyName("image")]     WhatsAppMedia? Image);
 
 public record WhatsAppText(
     [property: JsonPropertyName("body")] string Body);
+
+public record WhatsAppMedia(
+    [property: JsonPropertyName("id")]        string  Id,
+    [property: JsonPropertyName("mime_type")] string? MimeType,
+    [property: JsonPropertyName("caption")]   string? Caption,
+    [property: JsonPropertyName("sha256")]    string? Sha256);
 
 public record WhatsAppStatus(
     [property: JsonPropertyName("id")]           string Id,

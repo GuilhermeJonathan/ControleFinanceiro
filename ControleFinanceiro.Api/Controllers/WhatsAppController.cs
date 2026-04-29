@@ -18,6 +18,7 @@ public class WhatsAppController(
     IWhatsAppVinculoRepository vinculoRepo,
     ICategoriaRepository categoriaRepo,
     WhatsAppSenderService sender,
+    WhatsAppMediaService mediaService,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IConfiguration config) : ControllerBase
@@ -51,11 +52,11 @@ public class WhatsAppController(
             .SelectMany(e => e.Changes)
             .Where(c => c.Field == "messages")
             .SelectMany(c => c.Value.Messages ?? [])
-            .Where(m => m.Type == "text" && m.Text is not null)
+            .Where(m => m.Type is "text" or "audio" or "image")
             .ToList();
 
         foreach (var msg in messages)
-            await ProcessMessageAsync(msg.From, msg.Text!.Body, ct);
+            await ProcessMessageAsync(msg, ct);
 
         // Loga status de entrega para diagnóstico
         var statuses = payload.Entry
@@ -144,12 +145,38 @@ public class WhatsAppController(
 
     // ── Lógica interna ────────────────────────────────────────────────────────
 
-    private async Task ProcessMessageAsync(string from, string text, CancellationToken ct)
+    private async Task ProcessMessageAsync(WhatsAppMessage msg, CancellationToken ct)
     {
-        Console.WriteLine($"[WhatsApp] from={from} | text={text}");
+        var from = msg.From;
+        Console.WriteLine($"[WhatsApp] from={from} | type={msg.Type}");
 
         try
         {
+            // ── Resolve o texto a processar conforme o tipo ───────────────────
+            string text;
+            switch (msg.Type)
+            {
+                case "text":
+                    text = msg.Text!.Body;
+                    break;
+
+                case "audio":
+                    await sender.SendTextAsync(from, "🎙️ Transcrevendo seu áudio...", ct);
+                    text = await mediaService.TranscribeAudioAsync(msg.Audio!.Id, ct);
+                    Console.WriteLine($"[WhatsApp] áudio transcrito: {text}");
+                    break;
+
+                case "image":
+                    await sender.SendTextAsync(from, "🖼️ Analisando a imagem...", ct);
+                    text = await mediaService.ExtractFromImageAsync(
+                        msg.Image!.Id, msg.Image.Caption, ct);
+                    Console.WriteLine($"[WhatsApp] imagem extraída: {text}");
+                    break;
+
+                default:
+                    return; // tipo não suportado — ignora silenciosamente
+            }
+
             // Comandos especiais (ajuda, etc.)
             if (WhatsAppMessageParser.IsCommand(text, out var reply))
             {
@@ -181,15 +208,25 @@ public class WhatsAppController(
             HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
             HttpContext.Items["RealUserId"]      = vinculo.UserId;
 
-            // Tenta inferir a categoria pelo dicionário de palavras-chave
-            var categorias   = await categoriaRepo.GetAllAsync(vinculo.UserId, ct);
+            // ── Inferência de categoria ───────────────────────────────────────
+            var categorias = await categoriaRepo.GetAllAsync(vinculo.UserId, ct);
+
+            // 1. Tenta palavras-chave primeiro (rápido, sem custo)
             var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao);
 
+            // 2. Se não encontrou, usa IA com as categorias reais do usuário
+            if (nomeCategoria is null && categorias.Any())
+            {
+                var nomes = categorias.Select(c => c.Nome);
+                nomeCategoria = await mediaService.InferCategoryAsync(parsed.Descricao, nomes, ct);
+            }
+
             var match = nomeCategoria is not null
-                ? categorias.FirstOrDefault(c => string.Equals(c.Nome, nomeCategoria, StringComparison.OrdinalIgnoreCase))
+                ? categorias.FirstOrDefault(c =>
+                    string.Equals(c.Nome, nomeCategoria, StringComparison.OrdinalIgnoreCase))
                 : null;
 
-            // Fallback para "Outros" se não encontrou match
+            // 3. Fallback para "Outros"
             match ??= categorias.FirstOrDefault(c =>
                 string.Equals(c.Nome, "Outros", StringComparison.OrdinalIgnoreCase));
 
