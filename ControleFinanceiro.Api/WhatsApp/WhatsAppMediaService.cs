@@ -226,7 +226,7 @@ public class WhatsAppMediaService(
 
         var completion = JsonSerializer.Deserialize<ChatCompletionResponse>(resBody, _jsonOpts);
         var extracted  = completion?.Choices?[0]?.Message?.Content?.Trim();
-        logger.LogInformation("Imagem {Id} extraída: {Text}", mediaId, extracted);
+        logger.LogInformation("Imagem extraída: {Text}", extracted);
 
         if (string.IsNullOrEmpty(extracted) || extracted == "ERRO")
             throw new InvalidOperationException(
