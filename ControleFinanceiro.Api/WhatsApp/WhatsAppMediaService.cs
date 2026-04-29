@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -5,12 +6,14 @@ using System.Text.Json.Serialization;
 namespace ControleFinanceiro.Api.WhatsApp;
 
 /// <summary>
-/// Baixa mídias da Meta e usa OpenAI (Whisper + GPT-4o) para
+/// Baixa mídias da Meta e usa Azure OpenAI (Whisper + GPT-4o) para
 /// converter áudio/imagem em texto processável pelo WhatsAppMessageParser.
+/// Usa <see cref="IAiService"/> para inferências de texto (categorias, etc.).
 /// </summary>
 public class WhatsAppMediaService(
     IHttpClientFactory httpFactory,
     IConfiguration config,
+    IAiService ai,
     ILogger<WhatsAppMediaService> logger)
 {
     private static readonly JsonSerializerOptions _jsonOpts =
@@ -235,9 +238,9 @@ public class WhatsAppMediaService(
         return extracted;
     }
 
-    // ── Inferência de categoria (GPT) ────────────────────────────────────────
+    // ── Inferência de categoria (IAiService) ─────────────────────────────────
     /// <summary>
-    /// Usa o GPT para escolher a categoria mais adequada entre as disponíveis do usuário.
+    /// Usa <see cref="IAiService"/> para escolher a categoria mais adequada.
     /// Retorna null se não conseguir determinar com confiança.
     /// </summary>
     public async Task<string?> InferCategoryAsync(
@@ -246,50 +249,25 @@ public class WhatsAppMediaService(
         var lista = string.Join(", ", categoriasDisponiveis);
         if (string.IsNullOrWhiteSpace(lista)) return null;
 
-        var payload = new
+        const string system =
+            "Você é um assistente de finanças pessoais. " +
+            "Dado o nome de um gasto ou receita, escolha a categoria mais adequada " +
+            "da lista fornecida. Responda APENAS com o nome exato de uma das categorias, " +
+            "sem explicações. Se nenhuma se encaixar bem, responda: Outros";
+
+        var user = $"Gasto/receita: \"{descricao}\"\nCategorias disponíveis: {lista}";
+
+        try
         {
-            max_completion_tokens = 20,
-            temperature = 0,
-            messages    = new object[]
-            {
-                new
-                {
-                    role    = "system",
-                    content = "Você é um assistente de finanças pessoais. " +
-                              "Dado o nome de um gasto ou receita, escolha a categoria mais adequada " +
-                              "da lista fornecida. Responda APENAS com o nome exato de uma das categorias, " +
-                              "sem explicações. Se nenhuma se encaixar bem, responda: Outros"
-                },
-                new
-                {
-                    role    = "user",
-                    content = $"Gasto/receita: \"{descricao}\"\nCategorias disponíveis: {lista}"
-                }
-            },
-        };
-
-        var url  = $"{VisionEndpoint}/openai/deployments/{VisionDeployment}/chat/completions?api-version={ApiVersion}";
-        var http = httpFactory.CreateClient("openai");
-        var req  = new HttpRequestMessage(HttpMethod.Post, url)
+            var resposta = (await ai.ChatAsync(system, user, maxTokens: 20, temperature: 0, ct)).Trim();
+            logger.LogInformation("IA categorizou \"{Desc}\" → \"{Cat}\"", descricao, resposta);
+            return string.IsNullOrWhiteSpace(resposta) || resposta == "Outros" ? null : resposta;
+        }
+        catch (Exception ex)
         {
-            Content = JsonContent.Create(payload,
-                options: new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-                })
-        };
-        req.Headers.Add("api-key", VisionApiKey);
-
-        var res = await http.SendAsync(req, ct);
-        if (!res.IsSuccessStatusCode) return null; // falha silenciosa — fallback para Outros
-
-        var completion = JsonSerializer.Deserialize<ChatCompletionResponse>(
-            await res.Content.ReadAsStringAsync(ct), _jsonOpts);
-
-        var resposta = completion?.Choices?[0]?.Message?.Content?.Trim();
-        logger.LogInformation("IA categorizou \"{Desc}\" → \"{Cat}\"", descricao, resposta);
-
-        return string.IsNullOrWhiteSpace(resposta) || resposta == "Outros" ? null : resposta;
+            logger.LogWarning(ex, "InferCategoryAsync falhou para \"{Desc}\"", descricao);
+            return null; // fallback silencioso → categoria "Outros"
+        }
     }
 
     // ── DTOs internos ─────────────────────────────────────────────────────────
