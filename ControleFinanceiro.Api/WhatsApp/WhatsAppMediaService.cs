@@ -236,7 +236,6 @@ public class WhatsAppMediaService(
     }
 
     // ── Inferência de categoria (GPT) ────────────────────────────────────────
-
     /// <summary>
     /// Usa o GPT para escolher a categoria mais adequada entre as disponíveis do usuário.
     /// Retorna null se não conseguir determinar com confiança.
