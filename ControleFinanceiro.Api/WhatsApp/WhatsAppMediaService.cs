@@ -45,11 +45,16 @@ public class WhatsAppMediaService(
             HttpMethod.Get, $"https://graph.facebook.com/v25.0/{mediaId}");
         infoReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
-        var infoRes = await http.SendAsync(infoReq, ct);
-        infoRes.EnsureSuccessStatusCode();
+        var infoRes  = await http.SendAsync(infoReq, ct);
+        var infoBody = await infoRes.Content.ReadAsStringAsync(ct);
+        if (!infoRes.IsSuccessStatusCode)
+        {
+            logger.LogError("Meta mídia info erro {Status} | id={Id} | Body={Body}",
+                (int)infoRes.StatusCode, mediaId, infoBody);
+            infoRes.EnsureSuccessStatusCode();
+        }
 
-        var info = JsonSerializer.Deserialize<MediaUrlResponse>(
-            await infoRes.Content.ReadAsStringAsync(ct), _jsonOpts)
+        var info = JsonSerializer.Deserialize<MediaUrlResponse>(infoBody, _jsonOpts)
             ?? throw new InvalidOperationException("Resposta inválida ao buscar URL da mídia.");
 
         if (string.IsNullOrEmpty(info.Url))
@@ -60,7 +65,13 @@ public class WhatsAppMediaService(
         dlReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
         var dlRes = await http.SendAsync(dlReq, ct);
-        dlRes.EnsureSuccessStatusCode();
+        if (!dlRes.IsSuccessStatusCode)
+        {
+            var dlErr = await dlRes.Content.ReadAsStringAsync(ct);
+            logger.LogError("Meta download mídia erro {Status} | id={Id} | Body={Body}",
+                (int)dlRes.StatusCode, mediaId, dlErr);
+            dlRes.EnsureSuccessStatusCode();
+        }
 
         var bytes = await dlRes.Content.ReadAsByteArrayAsync(ct);
         logger.LogInformation("Mídia {Id} baixada: {Bytes} bytes, tipo={Mime}",
@@ -100,13 +111,20 @@ public class WhatsAppMediaService(
         var req  = new HttpRequestMessage(HttpMethod.Post, url) { Content = form };
         req.Headers.Add("api-key", WhisperApiKey);
 
-        var res = await http.SendAsync(req, ct);
-        res.EnsureSuccessStatusCode();
+        var res  = await http.SendAsync(req, ct);
+        var body = await res.Content.ReadAsStringAsync(ct);
 
-        var result = JsonSerializer.Deserialize<TranscriptionResponse>(
-            await res.Content.ReadAsStringAsync(ct), _jsonOpts);
+        if (!res.IsSuccessStatusCode)
+        {
+            logger.LogError("Whisper erro {Status} | URL={Url} | Body={Body}",
+                (int)res.StatusCode, url, body);
+            throw new InvalidOperationException(
+                $"Whisper retornou {(int)res.StatusCode}: {body}");
+        }
 
-        var text = result?.Text?.Trim();
+        var result = JsonSerializer.Deserialize<TranscriptionResponse>(body, _jsonOpts);
+        var text   = result?.Text?.Trim();
+
         if (string.IsNullOrEmpty(text))
             throw new InvalidOperationException("Whisper não retornou transcrição.");
 
@@ -182,13 +200,19 @@ public class WhatsAppMediaService(
         };
         req.Headers.Add("api-key", VisionApiKey);
 
-        var res = await http.SendAsync(req, ct);
-        res.EnsureSuccessStatusCode();
+        var res      = await http.SendAsync(req, ct);
+        var resBody  = await res.Content.ReadAsStringAsync(ct);
 
-        var completion = JsonSerializer.Deserialize<ChatCompletionResponse>(
-            await res.Content.ReadAsStringAsync(ct), _jsonOpts);
+        if (!res.IsSuccessStatusCode)
+        {
+            logger.LogError("Vision erro {Status} | URL={Url} | Body={Body}",
+                (int)res.StatusCode, url, resBody);
+            throw new InvalidOperationException(
+                $"Vision retornou {(int)res.StatusCode}: {resBody}");
+        }
 
-        var extracted = completion?.Choices?[0]?.Message?.Content?.Trim();
+        var completion = JsonSerializer.Deserialize<ChatCompletionResponse>(resBody, _jsonOpts);
+        var extracted  = completion?.Choices?[0]?.Message?.Content?.Trim();
         logger.LogInformation("Imagem {Id} extraída: {Text}", mediaId, extracted);
 
         if (string.IsNullOrEmpty(extracted) || extracted == "ERRO")
