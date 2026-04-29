@@ -202,7 +202,7 @@ public static class CategoryMatcher
         var normalized = text.ToLowerInvariant();
         normalized = string.Concat(
             normalized.Normalize(NormalizationForm.FormD)
-                      .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                      .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
         );
         return normalized;
     }
