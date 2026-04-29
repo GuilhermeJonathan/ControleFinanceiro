@@ -23,6 +23,52 @@ public class WhatsAppController(
     ICurrentUser currentUser,
     IConfiguration config) : ControllerBase
 {
+    // ── Endpoints de teste (remover em produção) ──────────────────────────────
+
+    /// <summary>Testa transcrição de áudio via Whisper. Envie um arquivo de áudio.</summary>
+    [HttpPost("test/transcribe")]
+    [Authorize]
+    public async Task<IActionResult> TestTranscribe(
+        IFormFile file, CancellationToken ct)
+    {
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, ct);
+        var bytes    = ms.ToArray();
+        var mimeType = file.ContentType;
+
+        // Chama diretamente sem passar pela Meta
+        var text = await mediaService.TranscribeRawAsync(bytes, mimeType, ct);
+        return Ok(new { transcricao = text });
+    }
+
+    /// <summary>Testa extração de imagem via GPT Vision. Envie uma imagem.</summary>
+    [HttpPost("test/vision")]
+    [Authorize]
+    public async Task<IActionResult> TestVision(
+        IFormFile file, string? caption, CancellationToken ct)
+    {
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, ct);
+        var bytes    = ms.ToArray();
+        var mimeType = file.ContentType;
+
+        var text   = await mediaService.ExtractRawAsync(bytes, mimeType, caption, ct);
+        var parsed = WhatsAppMessageParser.Parse(text);
+        return Ok(new { extraido = text, parsed });
+    }
+
+    /// <summary>Testa categorização por IA.</summary>
+    [HttpPost("test/categoria")]
+    [Authorize]
+    public async Task<IActionResult> TestCategoria(
+        [FromBody] TestCategoriaRequest body, CancellationToken ct)
+    {
+        var categorias = await categoriaRepo.GetAllAsync(currentUser.UserId, ct);
+        var nomes      = categorias.Select(c => c.Nome);
+        var resultado  = await mediaService.InferCategoryAsync(body.Descricao, nomes, ct);
+        return Ok(new { descricao = body.Descricao, categoriaInferida = resultado ?? "Outros" });
+    }
+
     // ── Verificação do webhook (Meta chama ao configurar) ─────────────────────
 
     [HttpGet("webhook")]
@@ -267,3 +313,4 @@ public class WhatsAppController(
 }
 
 public record VincularRequest(string PhoneNumber);
+public record TestCategoriaRequest(string Descricao);

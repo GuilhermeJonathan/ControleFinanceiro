@@ -86,6 +86,12 @@ public class WhatsAppMediaService(
     public async Task<string> TranscribeAudioAsync(string mediaId, CancellationToken ct)
     {
         var (data, mimeType) = await DownloadMediaAsync(mediaId, ct);
+        return await TranscribeRawAsync(data, mimeType, ct);
+    }
+
+    /// <summary>Transcreve bytes de áudio diretamente (sem download da Meta). Útil para testes.</summary>
+    public async Task<string> TranscribeRawAsync(byte[] data, string mimeType, CancellationToken ct)
+    {
 
         // WhatsApp envia áudio como audio/ogg (codec opus) na maioria das vezes
         var ext = mimeType switch
@@ -128,7 +134,7 @@ public class WhatsAppMediaService(
         if (string.IsNullOrEmpty(text))
             throw new InvalidOperationException("Whisper não retornou transcrição.");
 
-        logger.LogInformation("Áudio {Id} transcrito: {Text}", mediaId, text);
+        logger.LogInformation("Áudio transcrito: {Text}", text);
         return text;
     }
 
@@ -142,6 +148,13 @@ public class WhatsAppMediaService(
         string mediaId, string? caption, CancellationToken ct)
     {
         var (data, mimeType) = await DownloadMediaAsync(mediaId, ct);
+        return await ExtractRawAsync(data, mimeType, caption, ct);
+    }
+
+    /// <summary>Extrai lançamento de bytes de imagem diretamente (sem download da Meta). Útil para testes.</summary>
+    public async Task<string> ExtractRawAsync(
+        byte[] data, string mimeType, string? caption, CancellationToken ct)
+    {
         var base64 = Convert.ToBase64String(data);
 
         const string systemPrompt = """
@@ -166,7 +179,7 @@ public class WhatsAppMediaService(
         var payload = new
         {
             model      = "gpt-4o-mini",
-            max_tokens = 80,
+            max_completion_tokens = 80,
             messages   = new object[]
             {
                 new { role = "system", content = systemPrompt },
@@ -236,7 +249,7 @@ public class WhatsAppMediaService(
 
         var payload = new
         {
-            max_tokens  = 20,
+            max_completion_tokens = 20,
             temperature = 0,
             messages    = new object[]
             {
