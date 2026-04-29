@@ -183,48 +183,56 @@ public class GetDicasQueryHandler(
             dicas.Add(new("critico",
                 "Comprometimento Crítico",
                 $"Gastos comprometem {comprometimento:F0}% da renda. Revise as maiores despesas para recuperar folga.",
+                "Ideal: comprometer no máximo 70% da renda com despesas fixas e variáveis.",
                 "Ver Orçamento", "Orcamento"));
 
         else if (saldo < 0)
             dicas.Add(new("critico",
                 "Saldo Negativo",
                 $"Despesas superaram receitas em {Brl(Math.Abs(saldo))}. Evite novos gastos não essenciais.",
+                "Regra básica: despesas nunca devem superar receitas. Identifique o maior gasto e corte primeiro.",
                 "Ver Lançamentos", "Lancamentos"));
 
         else if (varDebitos > 20)
             dicas.Add(new("atencao",
                 "Despesas em Alta",
                 $"Gastos subiram {varDebitos:F0}% vs mês passado. Compare os lançamentos para identificar o que mudou.",
+                "Pequenos aumentos mensais se acumulam: 20% a mais por 6 meses = quase o dobro no gasto.",
                 "Ver Lançamentos", "Lancamentos"));
 
         else if (comprometimento > 70)
             dicas.Add(new("atencao",
                 "Renda Bastante Comprometida",
                 $"{comprometimento:F0}% da renda comprometida. Mantenha abaixo de 70% para ter mais segurança.",
+                "Regra 50/30/20: 50% necessidades, 30% desejos, 20% poupança e investimentos.",
                 "Ver Orçamento", "Orcamento"));
 
         else if (diasReserva < 30)
             dicas.Add(new("atencao",
                 "Reserva de Emergência Baixa",
-                $"Só {diasReserva} dias de cobertura — abaixo do mínimo recomendado (30 dias). Guarde parte das receitas.",
+                $"Só {diasReserva} dias de cobertura — abaixo do mínimo recomendado. Guarde parte das receitas.",
+                "Reserva ideal = 6 meses de despesas guardados em Tesouro Selic ou CDB com liquidez diária.",
                 null, null));
 
         else if (varCreditos > 10)
             dicas.Add(new("positivo",
                 "Receitas Crescendo 🎉",
                 $"Receitas cresceram {varCreditos:F0}% vs mês passado. Direcione o excedente à reserva.",
+                "Ao receber aumento, aplique pelo menos 50% do acréscimo em investimentos antes de elevar o padrão de vida.",
                 null, null));
 
         else if (comprometimento <= 50 && saldo > 0)
             dicas.Add(new("positivo",
                 "Ótimo Controle Financeiro",
                 $"Só {comprometimento:F0}% da renda comprometida. Espaço para investir ou reforçar a reserva.",
+                "Com mais de 30% livre, considere: 1º completar reserva de emergência, 2º investir em renda fixa ou variável.",
                 null, null));
 
         else
             dicas.Add(new("positivo",
                 "Finanças Equilibradas",
                 "Receitas e despesas bem balanceadas. Continue assim e considere metas de economia.",
+                "Defina uma meta mensal de poupança — mesmo que pequena — e automatize a transferência no dia do pagamento.",
                 null, null));
 
         // Dicas secundárias
@@ -234,6 +242,7 @@ public class GetDicasQueryHandler(
             dicas.Add(new("atencao",
                 $"Destaque: {topCatNome}",
                 $"\"{topCatNome}\" representa {pct}% da renda. Avalie se está dentro do esperado.",
+                "Categorize todos os gastos e defina um limite mensal para cada uma — o orçamento base-zero ajuda nisso.",
                 "Ver Orçamento", "Orcamento"));
         }
 
@@ -245,6 +254,7 @@ public class GetDicasQueryHandler(
                 diasReserva < 30
                     ? $"Só {diasReserva} dias de cobertura. Priorize a reserva antes de qualquer investimento."
                     : $"{diasReserva} dias de cobertura. O ideal é ter ao menos 90 dias guardados.",
+                "Tesouro Selic e CDB com liquidez diária são os melhores produtos para reserva de emergência.",
                 null, null));
         }
 
