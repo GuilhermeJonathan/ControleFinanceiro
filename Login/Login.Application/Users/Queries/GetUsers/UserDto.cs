@@ -12,5 +12,11 @@ public record UserDto(
     Guid? ProfileId,
     Guid? HierarchyId,
     DateTime CreatedAt,
-    DateTime? UltimoLogin
+    DateTime? UltimoLogin,
+    // ── Plano ─────────────────────────────────────────
+    int PlanType,
+    DateTime? TrialStartedAt,
+    DateTime? TrialEndsAt,
+    bool IsTrialExpired,
+    int? TrialDaysRemaining
 );

@@ -36,10 +36,15 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
             filtered = filtered.Where(u => u.ProfileId == request.ProfileId.Value);
 
         var totalCount = filtered.Count();
-        var items = filtered
+        var paged = filtered
             .Skip((request.CurrentPage - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(u => new UserDto(
+            .ToList(); // ← materializa antes do Select com bloco
+
+        var items = paged.Select(u =>
+        {
+            var plan = u.GetPlanStatus();
+            return new UserDto(
                 u.Id,
                 u.Name,
                 u.Email,
@@ -51,8 +56,13 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                 u.ProfileId,
                 null,
                 u.CreatedAt,
-                u.UltimoLogin))
-            .ToList();
+                u.UltimoLogin,
+                (int)u.PlanType,
+                u.TrialStartedAt,
+                plan.TrialEndsAt,
+                plan.IsTrialExpired,
+                plan.TrialDaysRemaining);
+        }).ToList();
 
         return new PagedResult<UserDto>(items, totalCount, request.CurrentPage, request.PageSize);
     }

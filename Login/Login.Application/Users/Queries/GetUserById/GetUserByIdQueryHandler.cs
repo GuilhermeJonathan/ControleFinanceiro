@@ -18,6 +18,8 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
         var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
         if (user is null) return null;
 
+        var plan = user.GetPlanStatus();
+
         return new UserDto(
             user.Id,
             user.Name,
@@ -30,6 +32,11 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
             user.ProfileId,
             null,
             user.CreatedAt,
-            user.UltimoLogin);
+            user.UltimoLogin,
+            (int)user.PlanType,
+            user.TrialStartedAt,
+            plan.TrialEndsAt,
+            plan.IsTrialExpired,
+            plan.TrialDaysRemaining);
     }
 }

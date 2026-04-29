@@ -1,3 +1,4 @@
+using Login.Domain.Entities;
 using MediatR;
 
 namespace Login.Application.Users.Commands.Authenticate;
@@ -11,10 +12,20 @@ public record AuthenticateCommand(
 
 public record AuthenticateResult(
     string AccessToken,
-    string? AvatarUrl,    
+    string? AvatarUrl,
     IReadOnlyList<HierarchyDto> Hierarchies,
     IReadOnlyList<RestrictionDto> Restrictions,
-    IReadOnlyList<int> SelectedCompanies
+    IReadOnlyList<int> SelectedCompanies,
+    PlanInfoDto? PlanInfo = null
+);
+
+public record PlanInfoDto(
+    bool HasPaidPlan,
+    bool IsTrialActive,
+    bool IsTrialExpired,
+    int? TrialDaysRemaining,
+    DateTime? TrialEndsAt,
+    DateTime? PlanExpiresAt
 );
 
 public record HierarchyDto(IReadOnlyList<CompanyDto> Companies);

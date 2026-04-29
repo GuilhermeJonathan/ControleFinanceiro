@@ -278,6 +278,16 @@ namespace Login.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<DateTime?>("TrialStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PlanExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PlanType")
+                        .HasColumnType("integer")
+                        .HasDefaultValue((int)Login.Domain.Entities.PlanType.None);
+
                     b.Property<DateTime?>("UltimoLogin")
                         .HasColumnType("timestamp with time zone");
 

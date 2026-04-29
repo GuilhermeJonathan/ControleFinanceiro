@@ -3,6 +3,7 @@ using Login.Application.Users.Commands.BlockUser;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.RegisterUser;
+using Login.Application.Users.Commands.SelfRegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
 using Login.Application.Users.Commands.UpdateAvatar;
 using Login.Application.Users.Commands.UpdateUser;
@@ -24,6 +25,18 @@ public class UserController : ControllerBase
     public UserController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>Auto-cadastro público — sem convite. Inicia trial de 30 dias.</summary>
+    [HttpPost("selfregister")]
+    [AllowAnonymous]
+    [EnableRateLimiting("register")]
+    public async Task<IActionResult> SelfRegister(
+        [FromBody] SelfRegisterUserCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Auto-cadastro via convite.</summary>

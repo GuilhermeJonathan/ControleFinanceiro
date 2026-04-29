@@ -21,6 +21,11 @@ public class User : Entity
     public string? Region { get; private set; }
     public DateTime? UltimoLogin { get; private set; }
 
+    // ── Plano / Trial ────────────────────────────────────────────────────────
+    public PlanType PlanType { get; private set; }
+    public DateTime? TrialStartedAt { get; private set; }
+    public DateTime? PlanExpiresAt { get; private set; }
+
     // Navigation
     public Profile? Profile { get; private set; }
     public ICollection<UserRestriction> Restrictions { get; private set; } = new List<UserRestriction>();
@@ -101,4 +106,75 @@ public class User : Entity
         UltimoLogin = DateTime.UtcNow;
         SetUpdated();
     }
+
+    /// <summary>Inicia o período de trial de 30 dias para novos usuários.</summary>
+    public void StartTrial()
+    {
+        if (TrialStartedAt is null)
+        {
+            TrialStartedAt = DateTime.UtcNow;
+            PlanType = PlanType.Trial;
+            SetUpdated();
+        }
+    }
+
+    /// <summary>Ativa um plano pago.</summary>
+    public void SetPlan(PlanType planType, DateTime expiresAt)
+    {
+        PlanType = planType;
+        PlanExpiresAt = expiresAt;
+        SetUpdated();
+    }
+
+    /// <summary>Calcula o status atual do plano.</summary>
+    public PlanStatus GetPlanStatus()
+    {
+        var now = DateTime.UtcNow;
+
+        // Plano pago ativo
+        if (PlanType is PlanType.Monthly or PlanType.Annual)
+        {
+            var paid = PlanExpiresAt is null || PlanExpiresAt > now;
+            return new PlanStatus(
+                HasPaidPlan: paid,
+                IsTrialActive: false,
+                IsTrialExpired: false,
+                TrialDaysRemaining: null,
+                TrialEndsAt: null,
+                PlanExpiresAt: PlanExpiresAt);
+        }
+
+        // Trial em andamento ou expirado
+        if (TrialStartedAt is not null)
+        {
+            var trialEnd = TrialStartedAt.Value.AddDays(30);
+            var daysLeft = (int)Math.Ceiling((trialEnd - now).TotalDays);
+            var active = daysLeft > 0;
+            return new PlanStatus(
+                HasPaidPlan: false,
+                IsTrialActive: active,
+                IsTrialExpired: !active,
+                TrialDaysRemaining: active ? daysLeft : 0,
+                TrialEndsAt: trialEnd,
+                PlanExpiresAt: null);
+        }
+
+        // Sem plano e sem trial (usuário antigo, migrado) → trata como trial ativo
+        return new PlanStatus(
+            HasPaidPlan: true,
+            IsTrialActive: false,
+            IsTrialExpired: false,
+            TrialDaysRemaining: null,
+            TrialEndsAt: null,
+            PlanExpiresAt: null);
+    }
 }
+
+public record PlanStatus(
+    bool HasPaidPlan,
+    bool IsTrialActive,
+    bool IsTrialExpired,
+    int? TrialDaysRemaining,
+    DateTime? TrialEndsAt,
+    DateTime? PlanExpiresAt
+);

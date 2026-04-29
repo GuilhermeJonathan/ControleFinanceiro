@@ -51,11 +51,21 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
             .Select(r => new RestrictionDto(r.ModuleId, r.CompanyId))
             .ToList();
 
+        var plan = user.GetPlanStatus();
+        var planInfo = new PlanInfoDto(
+            HasPaidPlan: plan.HasPaidPlan,
+            IsTrialActive: plan.IsTrialActive,
+            IsTrialExpired: plan.IsTrialExpired,
+            TrialDaysRemaining: plan.TrialDaysRemaining,
+            TrialEndsAt: plan.TrialEndsAt,
+            PlanExpiresAt: plan.PlanExpiresAt);
+
         return new AuthenticateResult(
             AccessToken: token,
             AvatarUrl: user.AvatarUrl,
             Hierarchies: new List<HierarchyDto>(),
             Restrictions: restrictions,
-            SelectedCompanies: new List<int>());
+            SelectedCompanies: new List<int>(),
+            PlanInfo: planInfo);
     }
 }

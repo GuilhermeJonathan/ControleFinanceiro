@@ -20,6 +20,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Phone).HasMaxLength(20);
         builder.Property(u => u.Region).HasMaxLength(100);
 
+        builder.Property(u => u.PlanType)
+               .HasConversion<int>()
+               .HasDefaultValue(PlanType.None);
+        builder.Property(u => u.TrialStartedAt);
+        builder.Property(u => u.PlanExpiresAt);
+
         builder.HasIndex(u => u.Email).IsUnique();
         builder.HasIndex(u => u.Document);
 
