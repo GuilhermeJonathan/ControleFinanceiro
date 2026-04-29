@@ -19,13 +19,19 @@ public class WhatsAppMediaService(
     private string AccessToken => config["WhatsApp:AccessToken"]
         ?? throw new InvalidOperationException("WhatsApp:AccessToken não configurado.");
 
-    // ── Azure OpenAI ──────────────────────────────────────────────────────────
-    private string AzureEndpoint => (config["AzureOpenAI:Endpoint"] ?? "").TrimEnd('/');
-    private string AzureApiKey   => config["AzureOpenAI:ApiKey"]
+    // ── Azure OpenAI — Vision/GPT (agente-financeiro, East US) ───────────────
+    private string VisionEndpoint   => (config["AzureOpenAI:Endpoint"] ?? "").TrimEnd('/');
+    private string VisionApiKey     => config["AzureOpenAI:ApiKey"]
         ?? throw new InvalidOperationException("AzureOpenAI:ApiKey não configurado.");
+    private string VisionDeployment => config["AzureOpenAI:VisionDeployment"] ?? "gpt-5.4-mini";
+
+    // ── Azure OpenAI — Whisper (recurso separado, North Central US) ──────────
+    private string WhisperEndpoint   => (config["AzureOpenAI:WhisperEndpoint"] ?? "").TrimEnd('/');
+    private string WhisperApiKey     => config["AzureOpenAI:WhisperApiKey"]
+        ?? throw new InvalidOperationException("AzureOpenAI:WhisperApiKey não configurado.");
     private string WhisperDeployment => config["AzureOpenAI:WhisperDeployment"] ?? "whisper";
-    private string VisionDeployment  => config["AzureOpenAI:VisionDeployment"]  ?? "gpt-4o-mini";
-    private const string ApiVersion  = "2024-06-01";
+
+    private const string ApiVersion = "2024-06-01";
 
     // ── Download de mídia da Meta ─────────────────────────────────────────────
 
@@ -88,11 +94,11 @@ public class WhatsAppMediaService(
         form.Add(new StringContent("pt"), "language"); // força português
 
         // Azure OpenAI: POST {endpoint}/openai/deployments/{deployment}/audio/transcriptions?api-version=...
-        var url = $"{AzureEndpoint}/openai/deployments/{WhisperDeployment}/audio/transcriptions?api-version={ApiVersion}";
+        var url = $"{WhisperEndpoint}/openai/deployments/{WhisperDeployment}/audio/transcriptions?api-version={ApiVersion}";
 
         var http = httpFactory.CreateClient("openai");
         var req  = new HttpRequestMessage(HttpMethod.Post, url) { Content = form };
-        req.Headers.Add("api-key", AzureApiKey); // Azure usa api-key, não Authorization Bearer
+        req.Headers.Add("api-key", WhisperApiKey);
 
         var res = await http.SendAsync(req, ct);
         res.EnsureSuccessStatusCode();
@@ -163,7 +169,7 @@ public class WhatsAppMediaService(
         };
 
         // Azure OpenAI: POST {endpoint}/openai/deployments/{deployment}/chat/completions?api-version=...
-        var url = $"{AzureEndpoint}/openai/deployments/{VisionDeployment}/chat/completions?api-version={ApiVersion}";
+        var url = $"{VisionEndpoint}/openai/deployments/{VisionDeployment}/chat/completions?api-version={ApiVersion}";
 
         var http = httpFactory.CreateClient("openai");
         var req  = new HttpRequestMessage(HttpMethod.Post, url)
@@ -174,7 +180,7 @@ public class WhatsAppMediaService(
                     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
                 })
         };
-        req.Headers.Add("api-key", AzureApiKey);
+        req.Headers.Add("api-key", VisionApiKey);
 
         var res = await http.SendAsync(req, ct);
         res.EnsureSuccessStatusCode();
@@ -226,7 +232,7 @@ public class WhatsAppMediaService(
             },
         };
 
-        var url  = $"{AzureEndpoint}/openai/deployments/{VisionDeployment}/chat/completions?api-version={ApiVersion}";
+        var url  = $"{VisionEndpoint}/openai/deployments/{VisionDeployment}/chat/completions?api-version={ApiVersion}";
         var http = httpFactory.CreateClient("openai");
         var req  = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -236,7 +242,7 @@ public class WhatsAppMediaService(
                     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
                 })
         };
-        req.Headers.Add("api-key", AzureApiKey);
+        req.Headers.Add("api-key", VisionApiKey);
 
         var res = await http.SendAsync(req, ct);
         if (!res.IsSuccessStatusCode) return null; // falha silenciosa — fallback para Outros
