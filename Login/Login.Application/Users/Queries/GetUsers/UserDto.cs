@@ -11,5 +11,6 @@ public record UserDto(
     string? AvatarUrl,
     Guid? ProfileId,
     Guid? HierarchyId,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? UltimoLogin
 );

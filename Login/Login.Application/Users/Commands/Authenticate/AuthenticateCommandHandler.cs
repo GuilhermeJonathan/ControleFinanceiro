@@ -1,4 +1,5 @@
 using Login.Application.Common.Interfaces;
+using Login.Domain.Common;
 using Login.Domain.Repositories;
 using MediatR;
 
@@ -10,17 +11,20 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
     private readonly ICryptography _cryptography;
     private readonly ITokenManager _tokenManager;
     private readonly IModuleRepository _moduleRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AuthenticateCommandHandler(
         IUserRepository userRepository,
         ICryptography cryptography,
         ITokenManager tokenManager,
-        IModuleRepository moduleRepository)
+        IModuleRepository moduleRepository,
+        IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _cryptography = cryptography;
         _tokenManager = tokenManager;
         _moduleRepository = moduleRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AuthenticateResult> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
@@ -33,6 +37,10 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
 
         if (!_cryptography.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Credenciais inválidas.");
+
+        user.RegisterLogin();
+        _userRepository.Update(user);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var token = _tokenManager.Generate(user);
 

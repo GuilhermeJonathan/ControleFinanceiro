@@ -19,6 +19,7 @@ public class User : Entity
     public Guid? ProfileId { get; private set; }
     public int? CountryId { get; private set; }
     public string? Region { get; private set; }
+    public DateTime? UltimoLogin { get; private set; }
 
     // Navigation
     public Profile? Profile { get; private set; }
@@ -92,6 +93,12 @@ public class User : Entity
     public void Deactivate()
     {
         IsActive = false;
+        SetUpdated();
+    }
+
+    public void RegisterLogin()
+    {
+        UltimoLogin = DateTime.UtcNow;
         SetUpdated();
     }
 }

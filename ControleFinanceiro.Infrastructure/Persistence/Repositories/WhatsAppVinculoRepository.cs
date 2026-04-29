@@ -36,6 +36,9 @@ public class WhatsAppVinculoRepository(AppDbContext db) : IWhatsAppVinculoReposi
     public Task<WhatsAppVinculo?> GetByUserIdAsync(Guid userId, CancellationToken ct = default) =>
         db.WhatsAppVinculos.FirstOrDefaultAsync(v => v.UserId == userId, ct);
 
+    public async Task<IEnumerable<WhatsAppVinculo>> GetAllAsync(CancellationToken ct = default) =>
+        await db.WhatsAppVinculos.ToListAsync(ct);
+
     public async Task AddAsync(WhatsAppVinculo vinculo, CancellationToken ct = default) =>
         await db.WhatsAppVinculos.AddAsync(vinculo, ct);
 

@@ -29,6 +29,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
             user.AvatarUrl,
             user.ProfileId,
             null,
-            user.CreatedAt);
+            user.CreatedAt,
+            user.UltimoLogin);
     }
 }

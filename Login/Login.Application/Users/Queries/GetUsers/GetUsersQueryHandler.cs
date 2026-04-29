@@ -50,7 +50,8 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                 u.AvatarUrl,
                 u.ProfileId,
                 null,
-                u.CreatedAt))
+                u.CreatedAt,
+                u.UltimoLogin))
             .ToList();
 
         return new PagedResult<UserDto>(items, totalCount, request.CurrentPage, request.PageSize);

@@ -75,6 +75,21 @@ public class WhatsAppController(
         return Ok();
     }
 
+    // ── Lista todos os vínculos (admin) ──────────────────────────────────────
+
+    [HttpGet("vinculos/admin")]
+    [Authorize]
+    public async Task<IActionResult> ListAllVinculos(CancellationToken ct)
+    {
+        var vinculos = await vinculoRepo.GetAllAsync(ct);
+        return Ok(vinculos.Select(v => new
+        {
+            v.UserId,
+            v.PhoneNumber,
+            v.CreatedAt,
+        }));
+    }
+
     // ── Vincular número ao usuário autenticado ────────────────────────────────
 
     [HttpPost("vincular")]
