@@ -30,6 +30,18 @@ public static partial class WhatsAppMessageParser
     private static readonly string[] _noiseWords =
         ["reais", "real"];
 
+    // ── Helpers de data ──────────────────────────────────────────────────────
+    /// <summary>
+    /// Retorna a data de hoje no horário de Brasília (UTC-3), armazenada como
+    /// 03:00 UTC — que equivale à meia-noite de Brasília — para que o app mobile
+    /// (que converte UTC para local) exiba o dia correto.
+    /// </summary>
+    public static DateTime TodayBrazil()
+    {
+        var brazilDate = DateTime.UtcNow.AddHours(-3).Date; // sem DST: Brasília = UTC-3
+        return new DateTime(brazilDate.Year, brazilDate.Month, brazilDate.Day, 3, 0, 0, DateTimeKind.Utc);
+    }
+
     // ── Regex: captura valor monetário ───────────────────────────────────────
     // Aceita: 300 / 300,50 / 300.50 / R$300 / R$ 300,50
     [GeneratedRegex(@"R?\$\s*(\d+(?:[.,]\d{1,2})?)|(?<!\d)(\d+(?:[.,]\d{1,2})?)(?!\d)(?:\s*reais?)?",
@@ -105,22 +117,25 @@ public static partial class WhatsAppMessageParser
 
         // 3. Data
         DateTime data;
+        var today     = TodayBrazil();
         var dateMatch = DateRegex().Match(text);
         if (lower.Contains("ontem"))
-            data = DateTime.Today.AddDays(-1);
+            data = today.AddDays(-1);
         else if (lower.Contains("amanhã") || lower.Contains("amanha"))
-            data = DateTime.Today.AddDays(1);
+            data = today.AddDays(1);
         else if (dateMatch.Success &&
                  int.TryParse(dateMatch.Groups[1].Value, out var dia) &&
                  int.TryParse(dateMatch.Groups[2].Value, out var mes))
         {
-            var ano = DateTime.Today.Year;
+            var ano = today.Year;
             if (dateMatch.Groups[3].Success && int.TryParse(dateMatch.Groups[3].Value, out var anoRaw))
                 ano = anoRaw < 100 ? 2000 + anoRaw : anoRaw;
-            data = IsValidDate(dia, mes, ano) ? new DateTime(ano, mes, dia) : DateTime.Today;
+            data = IsValidDate(dia, mes, ano)
+                ? new DateTime(ano, mes, dia, 3, 0, 0, DateTimeKind.Utc)
+                : today;
         }
         else
-            data = DateTime.Today;
+            data = today;
 
         // 4. Descrição — remove valor, data, indicadores e ruído
         var desc = text;

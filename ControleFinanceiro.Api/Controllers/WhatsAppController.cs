@@ -210,8 +210,9 @@ public class WhatsAppController(
                 CategoriaId:   categoriaId), ct);
 
             var tipoIcon  = parsed.Tipo == TipoLancamento.Credito ? "📈" : "💸";
-            var dataLabel = parsed.Data.Date == DateTime.Today          ? "hoje"
-                          : parsed.Data.Date == DateTime.Today.AddDays(-1) ? "ontem"
+            var todayBr   = WhatsAppMessageParser.TodayBrazil();
+            var dataLabel = parsed.Data.Date == todayBr.Date               ? "hoje"
+                          : parsed.Data.Date == todayBr.AddDays(-1).Date   ? "ontem"
                           : parsed.Data.ToString("dd/MM");
 
             await sender.SendTextAsync(replyTo,
