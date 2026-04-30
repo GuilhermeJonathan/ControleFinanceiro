@@ -328,10 +328,12 @@ public class WhatsAppController(
                           : parsed.Data.Date == todayBr.AddDays(-1).Date   ? "ontem"
                           : parsed.Data.ToString("dd/MM");
 
+            var catLabel = categoriaMatch is not null ? $"\nCategoria: {categoriaMatch.Nome}" : "";
+
             await sender.SendTextAsync(replyTo,
                 $"{tipoIcon} *{parsed.Descricao}* registrado!\n" +
                 $"Valor: R$ {parsed.Valor:N2}\n" +
-                $"Data: {dataLabel}", ct);
+                $"Data: {dataLabel}{catLabel}", ct);
         }
         catch (Exception ex)
         {
