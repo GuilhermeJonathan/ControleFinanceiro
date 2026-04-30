@@ -164,12 +164,14 @@ public class WhatsAppMediaService(
             Você é um assistente financeiro pessoal. O usuário enviou uma foto de
             cupom fiscal, comprovante, nota, recibo ou tela de pagamento.
             Extraia as informações e responda APENAS com uma linha de texto simples:
-            "<descrição breve do estabelecimento ou item> <valor total em reais>"
-            Use vírgula como separador decimal, ex: 245,80
+            "<descrição breve do estabelecimento ou item> <valor total em reais> <data>"
+            Regras:
+            - Valor: use vírgula como separador decimal, ex: 245,80
+            - Data: formato DD/MM/AAAA se o ano estiver visível, ou DD/MM se não. Se não houver data no comprovante, omita.
             Exemplos de respostas válidas:
-            - Supermercado Atacadão 245,80
-            - Restaurante Pizza 67,50
-            - Posto Shell gasolina 180,00
+            - Supermercado Atacadão 245,80 28/04/2026
+            - Restaurante Pizza 67,50 27/04
+            - Posto Shell gasolina 180,00 25/04/2026
             - iFood delivery 38,90
             Se não conseguir identificar claramente valor e descrição, responda: ERRO
             NÃO inclua explicações, prefixos nem pontuação extra.
