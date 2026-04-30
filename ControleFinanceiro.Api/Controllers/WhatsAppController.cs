@@ -57,16 +57,16 @@ public class WhatsAppController(
         return Ok(new { extraido = text, parsed });
     }
 
-    /// <summary>Testa categorização por IA.</summary>
+    /// <summary>Testa sugestão de categoria por IA (sem restrição às categorias existentes).</summary>
     [HttpPost("test/categoria")]
     [Authorize]
     public async Task<IActionResult> TestCategoria(
         [FromBody] TestCategoriaRequest body, CancellationToken ct)
     {
-        var categorias = await categoriaRepo.GetAllAsync(currentUser.UserId, ct);
-        var nomes      = categorias.Select(c => c.Nome);
-        var resultado  = await mediaService.InferCategoryAsync(body.Descricao, nomes, ct);
-        return Ok(new { descricao = body.Descricao, categoriaInferida = resultado ?? "Outros" });
+        var local     = CategoryMatcher.Infer(body.Descricao);
+        var ia        = local is null ? await mediaService.SuggestCategoryAsync(body.Descricao, ct) : null;
+        var resultado = local ?? ia ?? "Outros";
+        return Ok(new { descricao = body.Descricao, fonte = local is not null ? "keyword" : ia is not null ? "ia" : "fallback", categoriaInferida = resultado });
     }
 
     // ── Verificação do webhook (Meta chama ao configurar) ─────────────────────
@@ -254,29 +254,59 @@ public class WhatsAppController(
             HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
             HttpContext.Items["RealUserId"]      = vinculo.UserId;
 
-            // ── Inferência de categoria ───────────────────────────────────────
-            var categorias = await categoriaRepo.GetAllAsync(vinculo.UserId, ct);
+            // ── Inferência e criação automática de categoria ──────────────────
+            var categorias = (await categoriaRepo.GetAllAsync(vinculo.UserId, ct)).ToList();
+            Console.WriteLine($"[WhatsApp] userId={vinculo.UserId} | categorias carregadas: {categorias.Count} | descricao=\"{parsed.Descricao}\"");
 
-            // 1. Tenta palavras-chave primeiro (rápido, sem custo)
+            // 1. Palavras-chave locais (rápido, sem custo de IA)
             var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao);
+            Console.WriteLine($"[WhatsApp] keyword match: {nomeCategoria ?? "(nenhum)"}");
 
-            // 2. Se não encontrou, usa IA com as categorias reais do usuário
-            if (nomeCategoria is null && categorias.Any())
+            // 2. IA sugere livremente se não encontrou por palavras-chave
+            if (nomeCategoria is null)
             {
-                var nomes = categorias.Select(c => c.Nome);
-                nomeCategoria = await mediaService.InferCategoryAsync(parsed.Descricao, nomes, ct);
+                nomeCategoria = await mediaService.SuggestCategoryAsync(parsed.Descricao, ct);
+                Console.WriteLine($"[WhatsApp] IA sugeriu: {nomeCategoria ?? "(nenhuma)"}");
             }
 
-            var match = nomeCategoria is not null
+            // 3. Localiza a categoria sugerida entre as existentes
+            Categoria? categoriaMatch = nomeCategoria is not null
                 ? categorias.FirstOrDefault(c =>
                     string.Equals(c.Nome, nomeCategoria, StringComparison.OrdinalIgnoreCase))
                 : null;
 
-            // 3. Fallback para "Outros"
-            match ??= categorias.FirstOrDefault(c =>
-                string.Equals(c.Nome, "Outros", StringComparison.OrdinalIgnoreCase));
+            Console.WriteLine($"[WhatsApp] match nas existentes: {categoriaMatch?.Nome ?? "(não encontrado)"}");
 
-            Guid? categoriaId = match?.Id;
+            // 4. Cria automaticamente se a categoria sugerida não existir ainda
+            if (categoriaMatch is null && nomeCategoria is not null)
+            {
+                categoriaMatch = new Categoria(nomeCategoria, parsed.Tipo, vinculo.UserId);
+                await categoriaRepo.AddAsync(categoriaMatch, ct);
+                await unitOfWork.SaveChangesAsync(ct);
+                Console.WriteLine($"[WhatsApp] ✅ Nova categoria criada: \"{nomeCategoria}\" id={categoriaMatch.Id}");
+            }
+
+            // 5. Fallback para "Outros" — cria se também não existir
+            if (categoriaMatch is null)
+            {
+                categoriaMatch = categorias.FirstOrDefault(c =>
+                    string.Equals(c.Nome, "Outros", StringComparison.OrdinalIgnoreCase));
+
+                if (categoriaMatch is null)
+                {
+                    categoriaMatch = new Categoria("Outros", parsed.Tipo, vinculo.UserId);
+                    await categoriaRepo.AddAsync(categoriaMatch, ct);
+                    await unitOfWork.SaveChangesAsync(ct);
+                    Console.WriteLine($"[WhatsApp] ✅ Categoria 'Outros' criada id={categoriaMatch.Id}");
+                }
+                else
+                {
+                    Console.WriteLine($"[WhatsApp] usando fallback 'Outros' existente id={categoriaMatch.Id}");
+                }
+            }
+
+            Guid? categoriaId = categoriaMatch?.Id;
+            Console.WriteLine($"[WhatsApp] categoriaId final: {categoriaId?.ToString() ?? "NULL ⚠️"}");
 
             var situacao = parsed.Tipo == TipoLancamento.Credito
                 ? SituacaoLancamento.Recebido

@@ -238,35 +238,35 @@ public class WhatsAppMediaService(
         return extracted;
     }
 
-    // ── Inferência de categoria (IAiService) ─────────────────────────────────
+    // ── Sugestão inteligente de categoria (IAiService) ───────────────────────
     /// <summary>
-    /// Usa <see cref="IAiService"/> para escolher a categoria mais adequada.
-    /// Retorna null se não conseguir determinar com confiança.
+    /// Usa IA para sugerir o nome da categoria mais adequada ao lançamento,
+    /// sem estar limitada às categorias já existentes do usuário.
+    /// Se a categoria sugerida não existir, o controller a cria automaticamente.
+    /// Retorna null quando não há categoria clara (fallback para "Outros").
     /// </summary>
-    public async Task<string?> InferCategoryAsync(
-        string descricao, IEnumerable<string> categoriasDisponiveis, CancellationToken ct)
+    public async Task<string?> SuggestCategoryAsync(string descricao, CancellationToken ct)
     {
-        var lista = string.Join(", ", categoriasDisponiveis);
-        if (string.IsNullOrWhiteSpace(lista)) return null;
-
         const string system =
-            "Você é um assistente de finanças pessoais. " +
-            "Dado o nome de um gasto ou receita, escolha a categoria mais adequada " +
-            "da lista fornecida. Responda APENAS com o nome exato de uma das categorias, " +
-            "sem explicações. Se nenhuma se encaixar bem, responda: Outros";
+            "Você é um assistente de finanças pessoais brasileiro. " +
+            "Dado o nome de um gasto ou receita, sugira o nome da categoria financeira mais adequada. " +
+            "Exemplos de categorias válidas: Alimentação, Transporte, Saúde, Moradia, Lazer, " +
+            "Educação, Vestuário, Pets, Salário, Investimentos, Serviços, Beleza, Viagem, Tecnologia, Assinaturas. " +
+            "Responda APENAS com o nome da categoria, em português, com inicial maiúscula, sem explicações. " +
+            "Se não houver categoria clara, responda: Outros";
 
-        var user = $"Gasto/receita: \"{descricao}\"\nCategorias disponíveis: {lista}";
+        var user = $"Lançamento: \"{descricao}\"";
 
         try
         {
-            var resposta = (await ai.ChatAsync(system, user, maxTokens: 20, temperature: 0, ct)).Trim();
-            logger.LogInformation("IA categorizou \"{Desc}\" → \"{Cat}\"", descricao, resposta);
+            var resposta = (await ai.ChatAsync(system, user, maxTokens: 15, temperature: 0, ct)).Trim();
+            logger.LogInformation("IA sugeriu categoria \"{Cat}\" para \"{Desc}\"", resposta, descricao);
             return string.IsNullOrWhiteSpace(resposta) || resposta == "Outros" ? null : resposta;
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "InferCategoryAsync falhou para \"{Desc}\"", descricao);
-            return null; // fallback silencioso → categoria "Outros"
+            logger.LogWarning(ex, "SuggestCategoryAsync falhou para \"{Desc}\"", descricao);
+            return null;
         }
     }
 
