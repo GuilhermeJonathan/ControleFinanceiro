@@ -26,7 +26,7 @@ public class InviteController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "https://financeiro-web-two.vercel.app";
+        var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "https://app.findog.com.br";
         var link = $"{appUrl}/register?invite={result.Token}";
         return Ok(new { result.Token, result.ExpiresAt, link });
     }

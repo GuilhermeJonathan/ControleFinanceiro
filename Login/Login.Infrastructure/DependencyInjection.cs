@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenManager, JwtTokenManager>();
         services.AddScoped<IResetTokenManager, ResetTokenManager>();
         services.AddScoped<ICryptography, BcryptCryptography>();
+        services.AddScoped<IEmailService, EmailService>();
 
         return services;
     }

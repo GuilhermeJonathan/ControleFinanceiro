@@ -9,7 +9,7 @@ public record ValidateHashCommand(string Document, string Token) : IRequest<bool
 public record ValidateSecurityCodeCommand(string Document, string Token) : IRequest;
 
 public record ResetPasswordCommand(
-    string Document,
+    string Email,
     string Password,
     string Token,
     string? TermName

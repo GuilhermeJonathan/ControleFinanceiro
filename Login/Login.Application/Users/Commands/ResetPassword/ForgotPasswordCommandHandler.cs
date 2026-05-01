@@ -2,6 +2,7 @@ using Login.Application.Common.Interfaces;
 using Login.Domain.Common;
 using Login.Domain.Repositories;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Login.Application.Users.Commands.ResetPassword;
 
@@ -9,22 +10,39 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 {
     private readonly IUserRepository _userRepository;
     private readonly IResetTokenManager _resetTokenManager;
+    private readonly ILogger<ForgotPasswordCommandHandler> _logger;
 
     public ForgotPasswordCommandHandler(
         IUserRepository userRepository,
-        IResetTokenManager resetTokenManager)
+        IResetTokenManager resetTokenManager,
+        ILogger<ForgotPasswordCommandHandler> logger)
     {
         _userRepository = userRepository;
         _resetTokenManager = resetTokenManager;
+        _logger = logger;
     }
 
     public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
+        // Nunca revelamos se o e-mail existe ou não (evita enumeração)
         var user = await _userRepository.GetByEmailAsync(request.Identificador, cancellationToken)
-            ?? await _userRepository.GetByDocumentAsync(request.Identificador, cancellationToken)
-            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+            ?? await _userRepository.GetByDocumentAsync(request.Identificador, cancellationToken);
 
-        await _resetTokenManager.GenerateAndSendAsync(user, cancellationToken);
+        if (user is null)
+        {
+            _logger.LogWarning("ForgotPassword: e-mail não encontrado — {Identificador}", request.Identificador);
+            return; // Retorna 200 silenciosamente
+        }
+
+        try
+        {
+            await _resetTokenManager.GenerateAndSendAsync(user, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Loga mas não propaga — o usuário sempre recebe 200
+            _logger.LogError(ex, "ForgotPassword: falha ao enviar e-mail para {Email}", user.Email);
+        }
     }
 }
 
@@ -49,7 +67,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
 
     public async Task Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByDocumentAsync(request.Document, cancellationToken)
+        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken)
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
         if (!await _resetTokenManager.ValidateAsync(user.Id, request.Token, cancellationToken))
