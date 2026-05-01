@@ -1,4 +1,5 @@
 using Login.Application.Invites.Commands.CreateInvite;
+using Login.Application.Invites.Queries.ListInvites;
 using Login.Application.Invites.Queries.ValidateInvite;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,15 @@ public class InviteController : ControllerBase
         var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "https://financeiro-web-two.vercel.app";
         var link = $"{appUrl}/register?invite={result.Token}";
         return Ok(new { result.Token, result.ExpiresAt, link });
+    }
+
+    /// <summary>Lista os convites gerados pelo usuário autenticado.</summary>
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> ListMine(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new ListInvitesQuery(), cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Valida um convite pelo token.</summary>

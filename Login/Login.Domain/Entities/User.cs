@@ -118,13 +118,12 @@ public class User : Entity
         }
     }
 
-    /// <summary>Admin: define trial com duração customizada (retrodata TrialStartedAt).</summary>
+    /// <summary>Admin: define trial com duração customizada em dias a partir de agora.</summary>
     public void AdminSetTrial(int days)
     {
-        // Faz TrialStartedAt = agora - (30 - days) → trial expira em `days` dias
-        TrialStartedAt = DateTime.UtcNow.AddDays(-(30 - days));
-        PlanType = PlanType.Trial;
-        PlanExpiresAt = null;
+        TrialStartedAt ??= DateTime.UtcNow;          // preserva data original se já existir
+        PlanType      = PlanType.Trial;
+        PlanExpiresAt = DateTime.UtcNow.AddDays(days); // expira em exatamente `days` dias
         SetUpdated();
     }
 
@@ -166,7 +165,8 @@ public class User : Entity
         // Trial em andamento ou expirado
         if (TrialStartedAt is not null)
         {
-            var trialEnd = TrialStartedAt.Value.AddDays(30);
+            // Admin pode ter definido PlanExpiresAt com duração customizada
+            var trialEnd = PlanExpiresAt ?? TrialStartedAt.Value.AddDays(30);
             var daysLeft = (int)Math.Ceiling((trialEnd - now).TotalDays);
             var active = daysLeft > 0;
             return new PlanStatus(

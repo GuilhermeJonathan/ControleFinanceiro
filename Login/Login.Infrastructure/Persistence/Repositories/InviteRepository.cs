@@ -18,4 +18,10 @@ public class InviteRepository : IInviteRepository
 
     public async Task AddAsync(Invite invite, CancellationToken cancellationToken = default)
         => await _context.Invites.AddAsync(invite, cancellationToken);
+
+    public async Task<IReadOnlyList<Invite>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        => await _context.Invites
+            .Where(i => i.CreatedByUserId == userId)
+            .OrderByDescending(i => i.ExpiresAt)
+            .ToListAsync(cancellationToken);
 }
