@@ -1,5 +1,6 @@
 using Login.Application.Users.Commands.Authenticate;
 using Login.Application.Users.Commands.BlockUser;
+using Login.Application.Users.Commands.SetPlan;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.RegisterUser;
@@ -238,6 +239,15 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Admin: define o plano de um usuário.</summary>
+    [HttpPatch("{id:guid}/plan")]
+    [Authorize]
+    public async Task<IActionResult> SetPlan(Guid id, [FromBody] SetPlanRequest body, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new SetPlanCommand(id, body.PlanType, body.TrialDays), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Exclui um usuário e invalida seu token.</summary>
     [HttpDelete("{id:guid}")]
     [Authorize]
@@ -249,5 +259,6 @@ public class UserController : ControllerBase
 }
 
 public record SetBlockRequest(bool Block);
+public record SetPlanRequest(int PlanType, int? TrialDays);
 public record UpdateAvatarRequest(string? AvatarUrl);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

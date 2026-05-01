@@ -118,6 +118,25 @@ public class User : Entity
         }
     }
 
+    /// <summary>Admin: define trial com duração customizada (retrodata TrialStartedAt).</summary>
+    public void AdminSetTrial(int days)
+    {
+        // Faz TrialStartedAt = agora - (30 - days) → trial expira em `days` dias
+        TrialStartedAt = DateTime.UtcNow.AddDays(-(30 - days));
+        PlanType = PlanType.Trial;
+        PlanExpiresAt = null;
+        SetUpdated();
+    }
+
+    /// <summary>Admin: remove o plano e o trial do usuário.</summary>
+    public void AdminClearPlan()
+    {
+        PlanType = PlanType.None;
+        TrialStartedAt = null;
+        PlanExpiresAt = null;
+        SetUpdated();
+    }
+
     /// <summary>Ativa um plano pago.</summary>
     public void SetPlan(PlanType planType, DateTime expiresAt)
     {
