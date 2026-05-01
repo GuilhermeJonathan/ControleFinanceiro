@@ -57,50 +57,77 @@ public class ResetTokenManager : IResetTokenManager
         <body style="margin:0;padding:0;background:#0d1117;font-family:'Segoe UI',Arial,sans-serif;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:40px 16px;">
             <tr><td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#161b22;border-radius:16px;border:1px solid #30363d;overflow:hidden;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;border-radius:16px;overflow:hidden;border:1px solid #238636;">
+
+                <!-- HEADER -->
                 <tr>
-                  <td style="background:#1f2937;padding:32px 40px;text-align:center;border-bottom:1px solid #30363d;">
-                    <div style="font-size:48px;margin-bottom:8px;">🐕</div>
-                    <div style="color:#3fb950;font-size:22px;font-weight:800;letter-spacing:0.5px;">Meu FinDog</div>
-                    <div style="color:#8b949e;font-size:13px;margin-top:4px;">Seu assistente financeiro</div>
+                  <td style="background:#0d1117;padding:36px 40px 28px;text-align:center;border-bottom:2px solid #238636;">
+                    <!-- Mascote: ícone do app hospedado no Vercel -->
+                    <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+                      <tr><td style="background:#161b22;border-radius:22px;padding:10px;border:2px solid #3fb950;width:84px;height:84px;text-align:center;vertical-align:middle;">
+                        <img src="https://app.findog.com.br/favicon.png"
+                             alt="Meu FinDog"
+                             width="64" height="64"
+                             style="display:block;border:0;" />
+                      </td></tr>
+                    </table>
+                    <div style="color:#3fb950;font-size:24px;font-weight:900;letter-spacing:0.5px;line-height:1;">Meu FinDog</div>
+                    <div style="color:#6e7681;font-size:13px;margin-top:6px;letter-spacing:0.3px;">seu assistente financeiro</div>
                   </td>
                 </tr>
+
+                <!-- BODY -->
                 <tr>
-                  <td style="padding:40px;">
-                    <p style="color:#c9d1d9;font-size:16px;margin:0 0 8px 0;">Olá, <strong style="color:#e6edf3;">{name}</strong>!</p>
-                    <p style="color:#8b949e;font-size:14px;line-height:1.6;margin:0 0 28px 0;">
+                  <td style="background:#161b22;padding:36px 40px;">
+                    <p style="color:#e6edf3;font-size:17px;font-weight:600;margin:0 0 6px 0;">Olá, {name}! 👋</p>
+                    <p style="color:#8b949e;font-size:14px;line-height:1.7;margin:0 0 32px 0;">
                       Recebemos uma solicitação para redefinir a senha da sua conta.<br>
                       Clique no botão abaixo para criar uma nova senha:
                     </p>
-                    <div style="text-align:center;margin-bottom:32px;">
-                      <a href="{resetLink}"
-                         style="display:inline-block;background:#3fb950;color:#0d1117;font-size:15px;
-                                font-weight:700;padding:14px 36px;border-radius:10px;text-decoration:none;
-                                letter-spacing:0.3px;">
-                        🔑 Redefinir minha senha
-                      </a>
-                    </div>
-                    <div style="background:#1c2128;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:28px;">
-                      <p style="color:#8b949e;font-size:12px;margin:0 0 6px 0;">
-                        ⏱️ Este link expira em <strong style="color:#c9d1d9;">2 horas</strong>.
-                      </p>
-                      <p style="color:#8b949e;font-size:12px;margin:0;">
-                        🔒 Se você não solicitou esta redefinição, ignore este e-mail — sua senha permanece a mesma.
-                      </p>
-                    </div>
-                    <p style="color:#6e7681;font-size:12px;margin:0;border-top:1px solid #30363d;padding-top:20px;line-height:1.6;">
-                      Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-                      <span style="color:#3fb950;word-break:break-all;">{resetLink}</span>
+
+                    <!-- BOTÃO -->
+                    <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+                      <tr>
+                        <td style="background:#3fb950;border-radius:12px;">
+                          <a href="{resetLink}"
+                             style="display:block;color:#0d1117;font-size:15px;font-weight:800;
+                                    padding:15px 40px;text-decoration:none;letter-spacing:0.4px;">
+                            🔑&nbsp; Redefinir minha senha
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- AVISOS -->
+                    <table cellpadding="0" cellspacing="0" width="100%" style="background:#0d1117;border-radius:10px;border:1px solid #30363d;margin-bottom:28px;">
+                      <tr>
+                        <td style="padding:16px 20px;">
+                          <p style="color:#8b949e;font-size:13px;margin:0 0 8px 0;">
+                            ⏱&nbsp; Este link expira em <strong style="color:#e6edf3;">2 horas</strong>.
+                          </p>
+                          <p style="color:#8b949e;font-size:13px;margin:0;">
+                            🔒&nbsp; Se você não solicitou esta redefinição, ignore este e-mail — sua senha permanece a mesma.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="color:#484f58;font-size:12px;margin:0;border-top:1px solid #30363d;padding-top:20px;line-height:1.7;">
+                      Se o botão não funcionar, copie e cole este link no navegador:<br>
+                      <a href="{resetLink}" style="color:#3fb950;word-break:break-all;text-decoration:none;">{resetLink}</a>
                     </p>
                   </td>
                 </tr>
+
+                <!-- FOOTER -->
                 <tr>
-                  <td style="background:#0d1117;padding:20px 40px;text-align:center;border-top:1px solid #30363d;">
+                  <td style="background:#0d1117;padding:18px 40px;text-align:center;border-top:1px solid #30363d;">
                     <p style="color:#484f58;font-size:12px;margin:0;">
-                      © {DateTime.UtcNow.Year} Meu FinDog · Você está recebendo este e-mail porque solicitou a redefinição de senha.
+                      © {DateTime.UtcNow.Year} Meu FinDog &nbsp;·&nbsp; <a href="https://app.findog.com.br" style="color:#484f58;text-decoration:none;">app.findog.com.br</a>
                     </p>
                   </td>
                 </tr>
+
               </table>
             </td></tr>
           </table>
