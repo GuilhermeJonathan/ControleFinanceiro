@@ -59,20 +59,15 @@ public class ResetTokenManager : IResetTokenManager
             <tr><td align="center">
               <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;border-radius:16px;overflow:hidden;border:1px solid #238636;">
 
-                <!-- HEADER -->
+                <!-- HEADER: banner og-image -->
                 <tr>
-                  <td style="background:#0d1117;padding:36px 40px 28px;text-align:center;border-bottom:2px solid #238636;">
-                    <!-- Mascote: ícone do app hospedado no Vercel -->
-                    <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
-                      <tr><td style="background:#161b22;border-radius:22px;padding:10px;border:2px solid #3fb950;width:84px;height:84px;text-align:center;vertical-align:middle;">
-                        <img src="https://app.findog.com.br/favicon.png"
-                             alt="Meu FinDog"
-                             width="64" height="64"
-                             style="display:block;border:0;" />
-                      </td></tr>
-                    </table>
-                    <div style="color:#3fb950;font-size:24px;font-weight:900;letter-spacing:0.5px;line-height:1;">Meu FinDog</div>
-                    <div style="color:#6e7681;font-size:13px;margin-top:6px;letter-spacing:0.3px;">seu assistente financeiro</div>
+                  <td style="background:#0d1117;padding:0;border-bottom:2px solid #238636;">
+                    <a href="https://app.findog.com.br" style="display:block;line-height:0;">
+                      <img src="https://app.findog.com.br/og-image.png"
+                           alt="Meu FinDog · seu assistente financeiro"
+                           width="520"
+                           style="display:block;width:100%;max-width:520px;height:auto;border:0;" />
+                    </a>
                   </td>
                 </tr>
 
