@@ -5,6 +5,7 @@ using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.RegisterUser;
 using Login.Application.Users.Commands.SelfRegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
+using Login.Application.Users.Commands.ChangePassword;
 using Login.Application.Users.Commands.UpdateAvatar;
 using Login.Application.Users.Commands.UpdateUser;
 using Login.Application.Users.Queries.GetUserById;
@@ -193,6 +194,17 @@ public class UserController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id }, null);
     }
 
+    /// <summary>Altera a senha do usuário autenticado.</summary>
+    [HttpPatch("me/password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new ChangePasswordCommand(body.CurrentPassword, body.NewPassword), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Atualiza o avatar do usuário autenticado (base64 data URL).</summary>
     [HttpPatch("me/avatar")]
     [Authorize]
@@ -238,3 +250,4 @@ public class UserController : ControllerBase
 
 public record SetBlockRequest(bool Block);
 public record UpdateAvatarRequest(string? AvatarUrl);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
