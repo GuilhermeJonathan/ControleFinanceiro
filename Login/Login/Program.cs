@@ -115,6 +115,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin", policy =>
         policy.RequireClaim("userType", "1"));
 });
+builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 
 // CORS: permite apenas origens conhecidas em produção
@@ -162,5 +163,6 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
