@@ -153,7 +153,7 @@ public class UserController : ControllerBase
 
     /// <summary>Lista usuários de uma empresa específica.</summary>
     [HttpGet("ListByCompany/{id}")]
-    [AllowAnonymous]
+    [Authorize(Policy = "Admin")]
     public async Task<IActionResult> ListByCompany(string id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
@@ -164,7 +164,7 @@ public class UserController : ControllerBase
 
     /// <summary>Lista todos os usuários.</summary>
     [HttpGet("ListAllUsers")]
-    [AllowAnonymous]
+    [Authorize(Policy = "Admin")]
     public async Task<IActionResult> ListAllUsers(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
@@ -232,7 +232,7 @@ public class UserController : ControllerBase
 
     /// <summary>Bloqueia ou desbloqueia um usuário.</summary>
     [HttpPatch("{id:guid}/block")]
-    [Authorize]
+    [Authorize(Policy = "Admin")]
     public async Task<IActionResult> SetBlock(Guid id, [FromBody] SetBlockRequest body, CancellationToken cancellationToken)
     {
         await _mediator.Send(new BlockUserCommand(id, body.Block), cancellationToken);
@@ -241,7 +241,7 @@ public class UserController : ControllerBase
 
     /// <summary>Admin: define o plano de um usuário.</summary>
     [HttpPatch("{id:guid}/plan")]
-    [Authorize]
+    [Authorize(Policy = "Admin")]
     public async Task<IActionResult> SetPlan(Guid id, [FromBody] SetPlanRequest body, CancellationToken cancellationToken)
     {
         await _mediator.Send(new SetPlanCommand(id, body.PlanType, body.TrialDays), cancellationToken);

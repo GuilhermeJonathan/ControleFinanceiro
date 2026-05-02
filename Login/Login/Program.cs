@@ -48,6 +48,8 @@ builder.Services.AddSwaggerGen(c =>
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JwtSettings:SecretKey não configurado.");
+if (string.IsNullOrWhiteSpace(secretKey) || secretKey == "YOUR_SECRET_KEY_HERE")
+    throw new InvalidOperationException("JwtSettings:SecretKey está com valor padrão inseguro. Configure uma chave real via variável de ambiente (JwtSettings__SecretKey).");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -68,13 +70,32 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+// Política Admin: exige claim userType = 1
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+        policy.RequireClaim("userType", "1"));
+});
 builder.Services.AddHttpContextAccessor();
+
+// CORS: permite apenas origens conhecidas em produção
+var allowedOrigins = new[]
+{
+    "https://app.findog.com.br",
+    "https://www.findog.com.br",
+    "https://findog.com.br",
+    "https://financeiro-web-two.vercel.app"
+};
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    {
+        if (builder.Environment.IsDevelopment())
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        else
+            policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+    });
 });
 
 // Camadas CQRS + Clean Architecture
@@ -92,21 +113,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "controlefinanceiro.security.api v1"));
 }
 
-// Preflight CORS — deve ser o primeiro middleware da pipeline
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.Headers["Access-Control-Allow-Origin"] = "*";
-        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS";
-        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With";
-        context.Response.Headers["Access-Control-Max-Age"] = "86400";
-        context.Response.StatusCode = 200;
-        await context.Response.CompleteAsync();
-        return;
-    }
-    await next();
-});
+// Preflight CORS — deixa o middleware de CORS do ASP.NET Core gerenciar (não hardcode "*")
+
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAll");

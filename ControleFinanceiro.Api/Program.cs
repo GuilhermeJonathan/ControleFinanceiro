@@ -19,15 +19,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// CORS: permite apenas origens conhecidas em produção
+var allowedOrigins = new[]
+{
+    "https://app.findog.com.br",
+    "https://www.findog.com.br",
+    "https://findog.com.br",
+    "https://financeiro-web-two.vercel.app"
+};
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    {
+        if (builder.Environment.IsDevelopment())
+            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        else
+            policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+    });
 });
 
 // JWT — mesma SecretKey/Issuer/Audience do Login API
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JwtSettings:SecretKey não configurado.");
+if (string.IsNullOrWhiteSpace(secretKey))
+    throw new InvalidOperationException("JwtSettings:SecretKey não configurado. Defina via variável de ambiente (JwtSettings__SecretKey).");
 
 builder.Services.AddAuthentication(options =>
 {
