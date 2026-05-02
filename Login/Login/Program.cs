@@ -1,10 +1,13 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Login.Application;
 using Login.Application.Common.Interfaces;
 using Login.Extensions;
 using Login.Infrastructure;
+using Login.Infrastructure.Persistence;
 using Login.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -58,6 +61,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -67,6 +71,31 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var nameId = context.Principal?.FindFirst(JwtRegisteredClaimNames.NameId)?.Value;
+            if (!Guid.TryParse(nameId, out var userId)) { context.Fail("Token inválido."); return; }
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null || !user.IsActive || user.IsBlocked)
+            { context.Fail("Usuário inativo ou bloqueado."); return; }
+
+            if (user.TokenRevokedAt.HasValue)
+            {
+                var iatClaim = context.Principal?.FindFirst(JwtRegisteredClaimNames.Iat)?.Value;
+                if (long.TryParse(iatClaim, out var iatUnix))
+                {
+                    var tokenIssuedAt = DateTimeOffset.FromUnixTimeSeconds(iatUnix).UtcDateTime;
+                    if (tokenIssuedAt < user.TokenRevokedAt.Value)
+                    { context.Fail("Token revogado."); return; }
+                }
+            }
+        }
     };
 });
 

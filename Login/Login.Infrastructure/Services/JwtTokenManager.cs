@@ -11,7 +11,6 @@ namespace Login.Infrastructure.Services;
 public class JwtTokenManager : ITokenManager
 {
     private readonly IConfiguration _configuration;
-    private static readonly HashSet<Guid> _invalidatedTokens = new();
 
     public JwtTokenManager(IConfiguration configuration)
     {
@@ -26,6 +25,7 @@ public class JwtTokenManager : ITokenManager
         var audience = jwtSettings["Audience"];
         var expiresInMinutes = int.Parse(jwtSettings["ExpiresInMinutes"] ?? "60");
 
+        var now = DateTime.UtcNow;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -35,28 +35,25 @@ public class JwtTokenManager : ITokenManager
             new Claim(JwtRegisteredClaimNames.UniqueName, user.Name),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("userType", ((int)user.UserTypeId).ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            // iat explícito para comparação com TokenRevokedAt
+            new Claim(JwtRegisteredClaimNames.Iat,
+                new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64)
         };
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
+            notBefore: now,
+            expires: now.AddMinutes(expiresInMinutes),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public bool Validate(string token)
-    {
-        // Validação via middleware JWT do ASP.NET Core
-        return true;
-    }
+    public bool Validate(string token) => true; // validação feita pelo middleware JWT
 
-    public void Invalidate(Guid userId)
-    {
-        _invalidatedTokens.Add(userId);
-        // Em produção: persistir lista de tokens inválidos no Redis/banco
-    }
+    public void Invalidate(Guid userId) { } // revogação via User.RevokeTokens() + DB
 }

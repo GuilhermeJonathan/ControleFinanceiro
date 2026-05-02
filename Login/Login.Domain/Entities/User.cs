@@ -26,6 +26,13 @@ public class User : Entity
     public DateTime? TrialStartedAt { get; private set; }
     public DateTime? PlanExpiresAt { get; private set; }
 
+    // ── Segurança de token ───────────────────────────────────────────────────
+    /// <summary>
+    /// Tokens emitidos ANTES deste instante são considerados revogados.
+    /// Null = nenhuma revogação ativa.
+    /// </summary>
+    public DateTime? TokenRevokedAt { get; private set; }
+
     // Navigation
     public Profile? Profile { get; private set; }
     public ICollection<UserRestriction> Restrictions { get; private set; } = new List<UserRestriction>();
@@ -104,6 +111,13 @@ public class User : Entity
     public void RegisterLogin()
     {
         UltimoLogin = DateTime.UtcNow;
+        SetUpdated();
+    }
+
+    /// <summary>Revoga todos os tokens emitidos até este momento.</summary>
+    public void RevokeTokens()
+    {
+        TokenRevokedAt = DateTime.UtcNow;
         SetUpdated();
     }
 

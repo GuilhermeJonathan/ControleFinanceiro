@@ -35,8 +35,8 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
             request.CountryId,
             request.Region);
 
+        user.RevokeTokens(); // invalida todos os tokens anteriores via DB
         _userRepository.Update(user);
-        _tokenManager.Invalidate(user.Id);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

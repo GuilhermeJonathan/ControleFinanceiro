@@ -9,6 +9,7 @@ using Login.Application.Users.Commands.ResetPassword;
 using Login.Application.Users.Commands.ChangePassword;
 using Login.Application.Users.Commands.UpdateAvatar;
 using Login.Application.Users.Commands.UpdateUser;
+using Login.Application.Users.Commands.Refresh;
 using Login.Application.Users.Queries.GetUserById;
 using Login.Application.Users.Queries.GetUsers;
 using MediatR;
@@ -125,6 +126,17 @@ public class UserController : ControllerBase
     [HttpPost("checkToken")]
     [Authorize]
     public IActionResult CheckToken() => Ok(true);
+
+    /// <summary>Renova o access token usando um refresh token válido.</summary>
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshRequest body,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new RefreshCommand(body.RefreshToken), cancellationToken);
+        return Ok(result);
+    }
 
     /// <summary>Health check da API.</summary>
     [HttpGet("ok")]
@@ -262,3 +274,4 @@ public record SetBlockRequest(bool Block);
 public record SetPlanRequest(int PlanType, int? TrialDays);
 public record UpdateAvatarRequest(string? AvatarUrl);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+public record RefreshRequest(string RefreshToken);

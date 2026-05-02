@@ -12,6 +12,7 @@ public record AuthenticateCommand(
 
 public record AuthenticateResult(
     string AccessToken,
+    string RefreshToken,
     string? AvatarUrl,
     IReadOnlyList<HierarchyDto> Hierarchies,
     IReadOnlyList<RestrictionDto> Restrictions,

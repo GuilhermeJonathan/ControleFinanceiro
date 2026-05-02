@@ -21,48 +21,42 @@ public class WhatsAppController(
     WhatsAppMediaService mediaService,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
-    IConfiguration config) : ControllerBase
+    IConfiguration config,
+    IWebHostEnvironment env) : ControllerBase
 {
-    // ── Endpoints de teste (remover em produção) ──────────────────────────────
+    // ── Endpoints de teste (somente em Development) ───────────────────────────
 
     /// <summary>Testa transcrição de áudio via Whisper. Envie um arquivo de áudio.</summary>
     [HttpPost("test/transcribe")]
     [Authorize]
-    public async Task<IActionResult> TestTranscribe(
-        IFormFile file, CancellationToken ct)
+    public async Task<IActionResult> TestTranscribe(IFormFile file, CancellationToken ct)
     {
+        if (!env.IsDevelopment()) return NotFound();
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms, ct);
-        var bytes    = ms.ToArray();
-        var mimeType = file.ContentType;
-
-        // Chama diretamente sem passar pela Meta
-        var text = await mediaService.TranscribeRawAsync(bytes, mimeType, ct);
+        var text = await mediaService.TranscribeRawAsync(ms.ToArray(), file.ContentType, ct);
         return Ok(new { transcricao = text });
     }
 
     /// <summary>Testa extração de imagem via GPT Vision. Envie uma imagem.</summary>
     [HttpPost("test/vision")]
     [Authorize]
-    public async Task<IActionResult> TestVision(
-        IFormFile file, string? caption, CancellationToken ct)
+    public async Task<IActionResult> TestVision(IFormFile file, string? caption, CancellationToken ct)
     {
+        if (!env.IsDevelopment()) return NotFound();
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms, ct);
-        var bytes    = ms.ToArray();
-        var mimeType = file.ContentType;
-
-        var text   = await mediaService.ExtractRawAsync(bytes, mimeType, caption, ct);
+        var text   = await mediaService.ExtractRawAsync(ms.ToArray(), file.ContentType, caption, ct);
         var parsed = WhatsAppMessageParser.Parse(text);
         return Ok(new { extraido = text, parsed });
     }
 
-    /// <summary>Testa sugestão de categoria por IA (sem restrição às categorias existentes).</summary>
+    /// <summary>Testa sugestão de categoria por IA.</summary>
     [HttpPost("test/categoria")]
     [Authorize]
-    public async Task<IActionResult> TestCategoria(
-        [FromBody] TestCategoriaRequest body, CancellationToken ct)
+    public async Task<IActionResult> TestCategoria([FromBody] TestCategoriaRequest body, CancellationToken ct)
     {
+        if (!env.IsDevelopment()) return NotFound();
         var local     = CategoryMatcher.Infer(body.Descricao);
         var ia        = local is null ? await mediaService.SuggestCategoryAsync(body.Descricao, ct) : null;
         var resultado = local ?? ia ?? "Outros";

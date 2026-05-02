@@ -11,6 +11,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Invite> Invites => Set<Invite>();
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<DomainModule> Modules => Set<DomainModule>();

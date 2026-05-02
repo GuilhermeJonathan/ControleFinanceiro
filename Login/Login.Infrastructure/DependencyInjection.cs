@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IModuleRepository, ModuleRepository>();
         services.AddScoped<ITermRepository, TermRepository>();
         services.AddScoped<IInviteRepository, InviteRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Serviços cross-cutting
         services.AddScoped<ITokenManager, JwtTokenManager>();

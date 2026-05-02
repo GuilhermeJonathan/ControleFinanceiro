@@ -36,6 +36,7 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
             throw new ArgumentException("A nova senha deve ter pelo menos 6 caracteres.");
 
         user.ChangePassword(_cryptography.Hash(request.NewPassword));
+        user.RevokeTokens(); // força novo login após troca de senha
         _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
