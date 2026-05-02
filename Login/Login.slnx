@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Login.Application.Tests/Login.Application.Tests.csproj" />
   <Project Path="Login.Application/Login.Application.csproj" />
   <Project Path="Login.Domain/Login.Domain.csproj" />
   <Project Path="Login.Infrastructure/Login.Infrastructure.csproj" />
