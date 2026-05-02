@@ -6,6 +6,7 @@ public interface ILancamentoRepository
 {
     Task<Lancamento?> GetByIdAsync(Guid id, Guid usuarioId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByMesAnoAsync(int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<Lancamento> Itens, int TotalCount)> GetPagedByMesAnoAsync(int mes, int ano, Guid usuarioId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default);
     Task AddAsync(Lancamento lancamento, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<Lancamento> lancamentos, CancellationToken cancellationToken = default);

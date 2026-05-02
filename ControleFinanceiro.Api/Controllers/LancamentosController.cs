@@ -25,8 +25,8 @@ namespace ControleFinanceiro.Api.Controllers;
 public class LancamentosController(IMediator mediator) : ControllerBase
 {
     [HttpGet("{mes}/{ano}")]
-    public async Task<IActionResult> GetByMes(int mes, int ano, CancellationToken ct)
-        => Ok(await mediator.Send(new GetLancamentosByMesQuery(mes, ano), ct));
+    public async Task<IActionResult> GetByMes(int mes, int ano, [FromQuery] int page = 1, [FromQuery] int pageSize = 200, CancellationToken ct = default)
+        => Ok(await mediator.Send(new GetLancamentosByMesQuery(mes, ano, page, pageSize), ct));
 
     [HttpGet("dashboard/{mes}/{ano}")]
     public async Task<IActionResult> GetDashboard(int mes, int ano, CancellationToken ct)

@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
@@ -8,12 +9,15 @@ public class GetCartoesQueryHandler(
     ICartaoCreditoRepository cartaoRepository,
     ILancamentoRepository lancamentoRepository,
     ICurrentUser currentUser)
-    : IRequestHandler<GetCartoesQuery, IEnumerable<CartaoDto>>
+    : IRequestHandler<GetCartoesQuery, PagedResult<CartaoDto>>
 {
-    public async Task<IEnumerable<CartaoDto>> Handle(GetCartoesQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<CartaoDto>> Handle(GetCartoesQuery request, CancellationToken cancellationToken)
     {
         var usuarioId = currentUser.UserId;
-        var cartoes = await cartaoRepository.GetAllWithParcelasAsync(usuarioId, cancellationToken);
+        var page     = Math.Max(1, request.Page);
+        var pageSize = Math.Max(1, request.PageSize);
+
+        var (cartoes, total) = await cartaoRepository.GetPagedWithParcelasAsync(usuarioId, page, pageSize, cancellationToken);
         var result = new List<CartaoDto>();
 
         foreach (var cartao in cartoes)
@@ -33,6 +37,6 @@ public class GetCartoesQueryHandler(
                 dtos));
         }
 
-        return result;
+        return new PagedResult<CartaoDto>(result, total, page, pageSize);
     }
 }

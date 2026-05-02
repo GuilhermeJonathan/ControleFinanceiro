@@ -17,11 +17,11 @@ namespace ControleFinanceiro.Api.Controllers;
 public class CartoesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int mes, [FromQuery] int ano, CancellationToken ct)
+    public async Task<IActionResult> GetAll([FromQuery] int mes, [FromQuery] int ano, [FromQuery] int page = 1, [FromQuery] int pageSize = 100, CancellationToken ct = default)
     {
         if (mes == 0) mes = DateTime.Now.Month;
         if (ano == 0) ano = DateTime.Now.Year;
-        return Ok(await mediator.Send(new GetCartoesQuery(mes, ano), ct));
+        return Ok(await mediator.Send(new GetCartoesQuery(mes, ano, page, pageSize), ct));
     }
 
     [HttpPost]

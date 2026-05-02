@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
@@ -7,13 +8,17 @@ namespace ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosByMes
 public class GetLancamentosByMesQueryHandler(
     ILancamentoRepository repository,
     ICurrentUser currentUser)
-    : IRequestHandler<GetLancamentosByMesQuery, IEnumerable<LancamentoDto>>
+    : IRequestHandler<GetLancamentosByMesQuery, PagedResult<LancamentoDto>>
 {
-    public async Task<IEnumerable<LancamentoDto>> Handle(GetLancamentosByMesQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<LancamentoDto>> Handle(GetLancamentosByMesQuery request, CancellationToken cancellationToken)
     {
-        var lancamentos = await repository.GetByMesAnoAsync(request.Mes, request.Ano, currentUser.UserId, cancellationToken);
+        var page     = Math.Max(1, request.Page);
+        var pageSize = Math.Max(1, request.PageSize);
 
-        return lancamentos.Select(l => new LancamentoDto(
+        var (lancamentos, total) = await repository.GetPagedByMesAnoAsync(
+            request.Mes, request.Ano, currentUser.UserId, page, pageSize, cancellationToken);
+
+        var dtos = lancamentos.Select(l => new LancamentoDto(
             l.Id, l.Descricao, l.Data, l.Valor, l.Tipo, l.Situacao,
             l.Mes, l.Ano, l.CategoriaId, l.Categoria?.Nome,
             l.CartaoId, l.Cartao?.Nome, l.ParcelaAtual, l.TotalParcelas, l.GrupoParcelas,
@@ -27,6 +32,8 @@ public class GetLancamentosByMesQueryHandler(
             l.ContaBancaria?.Banco,
             l.DataPagamento,
             l.CriadoPorId,
-            l.CriadoPorNome));
+            l.CriadoPorNome)).ToList();
+
+        return new PagedResult<LancamentoDto>(dtos, total, page, pageSize);
     }
 }

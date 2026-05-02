@@ -22,6 +22,22 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
+    public async Task<(IEnumerable<Lancamento> Itens, int TotalCount)> GetPagedByMesAnoAsync(
+        int mes, int ano, Guid usuarioId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Lancamentos
+            .Include(l => l.Categoria)
+            .Include(l => l.Cartao)
+            .Include(l => l.ReceitaRecorrente)
+            .Include(l => l.ContaBancaria)
+            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
+            .OrderBy(l => l.Data);
+
+        var total = await query.CountAsync(cancellationToken);
+        var itens = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return (itens, total);
+    }
+
     public async Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
             .Include(l => l.Categoria)

@@ -16,6 +16,16 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseSentry(o =>
+{
+    o.Dsn = builder.Configuration["Sentry:Dsn"] ?? "";
+    o.Debug = builder.Environment.IsDevelopment();
+    o.TracesSampleRate = builder.Environment.IsDevelopment() ? 1.0 : 0.2;
+    o.MinimumBreadcrumbLevel = Microsoft.Extensions.Logging.LogLevel.Information;
+    o.MinimumEventLevel = Microsoft.Extensions.Logging.LogLevel.Error;
+    o.SendDefaultPii = false; // não envia dados pessoais
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 

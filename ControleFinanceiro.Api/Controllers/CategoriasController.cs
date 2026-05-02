@@ -15,8 +15,8 @@ namespace ControleFinanceiro.Api.Controllers;
 public class CategoriasController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
-        => Ok(await mediator.Send(new GetCategoriasQuery(), ct));
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
+        => Ok(await mediator.Send(new GetCategoriasQuery(page, pageSize), ct));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCategoriaCommand command, CancellationToken ct)

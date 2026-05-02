@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
@@ -5,11 +6,15 @@ using MediatR;
 namespace ControleFinanceiro.Application.Categorias.Queries.GetCategorias;
 
 public class GetCategoriasQueryHandler(ICategoriaRepository repository, ICurrentUser currentUser)
-    : IRequestHandler<GetCategoriasQuery, IEnumerable<CategoriaDto>>
+    : IRequestHandler<GetCategoriasQuery, PagedResult<CategoriaDto>>
 {
-    public async Task<IEnumerable<CategoriaDto>> Handle(GetCategoriasQuery request, CancellationToken cancellationToken)
+    public async Task<PagedResult<CategoriaDto>> Handle(GetCategoriasQuery request, CancellationToken cancellationToken)
     {
-        var categorias = await repository.GetAllAsync(currentUser.UserId, cancellationToken);
-        return categorias.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo, c.LimiteMensal));
+        var page     = Math.Max(1, request.Page);
+        var pageSize = Math.Max(1, request.PageSize);
+
+        var (itens, total) = await repository.GetPagedAsync(currentUser.UserId, page, pageSize, cancellationToken);
+        var dtos = itens.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo, c.LimiteMensal)).ToList();
+        return new PagedResult<CategoriaDto>(dtos, total, page, pageSize);
     }
 }
