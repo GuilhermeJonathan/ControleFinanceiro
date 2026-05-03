@@ -3,13 +3,16 @@ using Login.Application.Users.Commands.BlockUser;
 using Login.Application.Users.Commands.SetPlan;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
+using Login.Application.Users.Commands.DeleteSelf;
 using Login.Application.Users.Commands.RegisterUser;
 using Login.Application.Users.Commands.SelfRegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
 using Login.Application.Users.Commands.ChangePassword;
 using Login.Application.Users.Commands.UpdateAvatar;
+using Login.Application.Users.Commands.UpdateSelf;
 using Login.Application.Users.Commands.UpdateUser;
 using Login.Application.Users.Commands.Refresh;
+using Login.Application.Users.Queries.GetMe;
 using Login.Application.Users.Queries.GetUserById;
 using Login.Application.Users.Queries.GetUsers;
 using MediatR;
@@ -138,6 +141,15 @@ public class UserController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Retorna os dados do próprio usuário autenticado.</summary>
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetMeQuery(), cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>Health check da API.</summary>
     [HttpGet("ok")]
     [AllowAnonymous]
@@ -229,6 +241,26 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Atualiza nome e telefone do usuário autenticado.</summary>
+    [HttpPatch("me/profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateProfileRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new UpdateSelfCommand(body.Name, body.Cellphone, body.Document), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Exclui a própria conta do usuário autenticado e todos os seus dados.</summary>
+    [HttpDelete("me")]
+    [Authorize]
+    public async Task<IActionResult> DeleteSelf(CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DeleteSelfCommand(), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Atualiza perfil de um usuário.</summary>
     [HttpPut("{id:guid}")]
     [Authorize]
@@ -275,3 +307,4 @@ public record SetPlanRequest(int PlanType, int? TrialDays);
 public record UpdateAvatarRequest(string? AvatarUrl);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 public record RefreshRequest(string RefreshToken);
+public record UpdateProfileRequest(string Name, string? Cellphone, string? Document);

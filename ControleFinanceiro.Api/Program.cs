@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using ControleFinanceiro.Application;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Api.BackgroundServices;
@@ -8,6 +9,7 @@ using ControleFinanceiro.Api.Services;
 using ControleFinanceiro.Infrastructure;
 using ControleFinanceiro.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -78,6 +80,33 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddHealthChecks();
+
+// Rate limiting global: 60 req/minuto por IP (Fixed Window)
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim()
+                          ?? context.Connection.RemoteIpAddress?.ToString()
+                          ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit          = 60,
+                Window               = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit           = 0,
+            }));
+
+    options.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.StatusCode  = StatusCodes.Status429TooManyRequests;
+        ctx.HttpContext.Response.ContentType = "application/json";
+        ctx.HttpContext.Response.Headers["Retry-After"] = "60";
+        await ctx.HttpContext.Response.WriteAsync(
+            "{\"error\":\"Limite de requisições atingido.\"}",
+            ct);
+    };
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddApplication();
@@ -96,6 +125,7 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("AllowAll");
 if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<FamiliaContextMiddleware>();
 app.UseAuthorization();

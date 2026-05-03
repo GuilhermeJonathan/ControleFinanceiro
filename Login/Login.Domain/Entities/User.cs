@@ -78,6 +78,13 @@ public class User : Entity
         SetUpdated();
     }
 
+    public void UpdateDocument(string? document)
+    {
+        if (!string.IsNullOrWhiteSpace(document))
+            Document = document;
+        SetUpdated();
+    }
+
     public void UpdateAvatar(string? avatarUrl)
     {
         AvatarUrl = avatarUrl;

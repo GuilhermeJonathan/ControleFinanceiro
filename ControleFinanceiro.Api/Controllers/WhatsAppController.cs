@@ -229,7 +229,7 @@ public class WhatsAppController(
             if (vinculo is null)
             {
                 await sender.SendTextAsync(from,
-                    "⚠️ Seu número não está vinculado.\nAbra o app *Meu Financeiro*, vá em *Perfil → Vincular WhatsApp* e adicione este número.", ct);
+                    "⚠️ Seu número não está vinculado.\nAbra o app *Meu FinDog*, vá em *Perfil → Vincular WhatsApp* e adicione este número.", ct);
                 return;
             }
 
@@ -240,7 +240,9 @@ public class WhatsAppController(
             var parsed = WhatsAppMessageParser.Parse(text);
             if (!parsed.Success)
             {
-                await sender.SendTextAsync(from, parsed.Erro ?? "Não entendi a mensagem.", ct);
+                WhatsAppMessageParser.IsCommand("ajuda", out var ajuda);
+                var erroMsg = $"{parsed.Erro ?? "Não entendi a mensagem 🤔"}\n\n{ajuda}";
+                await sender.SendTextAsync(from, erroMsg, ct);
                 return;
             }
 

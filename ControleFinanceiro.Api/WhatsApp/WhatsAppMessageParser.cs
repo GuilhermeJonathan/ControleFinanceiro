@@ -62,7 +62,7 @@ public static partial class WhatsAppMessageParser
         if (lower is "ajuda" or "help" or "?")
         {
             reply = """
-                🐾 *Meu Financeiro — como usar*
+                🐾 *Meu FinDog — como usar*
 
                 Envie uma mensagem com a descrição e o valor:
 
