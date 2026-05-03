@@ -368,3 +368,9 @@ FodyWeavers.xsd
 mobile/.env.local
 migrate_sqlserver_to_postgres.py
 dados_para_postgres.sql
+
+# Graphify - knowledge graph (generated artifacts, do not commit)
+graphify-out/
+.graphify_python
+.graphify_detect.json
+Findog/
