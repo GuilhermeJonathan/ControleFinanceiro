@@ -1,3 +1,5 @@
+using Login.Domain.Entities;
+
 namespace Login.Application.Users.Queries.GetMe;
 
 public record MeDto(
@@ -6,5 +8,6 @@ public record MeDto(
     string Email,
     string Document,
     string? Cellphone,
-    string? AvatarUrl
+    string? AvatarUrl,
+    PlanStatus PlanInfo
 );

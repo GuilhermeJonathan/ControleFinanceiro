@@ -7,6 +7,7 @@ using Login.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Login.Infrastructure;
 
@@ -31,6 +32,10 @@ public static class DependencyInjection
         services.AddScoped<ITermRepository, TermRepository>();
         services.AddScoped<IInviteRepository, InviteRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+
+        // Mercado Pago
+        services.AddHttpClient<IMercadoPagoService, MercadoPagoService>();
 
         // Serviços cross-cutting
         services.AddScoped<ITokenManager, JwtTokenManager>();

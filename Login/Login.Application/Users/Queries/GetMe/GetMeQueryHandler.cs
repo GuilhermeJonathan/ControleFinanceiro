@@ -26,6 +26,7 @@ public class GetMeQueryHandler : IRequestHandler<GetMeQuery, MeDto>
             user.Email,
             user.Document,
             user.Cellphone,
-            user.AvatarUrl);
+            user.AvatarUrl,
+            user.GetPlanStatus());
     }
 }

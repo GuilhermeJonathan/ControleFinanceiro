@@ -57,6 +57,47 @@ namespace Login.Infrastructure.Migrations
                     b.ToTable("AcceptedTerms", (string)null);
                 });
 
+            modelBuilder.Entity("Login.Domain.Entities.MercadoPagoSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastPaymentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("MpSubscriptionId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PlanType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MpSubscriptionId").IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MercadoPagoSubscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Login.Domain.Entities.FreightForwarderPermission", b =>
                 {
                     b.Property<Guid>("FreightForwarderId")
