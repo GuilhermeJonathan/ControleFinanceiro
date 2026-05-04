@@ -30,7 +30,10 @@ public class CreateCheckoutCommandHandler : IRequestHandler<CreateCheckoutComman
         CancellationToken cancellationToken)
     {
         var userId = _userAccessor.UserId;
-        var email  = _userAccessor.Email;
+        // Usa o email MP fornecido pelo usuário; se não informado, usa o email da conta
+        var email  = !string.IsNullOrWhiteSpace(request.PayerEmail)
+            ? request.PayerEmail.Trim()
+            : _userAccessor.Email;
 
         // Cria assinatura no MP e obtém o link de checkout
         var mpResult = await _mp.CreateSubscriptionAsync(

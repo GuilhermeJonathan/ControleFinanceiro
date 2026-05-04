@@ -36,7 +36,7 @@ public class PaymentController : ControllerBase
         [FromBody] CheckoutRequest body,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new CreateCheckoutCommand(body.PlanId), cancellationToken);
+        var result = await _mediator.Send(new CreateCheckoutCommand(body.PlanId, body.PayerEmail), cancellationToken);
         return Ok(new { checkoutUrl = result.CheckoutUrl });
     }
 
@@ -107,4 +107,4 @@ public class PaymentController : ControllerBase
     }
 }
 
-public record CheckoutRequest(string PlanId);
+public record CheckoutRequest(string PlanId, string? PayerEmail);
