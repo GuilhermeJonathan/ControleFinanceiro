@@ -208,10 +208,11 @@ public class WhatsAppController(
 
                 case "image":
                     await sender.SendTextAsync(from, "🖼️ Analisando a imagem...", ct);
-                    text = await mediaService.ExtractFromImageAsync(
+                    var imageText = await mediaService.ExtractFromImageAsync(
                         msg.Image!.Id, msg.Image.Caption, ct);
-                    Console.WriteLine($"[WhatsApp] imagem extraída: {text}");
-                    break;
+                    Console.WriteLine($"[WhatsApp] imagem extraída:\n{imageText}");
+                    await ProcessImageLancamentosAsync(from, imageText, ct);
+                    return;  // já tratado — sai sem processar como texto único
 
                 default:
                     return; // tipo não suportado — ignora silenciosamente
@@ -337,6 +338,98 @@ public class WhatsAppController(
             await sender.SendTextAsync(from,
                 $"❌ Erro ao registrar. Tente novamente.\n({ex.Message})", ct);
         }
+    }
+}
+
+    // ── Processa múltiplos lançamentos de uma imagem ─────────────────────────
+
+    private async Task ProcessImageLancamentosAsync(string from, string imageText, CancellationToken ct)
+    {
+        var vinculo = await vinculoRepo.GetByPhoneAsync(from, ct);
+        if (vinculo is null)
+        {
+            await sender.SendTextAsync(from,
+                "⚠️ Seu número não está vinculado.\nAbra o app *Meu FinDog*, vá em *Perfil → Vincular WhatsApp* e adicione este número.", ct);
+            return;
+        }
+
+        HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
+        HttpContext.Items["RealUserId"]      = vinculo.UserId;
+
+        var linhas = imageText
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .ToList();
+
+        if (linhas.Count == 0)
+        {
+            await sender.SendTextAsync(from, "❌ Não consegui identificar lançamentos na imagem.", ct);
+            return;
+        }
+
+        var categorias   = (await categoriaRepo.GetAllAsync(vinculo.UserId, ct)).ToList();
+        var criados      = new List<string>();
+        var ignorados    = 0;
+
+        foreach (var linha in linhas)
+        {
+            var parsed = WhatsAppMessageParser.Parse(linha);
+            if (!parsed.Success) { ignorados++; continue; }
+
+            // Categoria
+            var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao)
+                             ?? await mediaService.SuggestCategoryAsync(parsed.Descricao, ct);
+
+            Categoria? cat = nomeCategoria is not null
+                ? categorias.FirstOrDefault(c => string.Equals(c.Nome, nomeCategoria, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            if (cat is null && nomeCategoria is not null)
+            {
+                cat = new Categoria(nomeCategoria, parsed.Tipo, vinculo.UserId);
+                await categoriaRepo.AddAsync(cat, ct);
+                categorias.Add(cat);
+            }
+
+            cat ??= categorias.FirstOrDefault(c =>
+                        string.Equals(c.Nome, "Outros", StringComparison.OrdinalIgnoreCase));
+
+            if (cat is null)
+            {
+                cat = new Categoria("Outros", parsed.Tipo, vinculo.UserId);
+                await categoriaRepo.AddAsync(cat, ct);
+                categorias.Add(cat);
+            }
+
+            var situacao = parsed.Tipo == TipoLancamento.Credito
+                ? SituacaoLancamento.Recebido
+                : SituacaoLancamento.Pago;
+
+            await mediator.Send(new CreateLancamentoCommand(
+                Descricao:   parsed.Descricao,
+                Data:        parsed.Data,
+                Valor:       parsed.Valor,
+                Tipo:        parsed.Tipo,
+                Situacao:    situacao,
+                Mes:         parsed.Data.Month,
+                Ano:         parsed.Data.Year,
+                CategoriaId: cat.Id), ct);
+
+            criados.Add($"• {parsed.Descricao} — R$ {parsed.Valor:N2} ({parsed.Data:dd/MM})");
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+
+        if (criados.Count == 0)
+        {
+            await sender.SendTextAsync(from, "❌ Não consegui registrar nenhum lançamento da imagem.", ct);
+            return;
+        }
+
+        var resumo = string.Join("\n", criados);
+        var extra  = ignorados > 0 ? $"\n\n_{ignorados} linha(s) ignorada(s)._" : "";
+        await sender.SendTextAsync(from,
+            $"✅ *{criados.Count} lançamento(s) registrado(s):*\n\n{resumo}{extra}", ct);
     }
 }
 

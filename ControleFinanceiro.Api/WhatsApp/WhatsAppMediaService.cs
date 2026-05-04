@@ -162,19 +162,20 @@ public class WhatsAppMediaService(
 
         const string systemPrompt = """
             Você é um assistente financeiro pessoal. O usuário enviou uma foto de
-            cupom fiscal, comprovante, nota, recibo ou tela de pagamento.
-            Extraia as informações e responda APENAS com uma linha de texto simples:
-            "<descrição breve do estabelecimento ou item> <valor total em reais> <data>"
+            cupom fiscal, comprovante, extrato, fatura de cartão ou lista de transações.
+            Extraia TODOS os lançamentos visíveis e responda com UMA LINHA POR LANÇAMENTO no formato:
+            <descrição> <valor> <data>
             Regras:
+            - Uma transação por linha, sem numeração, sem prefixos, sem explicações.
             - Valor: use vírgula como separador decimal, ex: 245,80
-            - Data: formato DD/MM/AAAA se o ano estiver visível, ou DD/MM se não. Se não houver data no comprovante, omita.
-            Exemplos de respostas válidas:
-            - Supermercado Atacadão 245,80 28/04/2026
-            - Restaurante Pizza 67,50 27/04
-            - Posto Shell gasolina 180,00 25/04/2026
-            - iFood delivery 38,90
-            Se não conseguir identificar claramente valor e descrição, responda: ERRO
-            NÃO inclua explicações, prefixos nem pontuação extra.
+            - Data: formato DD/MM/AAAA se o ano estiver visível, ou DD/MM se não. Se não houver data, omita.
+            - Inclua parcelas na descrição: ex "Lojas Renner - Parcela 1/2"
+            - Se uma linha não tiver valor claro, omita-a (não inclua ERRO).
+            Exemplos de resposta válida para um extrato com 3 itens:
+            Supermercado Atacadão 245,80 28/04/2026
+            Posto Shell gasolina 180,00 25/04
+            iFood delivery - Parcela 1/3 38,90 24/04/2026
+            NÃO inclua explicações, cabeçalhos, totais nem linhas vazias extras.
             """;
 
         var userText = string.IsNullOrWhiteSpace(caption)
@@ -233,9 +234,9 @@ public class WhatsAppMediaService(
         var extracted  = completion?.Choices?[0]?.Message?.Content?.Trim();
         logger.LogInformation("Imagem extraída: {Text}", extracted);
 
-        if (string.IsNullOrEmpty(extracted) || extracted == "ERRO")
+        if (string.IsNullOrEmpty(extracted))
             throw new InvalidOperationException(
-                "Não consegui identificar descrição e valor na imagem.");
+                "Não consegui identificar lançamentos na imagem.");
 
         return extracted;
     }
