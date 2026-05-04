@@ -485,17 +485,16 @@ public class WhatsAppController(
     private static (string BaseDesc, int Numero, int Total, string LinhaLimpa)?
         TryExtractParcelaFromLine(string linha)
     {
-        var rx = System.Text.RegularExpressions.Regex.Match;
         var ic = System.Text.RegularExpressions.RegexOptions.IgnoreCase;
-        
-        //   Aceita: hífen, en-dash, em-dash, espaços variáveis, "de" em vez de "/"
-        var m = rx(linha,
-            @"^(.*?)\s*[-–—]?\s*parcel[ao]s?\s+(\d{1,2})\s*[/]\s*(\d{1,2})(.*)",
-            ic | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        System.Text.RegularExpressions.Match m;
+
+        // Padrão 1a: "Lojas Renner - Parcela 1/2" ou "parcelas 1/2"
+        m = System.Text.RegularExpressions.Regex.Match(linha,
+            @"^(.*?)\s*[-–—]?\s*parcel[ao]s?\s+(\d{1,2})\s*[/]\s*(\d{1,2})(.*)", ic);
 
         if (!m.Success)
             // Padrão 1b: "Parcela 1 de 2"
-            m = rx(linha,
+            m = System.Text.RegularExpressions.Regex.Match(linha,
                 @"^(.*?)\s*[-–—]?\s*parcel[ao]s?\s+(\d{1,2})\s+de\s+(\d{1,2})(.*)", ic);
 
         Console.WriteLine($"[WhatsApp][parcela] linha='{linha.Trim()}' match={m.Success} g1='{m.Groups[1].Value}' g2='{m.Groups[2].Value}' g3='{m.Groups[3].Value}'");
@@ -505,35 +504,37 @@ public class WhatsAppController(
             int.TryParse(m.Groups[3].Value, out int t1) &&
             n1 >= 1 && t1 >= n1)
         {
-            string baseDesc  = m.Groups[1].Value.Trim().TrimEnd('-', '–', '—').Trim();
-            string resto     = m.Groups[4].Value.Trim();
+            string baseDesc   = m.Groups[1].Value.Trim().TrimEnd('-', '–', '—').Trim();
+            string resto      = m.Groups[4].Value.Trim();
             string linhaLimpa = string.IsNullOrWhiteSpace(baseDesc)
                 ? resto
                 : string.IsNullOrWhiteSpace(resto) ? baseDesc : $"{baseDesc} {resto}";
             return (baseDesc, n1, t1, linhaLimpa);
         }
-        
-        // Detecta "descrição - X/Y" onde Y <= 36 (max parcelas razoável)
-        m = rx(linha, @"^(.*?)\s+[-–—]\s+(\d{1,2})/(\d{1,2})\s+(.+)");
+
+        // Padrão 2: "Descrição - X/Y resto" onde Y é número razoável de parcelas (≤ 36)
+        m = System.Text.RegularExpressions.Regex.Match(linha,
+            @"^(.*?)\s+[-–—]\s+(\d{1,2})/(\d{1,2})\s+(.+)");
         if (m.Success &&
             int.TryParse(m.Groups[2].Value, out int n3) &&
             int.TryParse(m.Groups[3].Value, out int t3) &&
             n3 >= 1 && t3 >= n3 && t3 >= 2 && t3 <= 36)
         {
-            string baseDesc  = m.Groups[1].Value.Trim();
-            string resto     = m.Groups[4].Value.Trim();
+            string baseDesc = m.Groups[1].Value.Trim();
+            string resto    = m.Groups[4].Value.Trim();
             return (baseDesc, n3, t3, $"{baseDesc} {resto}");
         }
 
         // Padrão 3: "(1/2)" com parênteses
-        m = rx(linha, @"(.*?)\s+\((\d{1,2})/(\d{1,2})\)(.*)");
+        m = System.Text.RegularExpressions.Regex.Match(linha,
+            @"(.*?)\s+\((\d{1,2})/(\d{1,2})\)(.*)");
         if (m.Success &&
             int.TryParse(m.Groups[2].Value, out int n2) &&
             int.TryParse(m.Groups[3].Value, out int t2) &&
             n2 >= 1 && t2 >= n2)
         {
-            string baseDesc  = m.Groups[1].Value.Trim();
-            string resto     = m.Groups[4].Value.Trim();
+            string baseDesc   = m.Groups[1].Value.Trim();
+            string resto      = m.Groups[4].Value.Trim();
             string linhaLimpa = string.IsNullOrWhiteSpace(resto)
                 ? baseDesc
                 : $"{baseDesc} {resto}".Trim();
