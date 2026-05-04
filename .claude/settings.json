@@ -1,4 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(python graphify_update.py*)",
+      "Bash(python -m graphify*)",
+      "Bash(graphify *)",
+      "Bash(dotnet test*)",
+      "Bash(dotnet build*)",
+      "Bash(dotnet run*)",
+      "Bash(dotnet restore*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

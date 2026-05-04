@@ -18,6 +18,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<ModuleFunction> ModuleFunctions => Set<ModuleFunction>();
     public DbSet<AcceptedTerm> AcceptedTerms => Set<AcceptedTerm>();
     public DbSet<MercadoPagoSubscription> MercadoPagoSubscriptions => Set<MercadoPagoSubscription>();
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<UserRestriction> UserRestrictions => Set<UserRestriction>();
     public DbSet<Permission> Permissions => Set<Permission>();
 

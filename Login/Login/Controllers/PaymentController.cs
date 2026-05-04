@@ -1,6 +1,7 @@
 using Login.Application.Common.Interfaces;
 using Login.Application.Payments.Commands.CreateCheckout;
 using Login.Application.Payments.Commands.ProcessWebhook;
+using Login.Application.Payments.Queries.GetPaymentTransactions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -104,6 +105,20 @@ public class PaymentController : ControllerBase
             cancellationToken);
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Lista as transações de pagamento registradas.
+    /// </summary>
+    [HttpGet("transactions")]
+    [Authorize]
+    public async Task<IActionResult> GetTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken ct = default)
+    {
+        var result = await _mediator.Send(new GetPaymentTransactionsQuery(page, pageSize), ct);
+        return Ok(result);
     }
 }
 

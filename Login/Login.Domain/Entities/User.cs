@@ -25,6 +25,7 @@ public class User : Entity
     public PlanType PlanType { get; private set; }
     public DateTime? TrialStartedAt { get; private set; }
     public DateTime? PlanExpiresAt { get; private set; }
+    public bool IsPaying { get; private set; }
 
     // ── Segurança de token ───────────────────────────────────────────────────
     /// <summary>
@@ -154,6 +155,7 @@ public class User : Entity
         PlanType = PlanType.None;
         TrialStartedAt = null;
         PlanExpiresAt = null;
+        IsPaying = false;
         SetUpdated();
     }
 
@@ -162,6 +164,16 @@ public class User : Entity
     {
         PlanType = planType;
         PlanExpiresAt = expiresAt;
+        IsPaying = planType is PlanType.Monthly or PlanType.Annual;
+        SetUpdated();
+    }
+
+    /// <summary>Remove o plano pago do usuário.</summary>
+    public void ClearPlan()
+    {
+        PlanType = PlanType.None;
+        PlanExpiresAt = null;
+        IsPaying = false;
         SetUpdated();
     }
 

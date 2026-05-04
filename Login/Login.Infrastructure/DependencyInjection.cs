@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IInviteRepository, InviteRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<IPaymentTransactionRepository, PaymentTransactionRepository>();
 
         // Mercado Pago
         services.AddHttpClient<IMercadoPagoService, MercadoPagoService>();
