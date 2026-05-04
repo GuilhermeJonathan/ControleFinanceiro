@@ -100,10 +100,28 @@ public static partial class WhatsAppMessageParser
             : TipoLancamento.Debito;
 
         // 2. Valor
-        var match = ValueRegex().Match(text);
-        if (!match.Success)
+        // Estratégia: preferir match com prefixo "R$" (grupo 1).
+        // Se não houver, pegar o último número que aparece ANTES da data —
+        // evita capturar dígitos embutidos na descrição (ex: "Lusyiz019").
+        var allValues = ValueRegex().Matches(text).Cast<Match>().ToList();
+        if (allValues.Count == 0)
             return new(false, Erro:
                 "Não consegui identificar o valor 🤔\nTente: *Gasolina 150 reais*");
+
+        Match match;
+        var rMatch = allValues.FirstOrDefault(m => m.Groups[1].Success);
+        if (rMatch is not null)
+        {
+            match = rMatch;
+        }
+        else
+        {
+            // Usa o último valor antes da data (ou o último da string se não houver data)
+            var dateM = DateRegex().Match(text);
+            match = dateM.Success
+                ? (allValues.LastOrDefault(m => m.Index < dateM.Index) ?? allValues.Last())
+                : allValues.Last();
+        }
 
         var rawValue = (match.Groups[1].Success ? match.Groups[1] : match.Groups[2]).Value
             .Replace(",", ".");

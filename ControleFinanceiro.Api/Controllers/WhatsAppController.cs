@@ -211,7 +211,7 @@ public class WhatsAppController(
                     var imageText = await mediaService.ExtractFromImageAsync(
                         msg.Image!.Id, msg.Image.Caption, ct);
                     Console.WriteLine($"[WhatsApp] imagem extraída:\n{imageText}");
-                    await ProcessImageLancamentosAsync(from, imageText, ct);
+                    await ProcessImageLancamentosAsync(from, imageText, msg.Image.Caption, ct);
                     return;  // já tratado — sai sem processar como texto único
 
                 default:
@@ -342,7 +342,8 @@ public class WhatsAppController(
 
     // ── Processa múltiplos lançamentos de uma imagem ─────────────────────────
 
-    private async Task ProcessImageLancamentosAsync(string from, string imageText, CancellationToken ct)
+    private async Task ProcessImageLancamentosAsync(
+        string from, string imageText, string? caption, CancellationToken ct)
     {
         var vinculo = await vinculoRepo.GetByPhoneAsync(from, ct);
         if (vinculo is null)
@@ -354,6 +355,12 @@ public class WhatsAppController(
 
         HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
         HttpContext.Items["RealUserId"]      = vinculo.UserId;
+
+        // ── Detecta override de mês/ano na legenda ────────────────────────────
+        // Ex: "fatura maio", "maio 2025", "05/2025", "06"
+        var mesAnoOverride = TryParseMesAnoFromCaption(caption);
+        if (mesAnoOverride.HasValue)
+            Console.WriteLine($"[WhatsApp] override de data: {mesAnoOverride.Value.Mes:D2}/{mesAnoOverride.Value.Ano}");
 
         var linhas = imageText
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -379,6 +386,14 @@ public class WhatsAppController(
 
             var parsed = WhatsAppMessageParser.Parse(linhaClean);
             if (!parsed.Success) { ignorados++; continue; }
+
+            // Aplica override de mês/ano quando informado na legenda
+            if (mesAnoOverride.HasValue)
+            {
+                var (mesOvr, anoOvr) = mesAnoOverride.Value;
+                var diaOvr = Math.Min(parsed.Data.Day, DateTime.DaysInMonth(anoOvr, mesOvr));
+                parsed = parsed with { Data = new DateTime(anoOvr, mesOvr, diaOvr, 3, 0, 0, DateTimeKind.Utc) };
+            }
 
             // Categoria (usa a descrição já limpa, sem o "Parcela X/Y")
             var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao)
@@ -474,6 +489,72 @@ public class WhatsAppController(
         var extra  = ignorados > 0 ? $"\n\n_{ignorados} linha(s) ignorada(s)._" : "";
         await sender.SendTextAsync(from,
             $"✅ *{criados.Count} lançamento(s) registrado(s):*\n\n{resumo}{extra}", ct);
+    }
+
+    // ── Detecta mês/ano na legenda da imagem ─────────────────────────────────
+    /// <summary>
+    /// Tenta extrair mês e ano de strings como "fatura maio", "maio 2025",
+    /// "05/2025", "fatura 05" ou simplesmente "maio".
+    /// Usado para sobrescrever as datas extraídas da imagem.
+    /// </summary>
+    private static (int Mes, int Ano)? TryParseMesAnoFromCaption(string? caption)
+    {
+        if (string.IsNullOrWhiteSpace(caption)) return null;
+
+        var hoje = WhatsAppMessageParser.TodayBrazil();
+        var lower = caption.Trim().ToLowerInvariant();
+
+        // Nomes dos meses em português (completo e abreviado)
+        var meses = new[]
+        {
+            (new[]{"janeiro","jan"},1), (new[]{"fevereiro","fev"},2),
+            (new[]{"março","marco","mar"},3),  (new[]{"abril","abr"},4),
+            (new[]{"maio","mai"},5),           (new[]{"junho","jun"},6),
+            (new[]{"julho","jul"},7),           (new[]{"agosto","ago"},8),
+            (new[]{"setembro","set"},9),        (new[]{"outubro","out"},10),
+            (new[]{"novembro","nov"},11),        (new[]{"dezembro","dez"},12),
+        };
+
+        int? mesDet = null;
+        int  anoDet = hoje.Year;
+
+        // Busca nome do mês no texto
+        foreach (var (nomes, num) in meses)
+        {
+            if (nomes.Any(n => lower.Contains(n)))
+            {
+                mesDet = num;
+                break;
+            }
+        }
+
+        // Busca "MM/YYYY" ou "MM/YY"
+        var mMatch = System.Text.RegularExpressions.Regex.Match(lower,
+            @"\b(\d{1,2})/(\d{2,4})\b");
+        if (mMatch.Success &&
+            int.TryParse(mMatch.Groups[1].Value, out var mNum) && mNum is >= 1 and <= 12 &&
+            int.TryParse(mMatch.Groups[2].Value, out var aNum))
+        {
+            mesDet = mNum;
+            anoDet = aNum < 100 ? 2000 + aNum : aNum;
+        }
+
+        // Busca número isolado de mês (ex: "fatura 05")
+        if (mesDet is null)
+        {
+            var numMatch = System.Text.RegularExpressions.Regex.Match(lower,
+                @"\b(\d{1,2})\b");
+            if (numMatch.Success &&
+                int.TryParse(numMatch.Groups[1].Value, out var mSolo) && mSolo is >= 1 and <= 12)
+                mesDet = mSolo;
+        }
+
+        // Busca ano explícito (ex: "maio 2025")
+        var anoMatch = System.Text.RegularExpressions.Regex.Match(lower, @"\b(20\d{2})\b");
+        if (anoMatch.Success && int.TryParse(anoMatch.Groups[1].Value, out var anoExp))
+            anoDet = anoExp;
+
+        return mesDet.HasValue ? (mesDet.Value, anoDet) : null;
     }
 
     // ── Extração de parcela da linha bruta ────────────────────────────────────
