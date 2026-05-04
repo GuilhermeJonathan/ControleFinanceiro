@@ -273,8 +273,6 @@ public class WhatsAppMediaService(
         }
     }
 
-    // ── DTOs internos ─────────────────────────────────────────────────────────
-
     private record MediaUrlResponse(
         [property: JsonPropertyName("url")]       string? Url,
         [property: JsonPropertyName("mime_type")] string? MimeType);
