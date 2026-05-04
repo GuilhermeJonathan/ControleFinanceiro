@@ -372,10 +372,15 @@ public class WhatsAppController(
 
         foreach (var linha in linhas)
         {
-            var parsed = WhatsAppMessageParser.Parse(linha);
+            // Extrai parcela do texto bruto ANTES do parse para não confundir o parser
+            // (ex: "Parcela 1/2" seria interpretado como data pelo parser)
+            var parcelaRaw  = TryExtractParcelaFromLine(linha);
+            var linhaClean  = parcelaRaw.HasValue ? parcelaRaw.Value.LinhaLimpa : linha;
+
+            var parsed = WhatsAppMessageParser.Parse(linhaClean);
             if (!parsed.Success) { ignorados++; continue; }
 
-            // Categoria
+            // Categoria (usa a descrição já limpa, sem o "Parcela X/Y")
             var nomeCategoria = CategoryMatcher.Infer(parsed.Descricao)
                              ?? await mediaService.SuggestCategoryAsync(parsed.Descricao, ct);
 
@@ -400,21 +405,61 @@ public class WhatsAppController(
                 categorias.Add(cat);
             }
 
-            var situacao = parsed.Tipo == TipoLancamento.Credito
-                ? SituacaoLancamento.Recebido
-                : SituacaoLancamento.Pago;
+            if (parcelaRaw.HasValue)
+            {
+                // Cria cada parcela da atual até a última
+                string baseDesc  = parcelaRaw.Value.BaseDesc;
+                int    numero    = parcelaRaw.Value.Numero;
+                int    total     = parcelaRaw.Value.Total;
 
-            await mediator.Send(new CreateLancamentoCommand(
-                Descricao:   parsed.Descricao,
-                Data:        parsed.Data,
-                Valor:       parsed.Valor,
-                Tipo:        parsed.Tipo,
-                Situacao:    situacao,
-                Mes:         parsed.Data.Month,
-                Ano:         parsed.Data.Year,
-                CategoriaId: cat.Id), ct);
+                var situacaoBase = parsed.Tipo == TipoLancamento.Credito
+                    ? SituacaoLancamento.Recebido
+                    : SituacaoLancamento.Pago;
 
-            criados.Add($"• {parsed.Descricao} — R$ {parsed.Valor:N2} ({parsed.Data:dd/MM})");
+                for (int i = 0; i < total - numero + 1; i++)
+                {
+                    var mesBase  = parsed.Data.Month - 1 + i;
+                    var mesAtual = mesBase % 12 + 1;
+                    var anoAtual = parsed.Data.Year + mesBase / 12;
+                    var diaMax   = DateTime.DaysInMonth(anoAtual, mesAtual);
+                    var dataAtual = new DateTime(anoAtual, mesAtual,
+                        Math.Min(parsed.Data.Day, diaMax), 3, 0, 0, DateTimeKind.Utc);
+
+                    var numAtual  = numero + i;
+                    var descAtual = $"{baseDesc} ({numAtual}/{total})";
+                    var sit = i == 0 ? situacaoBase : SituacaoLancamento.AVencer;
+
+                    await mediator.Send(new CreateLancamentoCommand(
+                        Descricao:   descAtual,
+                        Data:        dataAtual,
+                        Valor:       parsed.Valor,
+                        Tipo:        parsed.Tipo,
+                        Situacao:    sit,
+                        Mes:         mesAtual,
+                        Ano:         anoAtual,
+                        CategoriaId: cat.Id), ct);
+
+                    criados.Add($"• {descAtual} — R$ {parsed.Valor:N2} ({dataAtual:dd/MM})");
+                }
+            }
+            else
+            {
+                var situacao = parsed.Tipo == TipoLancamento.Credito
+                    ? SituacaoLancamento.Recebido
+                    : SituacaoLancamento.Pago;
+
+                await mediator.Send(new CreateLancamentoCommand(
+                    Descricao:   parsed.Descricao,
+                    Data:        parsed.Data,
+                    Valor:       parsed.Valor,
+                    Tipo:        parsed.Tipo,
+                    Situacao:    situacao,
+                    Mes:         parsed.Data.Month,
+                    Ano:         parsed.Data.Year,
+                    CategoriaId: cat.Id), ct);
+
+                criados.Add($"• {parsed.Descricao} — R$ {parsed.Valor:N2} ({parsed.Data:dd/MM})");
+            }
         }
 
         await unitOfWork.SaveChangesAsync(ct);
@@ -429,6 +474,52 @@ public class WhatsAppController(
         var extra  = ignorados > 0 ? $"\n\n_{ignorados} linha(s) ignorada(s)._" : "";
         await sender.SendTextAsync(from,
             $"✅ *{criados.Count} lançamento(s) registrado(s):*\n\n{resumo}{extra}", ct);
+    }
+
+    // ── Extração de parcela da linha bruta ────────────────────────────────────
+    /// <summary>
+    /// Tenta identificar padrão "Parcela X/Y" ou "(X/Y)" na linha.
+    /// Retorna descrição base, número da parcela, total e a linha limpa
+    /// (sem o padrão de parcela) para ser repassada ao parser.
+    /// </summary>
+    private static (string BaseDesc, int Numero, int Total, string LinhaLimpa)?
+        TryExtractParcelaFromLine(string linha)
+    {
+        // "Lojas Renner - Parcela 1/2 59,95 25/04"
+        var m = System.Text.RegularExpressions.Regex.Match(
+            linha,
+            @"(.*?)\s*[-–]?\s*[Pp]arcela\s+(\d+)/(\d+)(.*)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        if (m.Success &&
+            int.TryParse(m.Groups[2].Value, out int n1) &&
+            int.TryParse(m.Groups[3].Value, out int t1) &&
+            n1 >= 1 && t1 >= n1)
+        {
+            string baseDesc  = m.Groups[1].Value.Trim();
+            string resto     = m.Groups[4].Value.Trim();
+            string linhaLimpa = string.IsNullOrWhiteSpace(resto)
+                ? baseDesc
+                : $"{baseDesc} {resto}".Trim();
+            return (baseDesc, n1, t1, linhaLimpa);
+        }
+
+        // "Lojas Renner (1/2) 59,95 25/04"
+        m = System.Text.RegularExpressions.Regex.Match(linha, @"(.*?)\s+\((\d+)/(\d+)\)(.*)");
+        if (m.Success &&
+            int.TryParse(m.Groups[2].Value, out int n2) &&
+            int.TryParse(m.Groups[3].Value, out int t2) &&
+            n2 >= 1 && t2 >= n2)
+        {
+            string baseDesc  = m.Groups[1].Value.Trim();
+            string resto     = m.Groups[4].Value.Trim();
+            string linhaLimpa = string.IsNullOrWhiteSpace(resto)
+                ? baseDesc
+                : $"{baseDesc} {resto}".Trim();
+            return (baseDesc, n2, t2, linhaLimpa);
+        }
+
+        return null;
     }
 }
 
