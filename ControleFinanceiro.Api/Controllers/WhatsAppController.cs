@@ -339,7 +339,6 @@ public class WhatsAppController(
                 $"❌ Erro ao registrar. Tente novamente.\n({ex.Message})", ct);
         }
     }
-}
 
     // ── Processa múltiplos lançamentos de uma imagem ─────────────────────────
 
