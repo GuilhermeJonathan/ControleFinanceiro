@@ -185,7 +185,7 @@ public class WhatsAppMediaService(
         var payload = new
         {
             model      = "gpt-4o-mini",
-            max_completion_tokens = 80,
+            max_completion_tokens = 600,
             messages   = new object[]
             {
                 new { role = "system", content = systemPrompt },
