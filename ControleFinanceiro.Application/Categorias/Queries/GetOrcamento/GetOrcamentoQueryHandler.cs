@@ -31,7 +31,9 @@ public class GetOrcamentoQueryHandler(
                 c.Id,
                 c.Nome,
                 c.LimiteMensal,
-                gastos.GetValueOrDefault(c.Id, 0)
+                gastos.GetValueOrDefault(c.Id, 0),
+                c.Icone,
+                c.Cor
             ))
             .Where(i => i.LimiteMensal.HasValue || i.GastoAtual > 0)
             .OrderByDescending(i => i.LimiteMensal.HasValue)

@@ -4,5 +4,7 @@ public record OrcamentoItemDto(
     Guid CategoriaId,
     string CategoriaNome,
     decimal? LimiteMensal,
-    decimal GastoAtual
+    decimal GastoAtual,
+    string? CategoriaIcone,
+    string? CategoriaCor
 );
