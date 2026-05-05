@@ -131,6 +131,15 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
         return creditos - debitos;
     }
 
+    public async Task<List<Lancamento>> GetRecorrentesAsync(Guid usuarioId, CancellationToken cancellationToken = default)
+        => await context.Lancamentos
+            .Include(l => l.Categoria)
+            .Where(l => l.UsuarioId == usuarioId
+                && l.IsRecorrente
+                && (l.Tipo == Domain.Enums.TipoLancamento.Debito || l.Tipo == Domain.Enums.TipoLancamento.Pix))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
     public async Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(
         string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default)
     {
@@ -160,4 +169,9 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
 
         return (itens, total);
     }
+
+    public async Task NullCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default)
+        => await context.Lancamentos
+            .Where(l => l.CategoriaId == categoriaId)
+            .ExecuteUpdateAsync(s => s.SetProperty(l => l.CategoriaId, (Guid?)null), cancellationToken);
 }

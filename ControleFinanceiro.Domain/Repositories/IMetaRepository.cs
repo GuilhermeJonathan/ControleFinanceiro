@@ -9,4 +9,5 @@ public interface IMetaRepository
     Task AddAsync(Meta meta, CancellationToken ct);
     void Update(Meta meta);
     void Remove(Meta meta);
+    Task<List<Meta>> GetAllWithContribuicaoAsync(CancellationToken cancellationToken);
 }

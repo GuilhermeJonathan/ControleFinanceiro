@@ -14,7 +14,7 @@ public class GetCategoriasQueryHandler(ICategoriaRepository repository, ICurrent
         var pageSize = Math.Max(1, request.PageSize);
 
         var (itens, total) = await repository.GetPagedAsync(currentUser.UserId, page, pageSize, cancellationToken);
-        var dtos = itens.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo, c.LimiteMensal)).ToList();
+        var dtos = itens.Select(c => new CategoriaDto(c.Id, c.Nome, c.Tipo, c.LimiteMensal, c.Icone, c.Cor)).ToList();
         return new PagedResult<CategoriaDto>(dtos, total, page, pageSize);
     }
 }

@@ -22,4 +22,7 @@ public interface ILancamentoRepository
     Task<(IEnumerable<Lancamento> Itens, int TotalCount)> SearchAsync(string q, int page, int pageSize, Guid usuarioId, CancellationToken cancellationToken = default);
     /// <summary>Retorna créditos − débitos de todos os lançamentos até (e incluindo) o mês/ano informado.</summary>
     Task<decimal> GetSaldoAcumuladoAsync(int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default);
+    /// <summary>Retorna todos os lançamentos recorrentes de débito do usuário (assinaturas).</summary>
+    Task<List<Lancamento>> GetRecorrentesAsync(Guid usuarioId, CancellationToken cancellationToken = default);
+    Task NullCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default);
 }

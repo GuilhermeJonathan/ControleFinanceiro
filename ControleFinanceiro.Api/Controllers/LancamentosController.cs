@@ -11,6 +11,7 @@ using ControleFinanceiro.Application.Lancamentos.Queries.GetAnaliseDividas;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetDicas;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosBusca;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetLancamentosByMes;
+using ControleFinanceiro.Application.Lancamentos.Queries.GetAssinaturas;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetParceladosVigentes;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetProjecao;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetResumoAnual;
@@ -36,6 +37,10 @@ public class LancamentosController(IMediator mediator) : ControllerBase
     [HttpGet("dicas/{mes}/{ano}")]
     public async Task<IActionResult> GetDicas(int mes, int ano, CancellationToken ct)
         => Ok(await mediator.Send(new GetDicasQuery(mes, ano), ct));
+
+    [HttpGet("assinaturas")]
+    public async Task<IActionResult> GetAssinaturas(CancellationToken ct)
+        => Ok(await mediator.Send(new GetAssinaturasQuery(), ct));
 
     [HttpGet("parcelados-vigentes")]
     public async Task<IActionResult> GetParceladosVigentes(CancellationToken ct)

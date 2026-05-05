@@ -2,6 +2,7 @@ using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Repositories;
 using ControleFinanceiro.Infrastructure.Persistence;
 using ControleFinanceiro.Infrastructure.Persistence.Repositories;
+using ControleFinanceiro.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped<IVinculoFamiliarRepository, VinculoFamiliarRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
         services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
+
+        services.AddHostedService<MetaContribuicaoService>();
 
         return services;
     }

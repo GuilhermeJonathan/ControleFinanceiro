@@ -1,4 +1,5 @@
 using ControleFinanceiro.Domain.Entities;
+using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,4 +20,10 @@ public class MetaRepository(AppDbContext db) : IMetaRepository
 
     public void Update(Meta meta) => db.Metas.Update(meta);
     public void Remove(Meta meta) => db.Metas.Remove(meta);
+
+    public async Task<List<Meta>> GetAllWithContribuicaoAsync(CancellationToken cancellationToken)
+        => await db.Metas
+            .Where(m => m.ContribuicaoMensalValor.HasValue && m.Status == StatusMeta.Ativa)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
 }

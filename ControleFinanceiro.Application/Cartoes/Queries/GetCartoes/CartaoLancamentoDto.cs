@@ -10,5 +10,7 @@ public record CartaoLancamentoDto(
     SituacaoLancamento Situacao,
     int? ParcelaAtual,
     int? TotalParcelas,
-    string? CategoriaNome
+    string? CategoriaNome,
+    string? CategoriaIcone,
+    string? CategoriaCor
 );

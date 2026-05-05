@@ -16,4 +16,4 @@ public record DashboardDto(
     decimal? ComprometimentoRenda  // Débitos ÷ Créditos × 100. Null se sem receita.
 );
 
-public record ResumoCategoriaDto(string Categoria, decimal Total);
+public record ResumoCategoriaDto(string Categoria, decimal Total, string? Icone, string? Cor);

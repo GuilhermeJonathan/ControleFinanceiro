@@ -15,6 +15,7 @@ public class MetaConfiguration : IEntityTypeConfiguration<Meta>
         builder.Property(m => m.ValorAtual).HasPrecision(18, 2);
         builder.Property(m => m.Capa).HasMaxLength(50);
         builder.Property(m => m.CorFundo).HasMaxLength(20);
+        builder.Property(m => m.ContribuicaoMensalValor).HasPrecision(18, 2);
         builder.HasIndex(m => m.UsuarioId);
     }
 }

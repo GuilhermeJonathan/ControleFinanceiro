@@ -24,8 +24,8 @@ public class GetDashboardQueryHandler(
 
         var resumo = lancamentos
             .Where(l => l.Tipo == TipoLancamento.Debito || l.Tipo == TipoLancamento.Pix)
-            .GroupBy(l => l.Categoria?.Nome ?? "Sem Categoria")
-            .Select(g => new ResumoCategoriaDto(g.Key, g.Sum(l => l.Valor)))
+            .GroupBy(l => new { Nome = l.Categoria?.Nome ?? "Sem Categoria", l.Categoria?.Icone, l.Categoria?.Cor })
+            .Select(g => new ResumoCategoriaDto(g.Key.Nome, g.Sum(l => l.Valor), g.Key.Icone, g.Key.Cor))
             .OrderByDescending(r => r.Total);
 
         // Mês anterior para calcular variação

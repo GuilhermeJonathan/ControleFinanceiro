@@ -15,6 +15,8 @@ public record LancamentoBuscaItemDto(
     int Ano,
     Guid? CategoriaId,
     string? CategoriaNome,
+    string? CategoriaIcone,
+    string? CategoriaCor,
     Guid? CartaoId,
     string? CartaoNome,
     int? ParcelaAtual,

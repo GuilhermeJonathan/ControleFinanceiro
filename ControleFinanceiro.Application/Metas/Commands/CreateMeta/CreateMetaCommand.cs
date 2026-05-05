@@ -12,7 +12,9 @@ public record CreateMetaCommand(
     decimal ValorMeta,
     DateTime? DataMeta,
     string? Capa,
-    string? CorFundo) : IRequest<Guid>;
+    string? CorFundo,
+    decimal? ContribuicaoMensalValor = null,
+    int? ContribuicaoDia = null) : IRequest<Guid>;
 
 public class CreateMetaCommandHandler(
     IMetaRepository repo,
@@ -22,6 +24,9 @@ public class CreateMetaCommandHandler(
     public async Task<Guid> Handle(CreateMetaCommand r, CancellationToken ct)
     {
         var meta = new Meta(currentUser.UserId, r.Titulo, r.Descricao, r.ValorMeta, r.DataMeta, r.Capa, r.CorFundo);
+        if (r.ContribuicaoMensalValor.HasValue || r.ContribuicaoDia.HasValue)
+            meta.Atualizar(r.Titulo, r.Descricao, r.ValorMeta, r.DataMeta, r.Capa, r.CorFundo,
+                r.ContribuicaoMensalValor, r.ContribuicaoDia);
         await repo.AddAsync(meta, ct);
         await uow.SaveChangesAsync(ct);
         return meta.Id;

@@ -14,7 +14,7 @@ public class CreateCategoriaCommandHandler(
 {
     public async Task<Guid> Handle(CreateCategoriaCommand request, CancellationToken cancellationToken)
     {
-        var categoria = new Categoria(request.Nome, request.Tipo, currentUser.UserId);
+        var categoria = new Categoria(request.Nome, request.Tipo, currentUser.UserId, request.Icone, request.Cor);
         await repository.AddAsync(categoria, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return categoria.Id;

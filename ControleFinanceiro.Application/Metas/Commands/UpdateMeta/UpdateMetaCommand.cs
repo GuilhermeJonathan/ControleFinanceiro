@@ -11,7 +11,9 @@ public record UpdateMetaCommand(
     decimal ValorMeta,
     DateTime? DataMeta,
     string? Capa,
-    string? CorFundo) : IRequest;
+    string? CorFundo,
+    decimal? ContribuicaoMensalValor = null,
+    int? ContribuicaoDia = null) : IRequest;
 
 public class UpdateMetaCommandHandler(
     IMetaRepository repo,
@@ -21,7 +23,8 @@ public class UpdateMetaCommandHandler(
     {
         var meta = await repo.GetByIdAsync(r.Id, ct)
             ?? throw new KeyNotFoundException("Meta não encontrada.");
-        meta.Atualizar(r.Titulo, r.Descricao, r.ValorMeta, r.DataMeta, r.Capa, r.CorFundo);
+        meta.Atualizar(r.Titulo, r.Descricao, r.ValorMeta, r.DataMeta, r.Capa, r.CorFundo,
+            r.ContribuicaoMensalValor, r.ContribuicaoDia);
         repo.Update(meta);
         await uow.SaveChangesAsync(ct);
     }

@@ -26,8 +26,8 @@ public class GetResumoAnualQueryHandler(
         // Agrega categorias de débito no ano todo
         var topCats = lancamentos
             .Where(l => l.Tipo != TipoLancamento.Credito)
-            .GroupBy(l => l.Categoria?.Nome ?? "Sem Categoria")
-            .Select(g => new ResumoCatAnualDto(g.Key, g.Sum(l => l.Valor)))
+            .GroupBy(l => new { Nome = l.Categoria?.Nome ?? "Sem Categoria", l.Categoria?.Icone, l.Categoria?.Cor })
+            .Select(g => new ResumoCatAnualDto(g.Key.Nome, g.Sum(l => l.Valor), g.Key.Icone, g.Key.Cor))
             .OrderByDescending(c => c.Total)
             .Take(8)
             .ToList();

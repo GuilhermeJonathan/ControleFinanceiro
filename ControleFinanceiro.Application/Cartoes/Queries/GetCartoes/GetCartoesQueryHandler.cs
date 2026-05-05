@@ -27,7 +27,7 @@ public class GetCartoesQueryHandler(
 
             var dtos = lancamentos.Select(l => new CartaoLancamentoDto(
                 l.Id, l.Descricao, l.Valor, l.Data, l.Situacao,
-                l.ParcelaAtual, l.TotalParcelas, l.Categoria?.Nome));
+                l.ParcelaAtual, l.TotalParcelas, l.Categoria?.Nome, l.Categoria?.Icone, l.Categoria?.Cor));
 
             result.Add(new CartaoDto(
                 cartao.Id,

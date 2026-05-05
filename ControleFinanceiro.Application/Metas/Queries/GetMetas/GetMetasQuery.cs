@@ -15,7 +15,9 @@ public record MetaDto(
     StatusMeta Status,
     string? Capa,
     string? CorFundo,
-    DateTime CriadoEm);
+    DateTime CriadoEm,
+    decimal? ContribuicaoMensalValor,
+    int? ContribuicaoDia);
 
 public record GetMetasQuery : IRequest<IEnumerable<MetaDto>>;
 
@@ -28,6 +30,7 @@ public class GetMetasQueryHandler(
         var metas = await repo.GetAllAsync(currentUser.UserId, ct);
         return metas.Select(m => new MetaDto(
             m.Id, m.Titulo, m.Descricao, m.ValorMeta, m.ValorAtual,
-            m.DataMeta, m.Status, m.Capa, m.CorFundo, m.CriadoEm));
+            m.DataMeta, m.Status, m.Capa, m.CorFundo, m.CriadoEm,
+            m.ContribuicaoMensalValor, m.ContribuicaoDia));
     }
 }

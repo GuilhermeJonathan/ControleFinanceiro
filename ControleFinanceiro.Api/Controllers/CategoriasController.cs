@@ -1,6 +1,7 @@
 using ControleFinanceiro.Application.Categorias.Commands.AtualizarLimiteCategoria;
 using ControleFinanceiro.Application.Categorias.Commands.CreateCategoria;
 using ControleFinanceiro.Application.Categorias.Commands.DeleteCategoria;
+using ControleFinanceiro.Application.Categorias.Commands.UpdateCategoria;
 using ControleFinanceiro.Application.Categorias.Queries.GetCategorias;
 using ControleFinanceiro.Application.Categorias.Queries.GetOrcamento;
 using MediatR;
@@ -23,6 +24,13 @@ public class CategoriasController(IMediator mediator) : ControllerBase
     {
         var id = await mediator.Send(command, ct);
         return Created(string.Empty, new { id });
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoriaCommand command, CancellationToken ct)
+    {
+        await mediator.Send(command with { Id = id }, ct);
+        return NoContent();
     }
 
     [HttpPatch("{id}/limite")]

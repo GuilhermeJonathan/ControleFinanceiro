@@ -20,7 +20,7 @@ public class GetLancamentosByMesQueryHandler(
 
         var dtos = lancamentos.Select(l => new LancamentoDto(
             l.Id, l.Descricao, l.Data, l.Valor, l.Tipo, l.Situacao,
-            l.Mes, l.Ano, l.CategoriaId, l.Categoria?.Nome,
+            l.Mes, l.Ano, l.CategoriaId, l.Categoria?.Nome, l.Categoria?.Icone, l.Categoria?.Cor,
             l.CartaoId, l.Cartao?.Nome, l.ParcelaAtual, l.TotalParcelas, l.GrupoParcelas,
             l.Cartao?.DiaVencimento,
             l.ReceitaRecorrenteId,

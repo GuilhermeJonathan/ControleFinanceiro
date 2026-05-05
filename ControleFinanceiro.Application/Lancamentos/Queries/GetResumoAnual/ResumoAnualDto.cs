@@ -9,7 +9,9 @@ public record ResumoMesDto(
 
 public record ResumoCatAnualDto(
     string Categoria,
-    decimal Total
+    decimal Total,
+    string? Icone,
+    string? Cor
 );
 
 public record ResumoAnualDto(

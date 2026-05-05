@@ -28,6 +28,8 @@ public class GetLancamentosBuscaQueryHandler(
             l.Ano,
             l.CategoriaId,
             l.Categoria?.Nome,
+            l.Categoria?.Icone,
+            l.Categoria?.Cor,
             l.CartaoId,
             l.Cartao?.Nome,
             l.ParcelaAtual,
