@@ -61,7 +61,8 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedResult<U
                 u.TrialStartedAt,
                 plan.TrialEndsAt,
                 plan.IsTrialExpired,
-                plan.TrialDaysRemaining);
+                plan.TrialDaysRemaining,
+                u.PodeVerImoveis);
         }).ToList();
 
         return new PagedResult<UserDto>(items, totalCount, request.CurrentPage, request.PageSize);

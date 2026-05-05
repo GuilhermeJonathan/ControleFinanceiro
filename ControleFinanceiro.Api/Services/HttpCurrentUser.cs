@@ -42,4 +42,16 @@ public class HttpCurrentUser : ICurrentUser
         _accessor.HttpContext?.User.FindFirstValue("name")
         ?? _accessor.HttpContext?.User.FindFirstValue("unique_name")
         ?? _accessor.HttpContext?.User.FindFirstValue("email");
+
+    /// <summary>Usuário tem permissão para ver e editar todos os imóveis.</summary>
+    public bool PodeVerImoveis
+    {
+        get
+        {
+            var claim = _accessor.HttpContext?.User.FindFirstValue("podeVerImoveis");
+            // Admin (userType=1) também tem acesso global
+            var userType = _accessor.HttpContext?.User.FindFirstValue("userType");
+            return claim == "true" || userType == "1";
+        }
+    }
 }

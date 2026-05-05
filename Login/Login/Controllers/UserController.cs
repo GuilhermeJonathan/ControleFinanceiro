@@ -1,5 +1,6 @@
 using Login.Application.Users.Commands.Authenticate;
 using Login.Application.Users.Commands.BlockUser;
+using Login.Application.Users.Commands.SetPodeVerImoveis;
 using Login.Application.Users.Commands.SetPlan;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
@@ -283,6 +284,15 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Admin: concede ou revoga permissão de ver imóveis.</summary>
+    [HttpPatch("{id:guid}/pode-ver-imoveis")]
+    [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> SetPodeVerImoveis(Guid id, [FromBody] SetPodeVerImoveisRequest body, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new SetPodeVerImoveisCommand(id, body.Value), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Admin: define o plano de um usuário.</summary>
     [HttpPatch("{id:guid}/plan")]
     [Authorize(Policy = "Admin")]
@@ -303,6 +313,7 @@ public class UserController : ControllerBase
 }
 
 public record SetBlockRequest(bool Block);
+public record SetPodeVerImoveisRequest(bool Value);
 public record SetPlanRequest(int PlanType, int? TrialDays);
 public record UpdateAvatarRequest(string? AvatarUrl);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

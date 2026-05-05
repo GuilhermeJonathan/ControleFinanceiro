@@ -3,6 +3,7 @@ using System;
 using ControleFinanceiro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ControleFinanceiro.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260505211253_AddImovelTipo")]
+    partial class AddImovelTipo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -185,36 +188,6 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Imoveis");
-                });
-
-            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ImovelComentario", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ImovelId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Texto")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ImovelId");
-
-                    b.ToTable("ImovelComentarios");
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ImovelFoto", b =>
@@ -595,17 +568,6 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.ToTable("WhatsAppVinculos");
                 });
 
-            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ImovelComentario", b =>
-                {
-                    b.HasOne("ControleFinanceiro.Domain.Entities.Imovel", "Imovel")
-                        .WithMany("Comentarios")
-                        .HasForeignKey("ImovelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Imovel");
-                });
-
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ImovelFoto", b =>
                 {
                     b.HasOne("ControleFinanceiro.Domain.Entities.Imovel", "Imovel")
@@ -672,7 +634,6 @@ namespace ControleFinanceiro.Infrastructure.Migrations
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Imovel", b =>
                 {
                     b.Navigation("Fotos");
-                    b.Navigation("Comentarios");
                 });
 #pragma warning restore 612, 618
         }

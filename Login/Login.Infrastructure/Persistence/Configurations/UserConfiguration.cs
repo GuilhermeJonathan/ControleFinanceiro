@@ -26,6 +26,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.TrialStartedAt);
         builder.Property(u => u.PlanExpiresAt);
 
+        builder.Property(u => u.PodeVerImoveis).HasDefaultValue(false);
+
         builder.HasIndex(u => u.Email).IsUnique();
         builder.HasIndex(u => u.Document);
 

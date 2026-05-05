@@ -29,6 +29,10 @@ public class User : Entity
     public bool TrialD7EmailSent { get; private set; }
     public bool TrialD1EmailSent { get; private set; }
 
+    // ── Permissões extras ────────────────────────────────────────────────────
+    /// <summary>Permite ver e editar imóveis de todos os usuários.</summary>
+    public bool PodeVerImoveis { get; private set; }
+
     // ── Segurança de token ───────────────────────────────────────────────────
     /// <summary>
     /// Tokens emitidos ANTES deste instante são considerados revogados.
@@ -172,6 +176,8 @@ public class User : Entity
 
     public void MarkTrialD7EmailSent() { TrialD7EmailSent = true; SetUpdated(); }
     public void MarkTrialD1EmailSent() { TrialD1EmailSent = true; SetUpdated(); }
+
+    public void SetPodeVerImoveis(bool value) { PodeVerImoveis = value; SetUpdated(); }
 
     /// <summary>Remove o plano pago do usuário.</summary>
     public void ClearPlan()
