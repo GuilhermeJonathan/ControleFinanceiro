@@ -141,6 +141,7 @@ builder.Services.AddCors(options =>
 // Camadas CQRS + Clean Architecture
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHostedService<Login.Infrastructure.Services.TrialExpirationEmailService>();
 
 // IUserAccessor — resolve via HttpContext
 builder.Services.AddScoped<IUserAccessor, Login.Infrastructure.HttpUserAccessor>();

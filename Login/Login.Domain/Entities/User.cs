@@ -26,6 +26,8 @@ public class User : Entity
     public DateTime? TrialStartedAt { get; private set; }
     public DateTime? PlanExpiresAt { get; private set; }
     public bool IsPaying { get; private set; }
+    public bool TrialD7EmailSent { get; private set; }
+    public bool TrialD1EmailSent { get; private set; }
 
     // ── Segurança de token ───────────────────────────────────────────────────
     /// <summary>
@@ -167,6 +169,9 @@ public class User : Entity
         IsPaying = planType is PlanType.Monthly or PlanType.Annual;
         SetUpdated();
     }
+
+    public void MarkTrialD7EmailSent() { TrialD7EmailSent = true; SetUpdated(); }
+    public void MarkTrialD1EmailSent() { TrialD1EmailSent = true; SetUpdated(); }
 
     /// <summary>Remove o plano pago do usuário.</summary>
     public void ClearPlan()

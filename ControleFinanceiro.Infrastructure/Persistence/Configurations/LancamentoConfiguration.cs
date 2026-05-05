@@ -28,5 +28,8 @@ public class LancamentoConfiguration : IEntityTypeConfiguration<Lancamento>
 
         builder.Property(l => l.UsuarioId).IsRequired();
         builder.HasIndex(l => l.UsuarioId);
+
+        builder.Property(x => x.TransferenciaId).IsRequired(false);
+        builder.HasIndex(x => x.TransferenciaId).HasFilter("\"TransferenciaId\" IS NOT NULL");
     }
 }

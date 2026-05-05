@@ -21,6 +21,7 @@ public class Lancamento : Entity
     public bool IsRecorrente { get; private set; }
     public Guid? ContaBancariaId { get; private set; }
     public DateTime? DataPagamento { get; private set; }
+    public Guid? TransferenciaId { get; private set; }
     public Guid UsuarioId { get; private set; }
     /// <summary>ID de quem realmente criou o lançamento (pode ser membro da família)</summary>
     public Guid? CriadoPorId { get; private set; }
@@ -39,7 +40,8 @@ public class Lancamento : Entity
         Guid? cartaoId = null, int? parcelaAtual = null, int? totalParcelas = null,
         Guid? grupoParcelas = null, Guid? receitaRecorrenteId = null,
         bool isRecorrente = false, Guid usuarioId = default,
-        Guid? criadoPorId = null, string? criadoPorNome = null)
+        Guid? criadoPorId = null, string? criadoPorNome = null,
+        Guid? transferenciaId = null)
         : base(Guid.NewGuid())
     {
         UsuarioId = usuarioId;
@@ -59,6 +61,7 @@ public class Lancamento : Entity
         GrupoParcelas = grupoParcelas;
         ReceitaRecorrenteId = receitaRecorrenteId;
         IsRecorrente = isRecorrente;
+        TransferenciaId = transferenciaId;
     }
 
     public void Update(string descricao, DateTime data, decimal valor, TipoLancamento tipo,
@@ -100,6 +103,12 @@ public class Lancamento : Entity
     public void SetContaBancaria(Guid? contaBancariaId)
     {
         ContaBancariaId = contaBancariaId;
+        SetUpdated();
+    }
+
+    public void SetTransferenciaId(Guid id)
+    {
+        TransferenciaId = id;
         SetUpdated();
     }
 

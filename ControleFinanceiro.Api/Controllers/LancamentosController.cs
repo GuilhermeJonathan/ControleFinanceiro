@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Lancamentos.Commands.AtualizarSituacao;
+using ControleFinanceiro.Application.Lancamentos.Commands.CreateTransferencia;
 using ControleFinanceiro.Application.Lancamentos.Commands.DeleteGrupoParcelas;
 using ControleFinanceiro.Application.Lancamentos.Commands.DeleteParcelasFuturas;
 using ControleFinanceiro.Application.Lancamentos.Commands.CreateLancamento;
@@ -115,5 +116,13 @@ public class LancamentosController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new DeleteGrupoParcelasCommand(grupoParcelas), ct);
         return NoContent();
+    }
+
+    [HttpPost("transferencia")]
+    public async Task<IActionResult> CreateTransferencia(
+        [FromBody] CreateTransferenciaCommand command, CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return Ok(result);
     }
 }
