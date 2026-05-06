@@ -41,8 +41,8 @@ public class ChangePasswordCommandHandlerTests
             .Setup(r => r.GetByIdAsync(_userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("oldpassword", "old_hash"))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync("oldpassword", "old_hash"))
+            .ReturnsAsync(true);
         _cryptoMock
             .Setup(c => c.Hash("newpassword123"))
             .Returns("new_hash");
@@ -67,8 +67,8 @@ public class ChangePasswordCommandHandlerTests
             .Setup(r => r.GetByIdAsync(_userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("wrongpassword", "old_hash"))
-            .Returns(false);
+            .Setup(c => c.VerifyAsync("wrongpassword", "old_hash"))
+            .ReturnsAsync(false);
 
         var command = new ChangePasswordCommand("wrongpassword", "newpassword123");
 
@@ -86,8 +86,8 @@ public class ChangePasswordCommandHandlerTests
             .Setup(r => r.GetByIdAsync(_userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("oldpassword", "old_hash"))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync("oldpassword", "old_hash"))
+            .ReturnsAsync(true);
 
         var command = new ChangePasswordCommand("oldpassword", "123");
 
@@ -120,8 +120,8 @@ public class ChangePasswordCommandHandlerTests
             .Setup(r => r.GetByIdAsync(_userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("oldpassword", "old_hash"))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync("oldpassword", "old_hash"))
+            .ReturnsAsync(true);
         _cryptoMock
             .Setup(c => c.Hash(It.IsAny<string>()))
             .Returns("new_hash");

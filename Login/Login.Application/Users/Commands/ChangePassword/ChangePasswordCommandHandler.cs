@@ -29,7 +29,7 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
         var user = await _userRepository.GetByIdAsync(_userAccessor.UserId, cancellationToken)
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
-        if (!_cryptography.Verify(request.CurrentPassword, user.PasswordHash))
+        if (!await _cryptography.VerifyAsync(request.CurrentPassword, user.PasswordHash))
             throw new UnauthorizedAccessException("Senha atual incorreta.");
 
         if (request.NewPassword.Length < 6)

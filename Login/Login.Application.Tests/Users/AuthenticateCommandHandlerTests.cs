@@ -53,8 +53,8 @@ public class AuthenticateCommandHandlerTests
             .Setup(r => r.GetByEmailAsync("joao@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("password123", "hashed_pass"))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync("password123", "hashed_pass"))
+            .ReturnsAsync(true);
 
         var command = new AuthenticateCommand("joao@example.com", "password123", null, null);
 
@@ -91,8 +91,8 @@ public class AuthenticateCommandHandlerTests
             .Setup(r => r.GetByEmailAsync("joao@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("wrongpassword", "hashed_pass"))
-            .Returns(false);
+            .Setup(c => c.VerifyAsync("wrongpassword", "hashed_pass"))
+            .ReturnsAsync(false);
 
         var command = new AuthenticateCommand("joao@example.com", "wrongpassword", null, null);
 
@@ -111,8 +111,8 @@ public class AuthenticateCommandHandlerTests
             .Setup(r => r.GetByEmailAsync("joao@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         var command = new AuthenticateCommand("joao@example.com", "password123", null, null);
 
@@ -130,8 +130,8 @@ public class AuthenticateCommandHandlerTests
             .Setup(r => r.GetByEmailAsync("joao@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _cryptoMock
-            .Setup(c => c.Verify("password123", "hashed_pass"))
-            .Returns(true);
+            .Setup(c => c.VerifyAsync("password123", "hashed_pass"))
+            .ReturnsAsync(true);
 
         var command = new AuthenticateCommand("joao@example.com", "password123", null, null);
 

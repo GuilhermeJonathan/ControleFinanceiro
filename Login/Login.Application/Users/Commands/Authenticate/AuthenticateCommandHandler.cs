@@ -39,7 +39,7 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, A
         if (!user.IsActive || user.IsBlocked)
             throw new UnauthorizedAccessException("Usuário inativo ou bloqueado.");
 
-        if (!_cryptography.Verify(request.Password, user.PasswordHash))
+        if (!await _cryptography.VerifyAsync(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Credenciais inválidas.");
 
         user.RegisterLogin();
