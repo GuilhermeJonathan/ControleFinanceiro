@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 using Login.Application;
 using Login.Application.Common.Interfaces;
 using Login.Extensions;
@@ -89,19 +90,33 @@ builder.Services.AddAuthentication(options =>
             var nameId = context.Principal?.FindFirst(JwtRegisteredClaimNames.NameId)?.Value;
             if (!Guid.TryParse(nameId, out var userId)) { context.Fail("Token inválido."); return; }
 
-            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+            var cacheKey = $"usr_status_{userId}";
 
-            if (user is null || !user.IsActive || user.IsBlocked)
+            if (!cache.TryGetValue(cacheKey, out (bool IsActive, bool IsBlocked, DateTime? TokenRevokedAt) status))
+            {
+                var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                var row = await db.Users.AsNoTracking()
+                    .Where(u => u.Id == userId)
+                    .Select(u => new { u.IsActive, u.IsBlocked, u.TokenRevokedAt })
+                    .FirstOrDefaultAsync();
+
+                if (row is null) { context.Fail("Usuário não encontrado."); return; }
+
+                status = (row.IsActive, row.IsBlocked, row.TokenRevokedAt);
+                cache.Set(cacheKey, status, TimeSpan.FromMinutes(2));
+            }
+
+            if (!status.IsActive || status.IsBlocked)
             { context.Fail("Usuário inativo ou bloqueado."); return; }
 
-            if (user.TokenRevokedAt.HasValue)
+            if (status.TokenRevokedAt.HasValue)
             {
                 var iatClaim = context.Principal?.FindFirst(JwtRegisteredClaimNames.Iat)?.Value;
                 if (long.TryParse(iatClaim, out var iatUnix))
                 {
                     var tokenIssuedAt = DateTimeOffset.FromUnixTimeSeconds(iatUnix).UtcDateTime;
-                    if (tokenIssuedAt < user.TokenRevokedAt.Value)
+                    if (tokenIssuedAt < status.TokenRevokedAt.Value)
                     { context.Fail("Token revogado."); return; }
                 }
             }
@@ -117,6 +132,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
 
 // CORS: permite apenas origens conhecidas em produção
 var allowedOrigins = new[]
@@ -142,6 +158,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHostedService<Login.Infrastructure.Services.TrialExpirationEmailService>();
+builder.Services.AddHostedService<Login.Infrastructure.Services.WarmupService>();
 
 // IUserAccessor — resolve via HttpContext
 builder.Services.AddScoped<IUserAccessor, Login.Infrastructure.HttpUserAccessor>();
