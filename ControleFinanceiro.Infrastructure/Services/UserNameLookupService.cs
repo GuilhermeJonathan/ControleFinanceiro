@@ -8,12 +8,18 @@ public class UserNameLookupService(AppDbContext db) : IUserNameLookup
 {
     public async Task<string?> GetNomeAsync(Guid userId, CancellationToken ct = default)
     {
-        var result = await db.Database
-            .SqlQueryRaw<string>(
-                "SELECT \"Name\" AS \"Value\" FROM \"Users\" WHERE \"Id\" = {0} LIMIT 1",
-                userId)
-            .FirstOrDefaultAsync(ct);
+        var conn = db.Database.GetDbConnection();
+        if (conn.State != System.Data.ConnectionState.Open)
+            await conn.OpenAsync(ct);
 
-        return result;
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT \"Name\" FROM \"Users\" WHERE \"Id\" = @id LIMIT 1";
+        var p = cmd.CreateParameter();
+        p.ParameterName = "id";
+        p.Value = userId;
+        cmd.Parameters.Add(p);
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return result as string;
     }
 }
