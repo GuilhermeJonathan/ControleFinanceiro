@@ -24,7 +24,8 @@ public class WhatsAppController(
     IConfiguration config,
     IWebHostEnvironment env,
     IVendaRepository vendaRepo,
-    IProdutoRepository produtoRepo) : ControllerBase
+    IProdutoRepository produtoRepo,
+    IUserNameLookup userNameLookup) : ControllerBase
 {
     // ── Endpoints de teste (somente em Development) ───────────────────────────
 
@@ -637,6 +638,16 @@ public class WhatsAppController(
 
     // ── Processa venda via WhatsApp ───────────────────────────────────────────
 
+    // Formata número "5511999990000" → "+55 (11) 99999-0000"
+    private static string FormatPhone(string digits)
+    {
+        if (digits.Length == 13 && digits.StartsWith("55")) // +55 DD 9XXXX-XXXX
+            return $"+55 ({digits[2..4]}) {digits[4..9]}-{digits[9..]}";
+        if (digits.Length == 12 && digits.StartsWith("55")) // +55 DD XXXX-XXXX
+            return $"+55 ({digits[2..4]}) {digits[4..8]}-{digits[8..]}";
+        return $"+{digits}";
+    }
+
     // Remove vírgulas separadoras de palavras que o Whisper insere na transcrição
     // (ex: "Venda, produto, teste, 160,00" → "Venda produto teste 160,00")
     // Preserva vírgula decimal ("160,00") pois não é seguida de espaço.
@@ -675,6 +686,9 @@ public class WhatsAppController(
         }
 
         // Cria a venda
+        var nomeUsuario = await userNameLookup.GetNomeAsync(vinculo.UserId, ct)
+                          ?? FormatPhone(vinculo.PhoneNumber);
+
         var venda = new Venda(
             usuarioId:     vinculo.UserId,
             produtoId:     produto.Id,
@@ -682,7 +696,7 @@ public class WhatsAppController(
             valor:         parsed.Valor,
             data:          parsed.Data,
             origem:        OrigemVenda.WhatsApp,
-            criadoPorNome: "WhatsApp");
+            criadoPorNome: nomeUsuario);
 
         await vendaRepo.AddAsync(venda, ct);
         await unitOfWork.SaveChangesAsync(ct);

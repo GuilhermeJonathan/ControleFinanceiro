@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Repositories;
 using ControleFinanceiro.Infrastructure.Persistence;
@@ -40,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<IImovelRepository, ImovelRepository>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<IVendaRepository, VendaRepository>();
+
+        services.AddScoped<IUserNameLookup, UserNameLookupService>();
 
         services.AddHostedService<MetaContribuicaoService>();
 
