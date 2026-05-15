@@ -204,7 +204,7 @@ public class WhatsAppController(
 
                 case "audio":
                     await sender.SendTextAsync(from, "🎙️ Transcrevendo seu áudio...", ct);
-                    text = await mediaService.TranscribeAudioAsync(msg.Audio!.Id, ct);
+                    text = NormalizeTranscription(await mediaService.TranscribeAudioAsync(msg.Audio!.Id, ct));
                     Console.WriteLine($"[WhatsApp] áudio transcrito: {text}");
                     break;
 
@@ -240,6 +240,7 @@ public class WhatsAppController(
             var replyTo = vinculo.PhoneNumber;
 
             // ── Verifica se é uma venda ───────────────────────────────────────────────
+            Console.WriteLine($"[WhatsApp] texto=\"{text}\" | isVenda={WhatsAppMessageParser.IsVenda(text)}");
             if (WhatsAppMessageParser.IsVenda(text))
             {
                 await ProcessVendaAsync(from, text, vinculo, ct);
@@ -635,6 +636,13 @@ public class WhatsAppController(
     }
 
     // ── Processa venda via WhatsApp ───────────────────────────────────────────
+
+    // Remove vírgulas separadoras de palavras que o Whisper insere na transcrição
+    // (ex: "Venda, produto, teste, 160,00" → "Venda produto teste 160,00")
+    // Preserva vírgula decimal ("160,00") pois não é seguida de espaço.
+    private static string NormalizeTranscription(string text) =>
+        System.Text.RegularExpressions.Regex
+            .Replace(text.Trim().TrimEnd('.', '!', '?'), @",\s+", " ");
 
     private async Task ProcessVendaAsync(
         string from, string text, WhatsAppVinculo vinculo, CancellationToken ct)
