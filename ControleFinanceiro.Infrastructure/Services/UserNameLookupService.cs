@@ -10,7 +10,7 @@ public class UserNameLookupService(AppDbContext db) : IUserNameLookup
     {
         var result = await db.Database
             .SqlQueryRaw<string>(
-                "SELECT \"Name\" FROM \"Users\" WHERE \"Id\" = {0} LIMIT 1",
+                "SELECT \"Name\" AS \"Value\" FROM \"Users\" WHERE \"Id\" = {0} LIMIT 1",
                 userId)
             .FirstOrDefaultAsync(ct);
 
