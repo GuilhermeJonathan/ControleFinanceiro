@@ -3,6 +3,13 @@ using ControleFinanceiro.Domain.Enums;
 
 namespace ControleFinanceiro.Api.WhatsApp;
 
+public record ParsedVenda(
+    bool    Success,
+    string  ProdutoNome  = "",
+    decimal Valor        = 0,
+    DateTime Data        = default,
+    string? Erro         = null);
+
 public record ParsedLancamento(
     bool    Success,
     string  Descricao    = "",
@@ -75,6 +82,10 @@ public static partial class WhatsAppMessageParser
                 • Recebi salário 5000
                 • Renda aluguel 1200
 
+                *Registrar venda:*
+                • venda produto A a 50,00
+                • venda serviço 200
+
                 ℹ️ Se não informar a data, registra como *hoje*.
                 Palavras aceitas: _hoje_, _ontem_, _amanhã_.
                 Ou informe a data: _15/04_ ou _15/04/2025_.
@@ -84,6 +95,56 @@ public static partial class WhatsAppMessageParser
 
         reply = "";
         return false;
+    }
+
+    // ── Venda ─────────────────────────────────────────────────────────────────
+    public static bool IsVenda(string text) =>
+        !string.IsNullOrWhiteSpace(text) &&
+        text.Trim().StartsWith("venda ", StringComparison.OrdinalIgnoreCase);
+
+    public static ParsedVenda ParseVenda(string text)
+    {
+        // Formato: "venda <produto> a <valor>" ou "venda <produto> <valor>"
+        // Exemplos: "venda produto A a 50", "venda caneta 3,50", "venda serviço consultoria 500"
+        if (string.IsNullOrWhiteSpace(text))
+            return new ParsedVenda(false, Erro: "Mensagem vazia.");
+
+        var lower = text.Trim().ToLowerInvariant();
+        if (!lower.StartsWith("venda "))
+            return new ParsedVenda(false, Erro: "Não é uma venda.");
+
+        // Remove "venda " do início
+        var body = text.Trim()[6..].Trim();
+
+        // Extrai o valor (último número ou R$...)
+        var allValues = ValueRegex().Matches(body).Cast<Match>().ToList();
+        if (allValues.Count == 0)
+            return new ParsedVenda(false, Erro: "Não encontrei o valor da venda.\nExemplo: *venda produto A a 50,00*");
+
+        // Prefere match com R$, senão pega o último número
+        var valMatch = allValues.FirstOrDefault(m => m.Groups[1].Success) ?? allValues.Last();
+        var rawValue = (valMatch.Groups[1].Success ? valMatch.Groups[1] : valMatch.Groups[2]).Value.Replace(",", ".");
+
+        if (!decimal.TryParse(rawValue, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var valor) || valor <= 0)
+            return new ParsedVenda(false, Erro: "Valor inválido.\nExemplo: *venda produto A a 50,00*");
+
+        // Remove o valor do body para extrair o nome do produto
+        var nomeProduto = ValueRegex().Replace(body, " ");
+        // Remove " a " no final (conector "venda X a Y")
+        nomeProduto = Regex.Replace(nomeProduto, @"\s+a\s*$", "", RegexOptions.IgnoreCase);
+        // Remove "reais" e outras palavras de ruído
+        foreach (var w in _noiseWords)
+            nomeProduto = Regex.Replace(nomeProduto, $@"\b{Regex.Escape(w)}\b", " ", RegexOptions.IgnoreCase);
+        nomeProduto = SpaceRegex().Replace(nomeProduto, " ").Trim();
+
+        if (string.IsNullOrWhiteSpace(nomeProduto))
+            return new ParsedVenda(false, Erro: "Nome do produto não encontrado.\nExemplo: *venda produto A a 50,00*");
+
+        // Capitaliza
+        nomeProduto = char.ToUpper(nomeProduto[0]) + nomeProduto[1..];
+
+        return new ParsedVenda(true, nomeProduto, valor, TodayBrazil());
     }
 
     // ── Parser principal ──────────────────────────────────────────────────────

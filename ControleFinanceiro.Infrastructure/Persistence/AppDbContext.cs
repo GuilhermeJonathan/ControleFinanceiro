@@ -22,6 +22,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<Imovel> Imoveis => Set<Imovel>();
     public DbSet<ImovelFoto> ImovelFotos => Set<ImovelFoto>();
     public DbSet<ImovelComentario> ImovelComentarios => Set<ImovelComentario>();
+    public DbSet<Produto> Produtos => Set<Produto>();
+    public DbSet<Venda> Vendas => Set<Venda>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

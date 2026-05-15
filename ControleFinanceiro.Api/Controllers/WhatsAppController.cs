@@ -22,7 +22,9 @@ public class WhatsAppController(
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IConfiguration config,
-    IWebHostEnvironment env) : ControllerBase
+    IWebHostEnvironment env,
+    IVendaRepository vendaRepo,
+    IProdutoRepository produtoRepo) : ControllerBase
 {
     // ── Endpoints de teste (somente em Development) ───────────────────────────
 
@@ -236,6 +238,13 @@ public class WhatsAppController(
 
             // Usa o número cadastrado no vínculo (não o from do webhook, que pode ter formato diferente)
             var replyTo = vinculo.PhoneNumber;
+
+            // ── Verifica se é uma venda ───────────────────────────────────────────────
+            if (WhatsAppMessageParser.IsVenda(text))
+            {
+                await ProcessVendaAsync(from, text, vinculo, ct);
+                return;
+            }
 
             // Faz o parse da mensagem
             var parsed = WhatsAppMessageParser.Parse(text);
@@ -623,6 +632,61 @@ public class WhatsAppController(
         }
 
         return null;
+    }
+
+    // ── Processa venda via WhatsApp ───────────────────────────────────────────
+
+    private async Task ProcessVendaAsync(
+        string from, string text, WhatsAppVinculo vinculo, CancellationToken ct)
+    {
+        var replyTo = vinculo.PhoneNumber;
+
+        var parsed = WhatsAppMessageParser.ParseVenda(text);
+        if (!parsed.Success)
+        {
+            await sender.SendTextAsync(from,
+                $"❌ {parsed.Erro}\nExemplo: *venda produto A a 50,00*", ct);
+            return;
+        }
+
+        // Injeta o userId
+        HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
+        HttpContext.Items["RealUserId"]      = vinculo.UserId;
+
+        // Busca ou cria o produto
+        var produto = await produtoRepo.GetByNomeAsync(vinculo.UserId, parsed.ProdutoNome, ct);
+        bool produtoNovo = false;
+
+        if (produto is null)
+        {
+            produto = new Produto(vinculo.UserId, parsed.ProdutoNome, parsed.Valor);
+            await produtoRepo.AddAsync(produto, ct);
+            await unitOfWork.SaveChangesAsync(ct);
+            produtoNovo = true;
+            Console.WriteLine($"[WhatsApp][Venda] novo produto criado: \"{parsed.ProdutoNome}\" id={produto.Id}");
+        }
+
+        // Cria a venda
+        var venda = new Venda(
+            usuarioId:     vinculo.UserId,
+            produtoId:     produto.Id,
+            descricao:     parsed.ProdutoNome,
+            valor:         parsed.Valor,
+            data:          parsed.Data,
+            origem:        OrigemVenda.WhatsApp,
+            criadoPorNome: "WhatsApp");
+
+        await vendaRepo.AddAsync(venda, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        var novoProdutoLabel = produtoNovo ? "\n_(produto criado automaticamente)_" : "";
+        await sender.SendTextAsync(replyTo,
+            $"🛒 *Venda registrada!*\n" +
+            $"Produto: {parsed.ProdutoNome}\n" +
+            $"Valor: R$ {parsed.Valor:N2}\n" +
+            $"Status: Pendente{novoProdutoLabel}", ct);
+
+        Console.WriteLine($"[WhatsApp][Venda] userId={vinculo.UserId} | produto={parsed.ProdutoNome} | valor={parsed.Valor}");
     }
 }
 
