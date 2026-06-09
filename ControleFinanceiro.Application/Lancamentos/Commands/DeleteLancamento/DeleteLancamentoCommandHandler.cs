@@ -1,5 +1,6 @@
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
+using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 
@@ -16,7 +17,15 @@ public class DeleteLancamentoCommandHandler(
         var lancamento = await repository.GetByIdAsync(request.Id, currentUser.UserId, cancellationToken)
             ?? throw new KeyNotFoundException($"Lançamento {request.Id} não encontrado.");
 
-        repository.Delete(lancamento);
+        if (lancamento.IsRecorrente)
+        {
+            lancamento.AtualizarSituacao(SituacaoLancamento.Cancelado);
+        }
+        else
+        {
+            repository.Delete(lancamento);
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

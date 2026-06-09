@@ -18,7 +18,8 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .Include(l => l.Cartao)
             .Include(l => l.ReceitaRecorrente)
             .Include(l => l.ContaBancaria)
-            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
+            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId
+                && l.Situacao != Domain.Enums.SituacaoLancamento.Cancelado)
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
@@ -30,7 +31,8 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
             .Include(l => l.Cartao)
             .Include(l => l.ReceitaRecorrente)
             .Include(l => l.ContaBancaria)
-            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
+            .Where(l => l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId
+                && l.Situacao != Domain.Enums.SituacaoLancamento.Cancelado)
             .OrderBy(l => l.Data);
 
         var total = await query.CountAsync(cancellationToken);
@@ -41,7 +43,8 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
     public async Task<IEnumerable<Lancamento>> GetByCartaoMesAnoAsync(Guid cartaoId, int mes, int ano, Guid usuarioId, CancellationToken cancellationToken = default)
         => await context.Lancamentos
             .Include(l => l.Categoria)
-            .Where(l => l.CartaoId == cartaoId && l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId)
+            .Where(l => l.CartaoId == cartaoId && l.Mes == mes && l.Ano == ano && l.UsuarioId == usuarioId
+                && l.Situacao != Domain.Enums.SituacaoLancamento.Cancelado)
             .OrderBy(l => l.Data)
             .ToListAsync(cancellationToken);
 
@@ -150,7 +153,9 @@ public class LancamentoRepository(AppDbContext context) : ILancamentoRepository
         var query = context.Lancamentos
             .Include(l => l.Categoria)
             .Include(l => l.Cartao)
-            .Where(l => l.UsuarioId == usuarioId && (
+            .Where(l => l.UsuarioId == usuarioId
+                && l.Situacao != Domain.Enums.SituacaoLancamento.Cancelado
+                && (
                 EF.Functions.ILike(l.Descricao, pattern) ||
                 (l.Categoria != null && EF.Functions.ILike(l.Categoria.Nome, pattern)) ||
                 (l.Cartao    != null && EF.Functions.ILike(l.Cartao.Nome,    pattern))

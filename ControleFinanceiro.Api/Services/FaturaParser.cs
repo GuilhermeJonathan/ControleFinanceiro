@@ -7,7 +7,7 @@ namespace ControleFinanceiro.Api.Services;
 
 public static class FaturaParser
 {
-    private static readonly Regex DateRegex   = new(@"^\d{2}/\d{2}$",          RegexOptions.Compiled);
+    private static readonly Regex DateRegex   = new(@"^\d{2}/\d{2}(/\d{2,4})?$", RegexOptions.Compiled);
     private static readonly Regex ParcelRegex = new(@"Parc\.(\d+)/(\d+)",       RegexOptions.Compiled);
     private static readonly Regex ValueRegex  = new(@"R\$\s*([\d.,]+)",         RegexOptions.Compiled);
     private static readonly Regex CardRegex   = new(
@@ -63,11 +63,15 @@ public static class FaturaParser
             // Pula créditos/ajustes negativos
             if (cellD.TrimStart().StartsWith("-")) continue;
 
-            // Parse da data
+            // Parse da data — aceita DD/MM ou DD/MM/AAAA
             var parts     = cellA.Split('/');
             var dia       = int.Parse(parts[0]);
             var mesCompra = int.Parse(parts[1]);
-            var anoCompra = mesCompra > mesFatura ? anoFatura - 1 : anoFatura;
+            int anoCompra;
+            if (parts.Length >= 3 && int.TryParse(parts[2], out var anoCell))
+                anoCompra = anoCell < 100 ? 2000 + anoCell : anoCell;
+            else
+                anoCompra = mesCompra > mesFatura ? anoFatura - 1 : anoFatura;
             var diaMax    = DateTime.DaysInMonth(anoCompra, mesCompra);
             var data      = new DateTime(anoCompra, mesCompra, Math.Min(dia, diaMax));
 
