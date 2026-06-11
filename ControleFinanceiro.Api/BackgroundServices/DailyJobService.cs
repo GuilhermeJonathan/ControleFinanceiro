@@ -116,7 +116,7 @@ public class DailyJobService(
 
         foreach (var resumo in resumoGrupos)
         {
-            // Carrega o template (último lançamento do grupo)
+            // Carrega o template (último lançamento do grupo, incluindo Cancelados)
             var ultimoAnoMes = resumo.UltimoAnoMes;
             var template = await db.Lancamentos
                 .Where(l => l.GrupoParcelas == resumo.GrupoParcelas
@@ -126,6 +126,14 @@ public class DailyJobService(
                 .FirstOrDefaultAsync(ct);
 
             if (template is null) continue;
+
+            // Meses que já existem no banco para este grupo (qualquer situação, incluindo Cancelado).
+            // Evita recriar meses que o usuário excluiu (soft-cancel) ou que já foram gerados.
+            var mesesExistentes = (await db.Lancamentos
+                .Where(l => l.GrupoParcelas == resumo.GrupoParcelas && l.UsuarioId == resumo.UsuarioId)
+                .Select(l => l.Ano * 100 + l.Mes)
+                .ToListAsync(ct))
+                .ToHashSet();
 
             var mes             = ultimoAnoMes % 100;
             var ano             = ultimoAnoMes / 100;
@@ -139,6 +147,9 @@ public class DailyJobService(
                 proximaParcela++;
 
                 if (ano * 100 + mes > limiteInt) break;
+
+                // Pula meses que já existem (AVencer, Cancelado, Pago, etc.)
+                if (mesesExistentes.Contains(ano * 100 + mes)) continue;
 
                 var diaMax   = DateTime.DaysInMonth(ano, mes);
                 var dia      = Math.Min(template.Data.Day, diaMax);
