@@ -92,18 +92,32 @@ public class DailyJobService(
         var minimoHorizonte = hoje.AddMonths(12);
         var minimoInt   = minimoHorizonte.Year * 100 + minimoHorizonte.Month;
 
-        // Pega o último mês gerado de cada grupo recorrente (em memória para segurança)
-        var resumoGrupos = (await db.Lancamentos
+        // Para cada grupo recorrente calcula:
+        //   UltimoAnoMes — MAX dos meses não-cancelados (fronteira ativa da série)
+        //   MaxCancelado  — MAX dos meses cancelados (fronteira de encerramento, se houver)
+        // Se MaxCancelado > UltimoAnoMes o usuário encerrou a série → não estender.
+        var todosGrupos = await db.Lancamentos
             .Where(l => l.IsRecorrente && l.GrupoParcelas.HasValue)
             .GroupBy(l => new { l.GrupoParcelas, l.UsuarioId })
             .Select(g => new
             {
                 GrupoParcelas = g.Key.GrupoParcelas!.Value,
                 g.Key.UsuarioId,
-                UltimoAnoMes  = g.Max(l => l.Ano * 100 + l.Mes),
+                UltimoAnoMes = g
+                    .Where(l => l.Situacao != SituacaoLancamento.Cancelado)
+                    .Max(l => (int?)(l.Ano * 100 + l.Mes)),
+                MaxCancelado = g
+                    .Where(l => l.Situacao == SituacaoLancamento.Cancelado)
+                    .Max(l => (int?)(l.Ano * 100 + l.Mes)),
             })
-            .ToListAsync(ct))
-            .Where(g => g.UltimoAnoMes < minimoInt)   // precisa de mais meses
+            .ToListAsync(ct);
+
+        var resumoGrupos = todosGrupos
+            .Where(g => g.UltimoAnoMes.HasValue                   // tem registros ativos
+                     && g.UltimoAnoMes.Value < minimoInt           // precisa de mais meses
+                     && (!g.MaxCancelado.HasValue                  // sem cancelamentos, OU
+                         || g.MaxCancelado.Value <= g.UltimoAnoMes.Value)) // cancelamentos só no meio
+            .Select(g => new { g.GrupoParcelas, g.UsuarioId, UltimoAnoMes = g.UltimoAnoMes!.Value })
             .ToList();
 
         if (resumoGrupos.Count == 0)
