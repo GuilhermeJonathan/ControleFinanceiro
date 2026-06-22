@@ -28,6 +28,7 @@ public class User : Entity
     public bool IsPaying { get; private set; }
     public bool TrialD7EmailSent { get; private set; }
     public bool TrialD1EmailSent { get; private set; }
+    public bool ReengagementEmailSent { get; private set; }
 
     // ── Permissões extras ────────────────────────────────────────────────────
     /// <summary>Permite ver e editar imóveis de todos os usuários.</summary>
@@ -149,9 +150,10 @@ public class User : Entity
     /// <summary>Admin: define trial com duração customizada em dias a partir de agora.</summary>
     public void AdminSetTrial(int days)
     {
-        TrialStartedAt ??= DateTime.UtcNow;          // preserva data original se já existir
-        PlanType      = PlanType.Trial;
-        PlanExpiresAt = DateTime.UtcNow.AddDays(days); // expira em exatamente `days` dias
+        TrialStartedAt ??= DateTime.UtcNow;
+        PlanType              = PlanType.Trial;
+        PlanExpiresAt         = DateTime.UtcNow.AddDays(days);
+        ReengagementEmailSent = false;
         SetUpdated();
     }
 
@@ -171,11 +173,14 @@ public class User : Entity
         PlanType = planType;
         PlanExpiresAt = expiresAt;
         IsPaying = planType is PlanType.Monthly or PlanType.Annual;
+        ReengagementEmailSent = false;
         SetUpdated();
     }
 
     public void MarkTrialD7EmailSent() { TrialD7EmailSent = true; SetUpdated(); }
     public void MarkTrialD1EmailSent() { TrialD1EmailSent = true; SetUpdated(); }
+    public void MarkReengagementEmailSent() { ReengagementEmailSent = true; SetUpdated(); }
+    public void ResetReengagementEmail() { ReengagementEmailSent = false; SetUpdated(); }
 
     public void SetPodeVerImoveis(bool value) { PodeVerImoveis = value; SetUpdated(); }
 

@@ -158,6 +158,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHostedService<Login.Infrastructure.Services.TrialExpirationEmailService>();
+builder.Services.AddHostedService<Login.Infrastructure.Services.ReengagementEmailService>();
 builder.Services.AddHostedService<Login.Infrastructure.Services.WarmupService>();
 
 // IUserAccessor — resolve via HttpContext
