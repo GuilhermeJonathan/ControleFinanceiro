@@ -37,7 +37,6 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserDto
             user.TrialStartedAt,
             plan.TrialEndsAt,
             plan.IsTrialExpired,
-            plan.TrialDaysRemaining,
-            user.PodeVerImoveis);
+            plan.TrialDaysRemaining);
     }
 }

@@ -1,3 +1,4 @@
+using Login.Application.Common.Email;
 using Login.Application.Common.Interfaces;
 using Login.Domain.Common;
 using Login.Domain.Entities;
@@ -156,15 +157,14 @@ public class ProcessWebhookCommandHandler : IRequestHandler<ProcessWebhookComman
         {
             var planLabel = subscription.PlanType == PlanType.Annual ? "Anual" : "Mensal";
             var customerSubject = "✅ Sua assinatura foi ativada!";
-            var customerBody = $@"
-<p>Olá, <strong>{user.Name}</strong>!</p>
-<p>Sua assinatura <strong>{planLabel}</strong> foi ativada com sucesso.</p>
-<ul>
-  <li><strong>Plano:</strong> {planLabel}</li>
-  <li><strong>Valor:</strong> R${amount:F2}</li>
-  <li><strong>Válida até:</strong> {expiresAt:dd/MM/yyyy}</li>
-</ul>
-<p>Obrigado por assinar o Findog!</p>";
+            var customerBody = EmailTemplateBuilder.Wrap(
+                EmailTemplateBuilder.Greeting($"Olá, {user.Name}! 🎉") +
+                EmailTemplateBuilder.Paragraph($"Sua assinatura <strong style=\"color:#e2e8f0\">{planLabel}</strong> foi ativada com sucesso. Obrigado por assinar o Meu FinDog!") +
+                EmailTemplateBuilder.Card(
+                    EmailTemplateBuilder.CardRow("Plano", planLabel) +
+                    EmailTemplateBuilder.CardRow("Valor", $"R${amount:F2}") +
+                    EmailTemplateBuilder.CardRow("Válida até", $"{expiresAt:dd/MM/yyyy}", "#4ade80")) +
+                EmailTemplateBuilder.Button("Acessar o Meu FinDog 🐶", EmailTemplateBuilder.AppUrl));
 
             await _emailService.SendAsync(user.Email, user.Name, customerSubject, customerBody, cancellationToken);
         }
@@ -179,15 +179,14 @@ public class ProcessWebhookCommandHandler : IRequestHandler<ProcessWebhookComman
             var adminEmail = _configuration["AdminEmail"] ?? "admin@findog.com.br";
             var planLabel = subscription.PlanType == PlanType.Annual ? "Anual" : "Mensal";
             var adminSubject = $"🎉 Nova assinatura — {user.Name}";
-            var adminBody = $@"
-<p>Nova assinatura registrada:</p>
-<ul>
-  <li><strong>Nome:</strong> {user.Name}</li>
-  <li><strong>E-mail:</strong> {user.Email}</li>
-  <li><strong>Plano:</strong> {planLabel}</li>
-  <li><strong>Valor:</strong> R${amount:F2}</li>
-  <li><strong>Data:</strong> {DateTime.UtcNow:dd/MM/yyyy HH:mm} UTC</li>
-</ul>";
+            var adminBody = EmailTemplateBuilder.Wrap(
+                EmailTemplateBuilder.Greeting("Nova assinatura registrada 🎉") +
+                EmailTemplateBuilder.Card(
+                    EmailTemplateBuilder.CardRow("Nome", user.Name) +
+                    EmailTemplateBuilder.CardRow("E-mail", user.Email) +
+                    EmailTemplateBuilder.CardRow("Plano", planLabel) +
+                    EmailTemplateBuilder.CardRow("Valor", $"R${amount:F2}", "#4ade80") +
+                    EmailTemplateBuilder.CardRow("Data", $"{DateTime.UtcNow:dd/MM/yyyy HH:mm} UTC")));
 
             await _emailService.SendAsync(adminEmail, "Admin", adminSubject, adminBody, cancellationToken);
         }

@@ -18,7 +18,5 @@ public record UserDto(
     DateTime? TrialStartedAt,
     DateTime? TrialEndsAt,
     bool IsTrialExpired,
-    int? TrialDaysRemaining,
-    // ── Permissões ────────────────────────────────────
-    bool PodeVerImoveis
+    int? TrialDaysRemaining
 );

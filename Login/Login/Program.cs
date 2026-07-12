@@ -166,6 +166,13 @@ builder.Services.AddScoped<IUserAccessor, Login.Infrastructure.HttpUserAccessor>
 
 var app = builder.Build();
 
+// Aplica migrations pendentes antes de aceitar tráfego e antes dos hosted services
+using (var migrationScope = app.Services.CreateScope())
+{
+    var db = migrationScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

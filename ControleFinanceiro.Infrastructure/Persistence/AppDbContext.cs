@@ -19,9 +19,6 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<VinculoFamiliar> VinculosFamiliares => Set<VinculoFamiliar>();
     public DbSet<Meta> Metas => Set<Meta>();
     public DbSet<WhatsAppVinculo> WhatsAppVinculos => Set<WhatsAppVinculo>();
-    public DbSet<Imovel> Imoveis => Set<Imovel>();
-    public DbSet<ImovelFoto> ImovelFotos => Set<ImovelFoto>();
-    public DbSet<ImovelComentario> ImovelComentarios => Set<ImovelComentario>();
     public DbSet<Produto> Produtos => Set<Produto>();
     public DbSet<Venda> Vendas => Set<Venda>();
 

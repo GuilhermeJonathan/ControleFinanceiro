@@ -38,7 +38,6 @@ public static class DependencyInjection
         services.AddScoped<IVinculoFamiliarRepository, VinculoFamiliarRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
         services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
-        services.AddScoped<IImovelRepository, ImovelRepository>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<IVendaRepository, VendaRepository>();
 
