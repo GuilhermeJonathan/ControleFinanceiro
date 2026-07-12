@@ -5,6 +5,7 @@ using ControleFinanceiro.Infrastructure.Persistence;
 using ControleFinanceiro.Infrastructure.Persistence.Repositories;
 using ControleFinanceiro.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,11 +21,17 @@ public static class DependencyInjection
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         services.AddDbContext<AppDbContext>(options =>
+        {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsql =>
             {
                 npgsql.CommandTimeout(120);
                 npgsql.EnableRetryOnFailure(maxRetryCount: 3);
-            }));
+            });
+            // Falso positivo do EF quando o snapshot foi gerado por tooling de versão
+            // diferente do runtime — o diff real é vazio (verificado via migration vazia)
+            options.ConfigureWarnings(w =>
+                w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
 

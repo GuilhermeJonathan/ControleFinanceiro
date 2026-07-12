@@ -5,6 +5,7 @@ using Login.Infrastructure.Persistence;
 using Login.Infrastructure.Persistence.Repositories;
 using Login.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,9 +19,15 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
+        {
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
-                o => o.EnableRetryOnFailure(3)));
+                o => o.EnableRetryOnFailure(3));
+            // Falso positivo do EF quando o snapshot foi gerado por tooling de versão
+            // diferente do runtime — o diff real é vazio (verificado via migration vazia)
+            options.ConfigureWarnings(w =>
+                w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        });
 
         // UnitOfWork
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
