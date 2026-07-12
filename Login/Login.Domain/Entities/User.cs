@@ -168,7 +168,7 @@ public class User : Entity
     {
         PlanType = planType;
         PlanExpiresAt = expiresAt;
-        IsPaying = planType is PlanType.Monthly or PlanType.Annual;
+        IsPaying = planType is PlanType.Monthly or PlanType.Annual or PlanType.Assessor;
         ReengagementEmailSent = false;
         SetUpdated();
     }
@@ -177,6 +177,9 @@ public class User : Entity
     public void MarkTrialD1EmailSent() { TrialD1EmailSent = true; SetUpdated(); }
     public void MarkReengagementEmailSent() { ReengagementEmailSent = true; SetUpdated(); }
     public void ResetReengagementEmail() { ReengagementEmailSent = false; SetUpdated(); }
+
+    /// <summary>Admin: altera o perfil do usuário (User, Assessor, Admin).</summary>
+    public void SetUserType(UserType userType) { UserTypeId = userType; SetUpdated(); }
 
     /// <summary>Remove o plano pago do usuário.</summary>
     public void ClearPlan()

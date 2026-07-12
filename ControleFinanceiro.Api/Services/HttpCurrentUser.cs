@@ -42,4 +42,25 @@ public class HttpCurrentUser : ICurrentUser
         _accessor.HttpContext?.User.FindFirstValue("name")
         ?? _accessor.HttpContext?.User.FindFirstValue("unique_name")
         ?? _accessor.HttpContext?.User.FindFirstValue("email");
+
+    /// <summary>Perfil Assessor (userType=3); Admin (userType=1) também tem acesso.</summary>
+    public bool IsAssessor
+    {
+        get
+        {
+            var userType = _accessor.HttpContext?.User.FindFirstValue("userType");
+            return userType is "3" or "1";
+        }
+    }
+
+    /// <summary>Plano Assessor ativo (planType=4); Admin não precisa de plano.</summary>
+    public bool TemPlanoAssessor
+    {
+        get
+        {
+            var planType = _accessor.HttpContext?.User.FindFirstValue("planType");
+            var userType = _accessor.HttpContext?.User.FindFirstValue("userType");
+            return planType == "4" || userType == "1";
+        }
+    }
 }

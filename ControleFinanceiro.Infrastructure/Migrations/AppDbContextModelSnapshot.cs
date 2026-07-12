@@ -416,6 +416,51 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.ToTable("ReceitasRecorrentes");
                 });
 
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Recomendacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CategoriaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RespondidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RespostaCliente")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("AssessorId", "ClienteId");
+
+                    b.ToTable("Recomendacoes", (string)null);
+                });
+
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.SaldoConta", b =>
                 {
                     b.Property<Guid>("Id")
@@ -506,6 +551,52 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Vendas");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.VinculoAssessoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AceitoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AssessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoConvite")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NomeAssessor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NomeCliente")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("RevogadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssessorId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("CodigoConvite")
+                        .IsUnique();
+
+                    b.ToTable("VinculosAssessoria", (string)null);
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.VinculoFamiliar", b =>

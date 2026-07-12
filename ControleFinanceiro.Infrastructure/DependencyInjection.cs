@@ -43,12 +43,15 @@ public static class DependencyInjection
         services.AddScoped<IHorasTrabalhadasRepository, HorasTrabalhadasRepository>();
         services.AddScoped<IReceitaRecorrenteRepository, ReceitaRecorrenteRepository>();
         services.AddScoped<IVinculoFamiliarRepository, VinculoFamiliarRepository>();
+        services.AddScoped<IVinculoAssessoriaRepository, VinculoAssessoriaRepository>();
+        services.AddScoped<IRecomendacaoRepository, RecomendacaoRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
         services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<IVendaRepository, VendaRepository>();
 
         services.AddScoped<IUserNameLookup, UserNameLookupService>();
+        services.AddScoped<IEmailService, EmailService>();
 
         services.AddHostedService<MetaContribuicaoService>();
 

@@ -6,4 +6,6 @@ public enum PlanType
     Trial   = 1,
     Monthly = 2,
     Annual  = 3,
+    /// <summary>Plano pago para assessores financeiros — libera carteira de clientes ilimitada.</summary>
+    Assessor = 4,
 }

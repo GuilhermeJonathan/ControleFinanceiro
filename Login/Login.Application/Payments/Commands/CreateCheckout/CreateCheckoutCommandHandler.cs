@@ -40,9 +40,12 @@ public class CreateCheckoutCommandHandler : IRequestHandler<CreateCheckoutComman
             email, userId, request.PlanId.ToLower(), cancellationToken);
 
         // Persiste o registro local para rastrear via webhook
-        var planType = request.PlanId.ToLower() == "anual"
-            ? PlanType.Annual
-            : PlanType.Monthly;
+        var planType = request.PlanId.ToLower() switch
+        {
+            "anual"    => PlanType.Annual,
+            "assessor" => PlanType.Assessor,
+            _          => PlanType.Monthly,
+        };
 
         var subscription = new MercadoPagoSubscription(
             Guid.NewGuid(),

@@ -135,6 +135,7 @@ if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<FamiliaContextMiddleware>();
+app.UseMiddleware<AssessoriaContextMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");

@@ -1,6 +1,7 @@
 using Login.Application.Users.Commands.Authenticate;
 using Login.Application.Users.Commands.BlockUser;
 using Login.Application.Users.Commands.SetPlan;
+using Login.Application.Users.Commands.SetUserType;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.DeleteSelf;
@@ -292,6 +293,15 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Admin: altera o perfil do usuário (1=Admin, 2=User, 3=Assessor).</summary>
+    [HttpPatch("{id:guid}/user-type")]
+    [Authorize(Policy = "Admin")]
+    public async Task<IActionResult> SetUserType(Guid id, [FromBody] SetUserTypeRequest body, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new SetUserTypeCommand(id, body.UserTypeId), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Exclui um usuário e invalida seu token.</summary>
     [HttpDelete("{id:guid}")]
     [Authorize]
@@ -303,6 +313,7 @@ public class UserController : ControllerBase
 }
 
 public record SetBlockRequest(bool Block);
+public record SetUserTypeRequest(int UserTypeId);
 public record SetPlanRequest(int PlanType, int? TrialDays);
 public record UpdateAvatarRequest(string? AvatarUrl);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);

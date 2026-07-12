@@ -17,10 +17,12 @@ public class MercadoPagoService : IMercadoPagoService
     private readonly string _webhookSecret;
     private readonly string _backUrl;
     private readonly ILogger<MercadoPagoService> _logger;
+    private readonly decimal _priceAssessor;
 
     // Preços dos planos em BRL
-    private const decimal PriceMonthly = 4.90m;
-    private const decimal PriceAnnual  = 39.90m;
+    private const decimal PriceMonthly  = 4.90m;
+    private const decimal PriceAnnual   = 39.90m;
+    private const decimal PriceAssessorDefault = 19.90m; // mensal — ajustável via MercadoPago:AssessorPrice
 
     public MercadoPagoService(
         HttpClient http,
@@ -33,6 +35,8 @@ public class MercadoPagoService : IMercadoPagoService
             ?? throw new InvalidOperationException("MercadoPago:AccessToken não configurado.");
         _webhookSecret = configuration["MercadoPago:WebhookSecret"] ?? string.Empty;
         _backUrl       = configuration["MercadoPago:BackUrl"] ?? "https://app.findog.com.br";
+        _priceAssessor = decimal.TryParse(configuration["MercadoPago:AssessorPrice"], out var p)
+            ? p : PriceAssessorDefault;
 
         _http.BaseAddress = new Uri(BaseUrl);
         _http.DefaultRequestHeaders.Authorization =
@@ -45,11 +49,16 @@ public class MercadoPagoService : IMercadoPagoService
         string planId,
         CancellationToken cancellationToken = default)
     {
-        var isAnnual = planId == "anual";
-        var amount   = isAnnual ? PriceAnnual : PriceMonthly;
-        var reason   = isAnnual
-            ? "Plano Anual · Meu FinDog"
-            : "Plano Mensal · Meu FinDog";
+        var isAnnual   = planId == "anual";
+        var isAssessor = planId == "assessor";
+
+        var amount = isAssessor
+            ? _priceAssessor
+            : isAnnual ? PriceAnnual : PriceMonthly;
+
+        var reason = isAssessor
+            ? "Plano Assessor · Meu FinDog"
+            : isAnnual ? "Plano Anual · Meu FinDog" : "Plano Mensal · Meu FinDog";
 
         var payload = new
         {

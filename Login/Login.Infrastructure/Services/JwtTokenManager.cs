@@ -35,6 +35,7 @@ public class JwtTokenManager : ITokenManager
             new Claim(JwtRegisteredClaimNames.UniqueName, user.Name),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("userType", ((int)user.UserTypeId).ToString()),
+            new Claim("planType", ((int)user.PlanType).ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             // iat explícito para comparação com TokenRevokedAt
             new Claim(JwtRegisteredClaimNames.Iat,

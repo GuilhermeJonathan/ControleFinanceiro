@@ -17,6 +17,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<HorasTrabalhadas> HorasTrabalhadas => Set<HorasTrabalhadas>();
     public DbSet<ReceitaRecorrente> ReceitasRecorrentes => Set<ReceitaRecorrente>();
     public DbSet<VinculoFamiliar> VinculosFamiliares => Set<VinculoFamiliar>();
+    public DbSet<VinculoAssessoria> VinculosAssessoria => Set<VinculoAssessoria>();
+    public DbSet<Recomendacao> Recomendacoes => Set<Recomendacao>();
     public DbSet<Meta> Metas => Set<Meta>();
     public DbSet<WhatsAppVinculo> WhatsAppVinculos => Set<WhatsAppVinculo>();
     public DbSet<Produto> Produtos => Set<Produto>();

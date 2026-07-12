@@ -45,6 +45,10 @@ public class SetPlanCommandHandler : IRequestHandler<SetPlanCommand>
             case PlanType.Annual:
                 user.SetPlan(PlanType.Annual, DateTime.UtcNow.AddDays(365));
                 break;
+
+            case PlanType.Assessor:
+                user.SetPlan(PlanType.Assessor, DateTime.UtcNow.AddDays(30));
+                break;
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
