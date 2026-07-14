@@ -6,6 +6,8 @@ using ControleFinanceiro.Application.Patrimonio.Commands.UpdateAtivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdatePassivo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
+using ControleFinanceiro.Application.Relatorios;
+using ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
 using ControleFinanceiro.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -137,4 +139,20 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     [HttpGet("projecao-dividas")]
     public async Task<IActionResult> GetProjecaoDividas([FromQuery] int? meses, CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetProjecaoDividasQuery(meses), cancellationToken));
+
+    /// <summary>Gera o relatório patrimonial em PDF (marca do assessor + dados do cliente efetivo).</summary>
+    [HttpPost("relatorio")]
+    public async Task<IActionResult> GerarRelatorio([FromBody] RelatorioRequest req, CancellationToken cancellationToken)
+    {
+        var pdf = await mediator.Send(
+            new GerarRelatorioPatrimonialQuery(
+                req.ClienteNome,
+                new RelatorioBranding(req.NomeConsultoria, req.LogoBase64, req.CorMarca)),
+            cancellationToken);
+
+        return File(pdf, "application/pdf", "relatorio-patrimonial.pdf");
+    }
 }
+
+/// <summary>Request do relatório: dados do cliente vêm do servidor; a marca vem do app.</summary>
+public record RelatorioRequest(string? ClienteNome, string? NomeConsultoria, string? LogoBase64, string? CorMarca);

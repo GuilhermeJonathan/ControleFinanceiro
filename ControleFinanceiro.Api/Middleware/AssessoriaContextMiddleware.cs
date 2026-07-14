@@ -45,10 +45,15 @@ public class AssessoriaContextMiddleware(RequestDelegate next)
                 return;
             }
 
+            // Geração de relatório é POST, mas apenas LÊ os dados (produz PDF) — exceção read-only.
+            var geracaoRelatorio = HttpMethods.IsPost(context.Request.Method) &&
+                context.Request.Path.StartsWithSegments("/api/patrimonio/relatorio", StringComparison.OrdinalIgnoreCase);
+
             // Modo view-as é estritamente leitura — o servidor garante, não a UI
             if (!HttpMethods.IsGet(context.Request.Method) &&
                 !HttpMethods.IsHead(context.Request.Method) &&
-                !HttpMethods.IsOptions(context.Request.Method))
+                !HttpMethods.IsOptions(context.Request.Method) &&
+                !geracaoRelatorio)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(new { error = "Modo visualização é somente leitura." });

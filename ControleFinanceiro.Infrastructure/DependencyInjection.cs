@@ -59,6 +59,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUserNameLookup, UserNameLookupService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
 
         services.AddHostedService<MetaContribuicaoService>();
 
