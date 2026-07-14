@@ -15,6 +15,7 @@ public record GetMeuAssessorQuery : IRequest<MeuAssessorDto>;
 
 public class GetMeuAssessorQueryHandler(
     IVinculoAssessoriaRepository repository,
+    IConsultoriaConfigRepository consultoriaRepository,
     IUserNameLookup userLookup,
     ICurrentUser currentUser)
     : IRequestHandler<GetMeuAssessorQuery, MeuAssessorDto>
@@ -25,9 +26,13 @@ public class GetMeuAssessorQueryHandler(
         if (vinculo is null)
             return new MeuAssessorDto(false, null, null, null, null);
 
-        // WhatsApp do assessor (telefone cadastrado no perfil dele).
-        var contato = await userLookup.GetContatoAsync(vinculo.AssessorId, cancellationToken);
+        // Preferimos os dados da consultoria configurada; caímos no vínculo/telefone do perfil.
+        var config = await consultoriaRepository.GetByUsuarioAsync(vinculo.AssessorId, cancellationToken);
+        var nome = !string.IsNullOrWhiteSpace(config?.NomeConsultoria) ? config!.NomeConsultoria : vinculo.NomeAssessor;
+        var whatsApp = !string.IsNullOrWhiteSpace(config?.WhatsApp)
+            ? config!.WhatsApp
+            : (await userLookup.GetContatoAsync(vinculo.AssessorId, cancellationToken))?.Cellphone;
 
-        return new MeuAssessorDto(true, vinculo.Id, vinculo.NomeAssessor, vinculo.AceitoEm, contato?.Cellphone);
+        return new MeuAssessorDto(true, vinculo.Id, nome, vinculo.AceitoEm, whatsApp);
     }
 }

@@ -63,4 +63,14 @@ public class HttpCurrentUser : ICurrentUser
             return planType == "4" || userType == "1";
         }
     }
+
+    /// <summary>Perfil Corretor (userType=4).</summary>
+    public bool IsCorretor
+    {
+        get
+        {
+            var userType = _accessor.HttpContext?.User.FindFirstValue("userType");
+            return userType == "4";
+        }
+    }
 }

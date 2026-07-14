@@ -5,14 +5,12 @@ using Microsoft.EntityFrameworkCore;
 namespace ControleFinanceiro.Api.Middleware;
 
 /// <summary>
-/// Modo "visualizar como" do assessor. Quando a requisição traz o header
-/// X-Assessoria-Cliente com o id de um cliente vinculado:
-///   1. Exige perfil Assessor (userType=3) ou Admin (userType=1) no JWT;
-///   2. Exige vínculo de assessoria ATIVO (aceito e não revogado);
-///   3. Permite SOMENTE métodos de leitura (GET/HEAD/OPTIONS) — escrita retorna 403.
-///      O assessor apenas VISUALIZA os dados do cliente; nunca altera.
-///   4. Sobrescreve EffectiveUserId com o id do cliente (RealUserId segue o assessor).
-/// Deve ser registrado DEPOIS do FamiliaContextMiddleware para ter precedência.
+/// Modo "visualizar como" do assessor/corretor.
+/// Quando a requisição traz X-Assessoria-Cliente:
+///   - Assessor (userType=3/1): valida VinculoAssessoria ativo.
+///   - Corretor (userType=4): valida DelegacaoCarteira ativa delegada pelo assessor dono.
+///   - Somente leitura (GET/HEAD/OPTIONS) — exceto geração de PDF.
+///   - Sobrescreve EffectiveUserId com clienteId; RealUserId = quem está logado.
 /// </summary>
 public class AssessoriaContextMiddleware(RequestDelegate next)
 {
@@ -31,25 +29,24 @@ public class AssessoriaContextMiddleware(RequestDelegate next)
             }
 
             var userType = context.User.FindFirstValue("userType");
-            if (userType is not ("3" or "1"))
+            var rawId    = context.User.FindFirstValue("nameid");
+
+            if (userType is not ("3" or "1" or "4"))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsJsonAsync(new { error = "Apenas assessores podem visualizar dados de clientes." });
+                await context.Response.WriteAsJsonAsync(new { error = "Acesso negado." });
                 return;
             }
 
-            var rawId = context.User.FindFirstValue("nameid");
-            if (!Guid.TryParse(rawId, out var assessorId))
+            if (!Guid.TryParse(rawId, out var userId))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;
             }
 
-            // Geração de relatório é POST, mas apenas LÊ os dados (produz PDF) — exceção read-only.
             var geracaoRelatorio = HttpMethods.IsPost(context.Request.Method) &&
                 context.Request.Path.StartsWithSegments("/api/patrimonio/relatorio", StringComparison.OrdinalIgnoreCase);
 
-            // Modo view-as é estritamente leitura — o servidor garante, não a UI
             if (!HttpMethods.IsGet(context.Request.Method) &&
                 !HttpMethods.IsHead(context.Request.Method) &&
                 !HttpMethods.IsOptions(context.Request.Method) &&
@@ -60,21 +57,35 @@ public class AssessoriaContextMiddleware(RequestDelegate next)
                 return;
             }
 
-            var vinculoAtivo = await db.VinculosAssessoria.AnyAsync(v =>
-                v.AssessorId == assessorId &&
-                v.ClienteId == clienteId &&
-                v.AceitoEm != null &&
-                v.RevogadoEm == null);
+            bool autorizado;
 
-            if (!vinculoAtivo)
+            if (userType is "3" or "1")
+            {
+                // Assessor: valida VinculoAssessoria próprio
+                autorizado = await db.VinculosAssessoria.AnyAsync(v =>
+                    v.AssessorId == userId &&
+                    v.ClienteId  == clienteId &&
+                    v.AceitoEm   != null &&
+                    v.RevogadoEm == null, context.RequestAborted);
+            }
+            else
+            {
+                // Corretor: valida DelegacaoCarteira ativa
+                autorizado = await db.DelegacoesCarteira.AnyAsync(d =>
+                    d.CorretorId  == userId &&
+                    d.ClienteId   == clienteId &&
+                    d.RevogadoEm  == null, context.RequestAborted);
+            }
+
+            if (!autorizado)
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsJsonAsync(new { error = "Vínculo de assessoria não encontrado ou revogado." });
+                await context.Response.WriteAsJsonAsync(new { error = "Vínculo de assessoria/delegação não encontrado ou revogado." });
                 return;
             }
 
             context.Items["EffectiveUserId"] = clienteId;
-            context.Items["RealUserId"] = assessorId;
+            context.Items["RealUserId"]      = userId;
         }
 
         await next(context);

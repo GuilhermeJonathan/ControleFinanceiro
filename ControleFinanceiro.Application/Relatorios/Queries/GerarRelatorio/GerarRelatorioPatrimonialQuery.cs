@@ -3,6 +3,7 @@ using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
 using ControleFinanceiro.Application.Simulacoes.Queries.GetSimulacoes;
+using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 
 namespace ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
@@ -17,6 +18,7 @@ public record GerarRelatorioPatrimonialQuery(string? ClienteNome, RelatorioBrand
 public class GerarRelatorioPatrimonialQueryHandler(
     IMediator mediator,
     ICurrentUser currentUser,
+    IConsultoriaConfigRepository consultoriaRepository,
     IRelatorioPatrimonialGenerator generator)
     : IRequestHandler<GerarRelatorioPatrimonialQuery, byte[]>
 {
@@ -53,6 +55,12 @@ public class GerarRelatorioPatrimonialQueryHandler(
             Investimentos: investimentos,
             SimulacaoDestaque: destaque);
 
-        return generator.Gerar(dados, request.Branding);
+        // Marca vem da consultoria configurada pelo assessor (autoritativa); o request é fallback.
+        var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, cancellationToken);
+        var branding = config is not null
+            ? new RelatorioBranding(config.NomeConsultoria, config.LogoBase64, config.CorMarca, config.MensagemRodape)
+            : request.Branding;
+
+        return generator.Gerar(dados, branding);
     }
 }

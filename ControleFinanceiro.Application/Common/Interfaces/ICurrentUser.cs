@@ -9,4 +9,6 @@ public interface ICurrentUser
     bool IsAssessor { get; }
     /// <summary>Assinatura do plano Assessor ativa (claim planType=4) — libera carteira ilimitada.</summary>
     bool TemPlanoAssessor { get; }
+    /// <summary>Perfil Corretor (userType=4) — subordinado de um assessor.</summary>
+    bool IsCorretor { get; }
 }

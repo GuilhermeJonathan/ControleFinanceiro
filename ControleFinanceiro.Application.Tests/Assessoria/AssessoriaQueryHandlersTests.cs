@@ -15,6 +15,7 @@ namespace ControleFinanceiro.Application.Tests.Assessoria;
 public class AssessoriaQueryHandlersTests
 {
     private readonly Mock<IVinculoAssessoriaRepository> _repoMock = new();
+    private readonly Mock<IConsultoriaConfigRepository> _consultoriaRepoMock = new();
     private readonly Mock<IUserNameLookup> _userLookupMock = new();
     private readonly Mock<ICurrentUser> _currentUserMock = new();
 
@@ -62,7 +63,7 @@ public class AssessoriaQueryHandlersTests
         _currentUserMock.Setup(c => c.RealUserId).Returns(ClienteId);
         _repoMock.Setup(r => r.GetByClienteAsync(ClienteId, It.IsAny<CancellationToken>())).ReturnsAsync(vinculo);
 
-        var handler = new GetMeuAssessorQueryHandler(_repoMock.Object, _userLookupMock.Object, _currentUserMock.Object);
+        var handler = new GetMeuAssessorQueryHandler(_repoMock.Object, _consultoriaRepoMock.Object, _userLookupMock.Object, _currentUserMock.Object);
         var result = await handler.Handle(new GetMeuAssessorQuery(), CancellationToken.None);
 
         result.TemAssessor.Should().BeTrue();
@@ -76,7 +77,7 @@ public class AssessoriaQueryHandlersTests
         _repoMock.Setup(r => r.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((VinculoAssessoria?)null);
 
-        var handler = new GetMeuAssessorQueryHandler(_repoMock.Object, _userLookupMock.Object, _currentUserMock.Object);
+        var handler = new GetMeuAssessorQueryHandler(_repoMock.Object, _consultoriaRepoMock.Object, _userLookupMock.Object, _currentUserMock.Object);
         var result = await handler.Handle(new GetMeuAssessorQuery(), CancellationToken.None);
 
         result.TemAssessor.Should().BeFalse();

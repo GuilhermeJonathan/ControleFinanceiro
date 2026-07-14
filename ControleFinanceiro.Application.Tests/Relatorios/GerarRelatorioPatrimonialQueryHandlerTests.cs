@@ -15,6 +15,7 @@ public class GerarRelatorioPatrimonialQueryHandlerTests
 {
     private readonly Mock<IMediator> _mediator = new();
     private readonly Mock<ICurrentUser> _currentUser = new();
+    private readonly Mock<ControleFinanceiro.Domain.Repositories.IConsultoriaConfigRepository> _consultoria = new();
     private readonly Mock<IRelatorioPatrimonialGenerator> _generator = new();
     private static readonly byte[] PdfFake = { 0x25, 0x50, 0x44, 0x46 }; // "%PDF"
 
@@ -34,7 +35,7 @@ public class GerarRelatorioPatrimonialQueryHandlerTests
     }
 
     private GerarRelatorioPatrimonialQueryHandler CreateHandler() =>
-        new(_mediator.Object, _currentUser.Object, _generator.Object);
+        new(_mediator.Object, _currentUser.Object, _consultoria.Object, _generator.Object);
 
     [Fact]
     public async Task Handle_ShouldGatherDataAndReturnPdfBytes()

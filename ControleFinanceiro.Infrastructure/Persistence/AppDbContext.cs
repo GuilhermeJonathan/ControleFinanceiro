@@ -18,6 +18,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<ReceitaRecorrente> ReceitasRecorrentes => Set<ReceitaRecorrente>();
     public DbSet<VinculoFamiliar> VinculosFamiliares => Set<VinculoFamiliar>();
     public DbSet<VinculoAssessoria> VinculosAssessoria => Set<VinculoAssessoria>();
+    public DbSet<VinculoCorretor> VinculosCorretor => Set<VinculoCorretor>();
+    public DbSet<DelegacaoCarteira> DelegacoesCarteira => Set<DelegacaoCarteira>();
     public DbSet<Recomendacao> Recomendacoes => Set<Recomendacao>();
     public DbSet<AtivoPatrimonial> AtivosPatrimoniais => Set<AtivoPatrimonial>();
     public DbSet<PassivoPatrimonial> PassivosPatrimoniais => Set<PassivoPatrimonial>();
@@ -26,6 +28,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();
     public DbSet<MoedaParam> MoedasParam => Set<MoedaParam>();
+    public DbSet<ConsultoriaConfig> ConsultoriaConfigs => Set<ConsultoriaConfig>();
     public DbSet<Meta> Metas => Set<Meta>();
     public DbSet<WhatsAppVinculo> WhatsAppVinculos => Set<WhatsAppVinculo>();
     public DbSet<Produto> Produtos => Set<Produto>();

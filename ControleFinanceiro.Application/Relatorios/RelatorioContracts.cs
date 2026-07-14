@@ -5,8 +5,8 @@ using ControleFinanceiro.Application.Simulacoes.Queries.GetSimulacoes;
 
 namespace ControleFinanceiro.Application.Relatorios;
 
-/// <summary>Identidade visual do assessor, enviada pelo app (nome + logo base64 + cor).</summary>
-public record RelatorioBranding(string? NomeConsultoria, string? LogoBase64, string? CorMarca);
+/// <summary>Identidade visual da consultoria (nome + logo base64 + cor + rodapé).</summary>
+public record RelatorioBranding(string? NomeConsultoria, string? LogoBase64, string? CorMarca, string? MensagemRodape = null);
 
 /// <summary>Resultado calculado da simulação em destaque (favorita), para o relatório.</summary>
 public record SimulacaoDestaqueDto(

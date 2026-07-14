@@ -206,9 +206,13 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
                 });
 
                 // ── Rodapé ──
+                var rodapeMsg = string.IsNullOrWhiteSpace(branding.MensagemRodape)
+                    ? "Não constitui recomendação formal de investimento."
+                    : branding.MensagemRodape!;
+
                 page.Footer().PaddingHorizontal(30).PaddingBottom(12).Row(row =>
                 {
-                    row.RelativeItem().Text($"Gerado por {d.AssessorNome} · {consultoria}  ·  Não constitui recomendação formal de investimento.")
+                    row.RelativeItem().Text($"{consultoria}  ·  {rodapeMsg}")
                         .FontSize(7.5f).FontColor("#9ca3af");
                     row.ConstantItem(60).AlignRight().Text(t =>
                     {

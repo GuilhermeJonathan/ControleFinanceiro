@@ -52,10 +52,13 @@ public static class DependencyInjection
         services.AddScoped<ITipoAtivoParamRepository, TipoAtivoParamRepository>();
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();
         services.AddScoped<IMoedaParamRepository, MoedaParamRepository>();
+        services.AddScoped<IConsultoriaConfigRepository, ConsultoriaConfigRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
         services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
         services.AddScoped<IProdutoRepository, ProdutoRepository>();
         services.AddScoped<IVendaRepository, VendaRepository>();
+        services.AddScoped<IVinculoCorretorRepository, VinculoCorretorRepository>();
+        services.AddScoped<IDelegacaoCarteiraRepository, DelegacaoCarteiraRepository>();
 
         services.AddScoped<IUserNameLookup, UserNameLookupService>();
         services.AddScoped<IEmailService, EmailService>();
