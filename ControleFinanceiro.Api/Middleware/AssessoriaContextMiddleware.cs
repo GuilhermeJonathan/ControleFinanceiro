@@ -9,7 +9,8 @@ namespace ControleFinanceiro.Api.Middleware;
 /// X-Assessoria-Cliente com o id de um cliente vinculado:
 ///   1. Exige perfil Assessor (userType=3) ou Admin (userType=1) no JWT;
 ///   2. Exige vínculo de assessoria ATIVO (aceito e não revogado);
-///   3. Permite SOMENTE métodos de leitura (GET/HEAD/OPTIONS) — escrita retorna 403;
+///   3. Permite SOMENTE métodos de leitura (GET/HEAD/OPTIONS) — escrita retorna 403.
+///      O assessor apenas VISUALIZA os dados do cliente; nunca altera.
 ///   4. Sobrescreve EffectiveUserId com o id do cliente (RealUserId segue o assessor).
 /// Deve ser registrado DEPOIS do FamiliaContextMiddleware para ter precedência.
 /// </summary>
