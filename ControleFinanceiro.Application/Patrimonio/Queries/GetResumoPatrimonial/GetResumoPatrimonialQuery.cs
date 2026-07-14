@@ -65,19 +65,10 @@ public record GetResumoPatrimonialQuery : IRequest<ResumoPatrimonialDto>;
 public class GetResumoPatrimonialQueryHandler(
     IAtivoPatrimonialRepository ativoRepository,
     IPassivoPatrimonialRepository passivoRepository,
+    IMoedaParamRepository moedaRepository,
     ICurrentUser currentUser)
     : IRequestHandler<GetResumoPatrimonialQuery, ResumoPatrimonialDto>
 {
-    // Câmbio provisório para consolidação em BRL. TODO: substituir por cotação real.
-    private static readonly Dictionary<MoedaPatrimonio, decimal> FxStub = new()
-    {
-        [MoedaPatrimonio.BRL] = 1.00m,
-        [MoedaPatrimonio.USD] = 5.40m,
-        [MoedaPatrimonio.EUR] = 5.90m,
-        [MoedaPatrimonio.CHF] = 6.10m,
-        [MoedaPatrimonio.GBP] = 6.90m,
-    };
-
     private static readonly Dictionary<TipoAtivo, string> CategoriaLabel = new()
     {
         [TipoAtivo.Imovel]       = "Imóveis",
@@ -88,9 +79,6 @@ public class GetResumoPatrimonialQueryHandler(
         [TipoAtivo.Investimento] = "Investimentos",
         [TipoAtivo.Outro]        = "Outros",
     };
-
-    private static decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
-        valor * FxStub.GetValueOrDefault(moeda, 1m);
 
     /// <summary>ROI anual estimado a partir do fluxo de caixa; se não há fluxo, cai na valorização.</summary>
     private static decimal? RoiAnual(decimal valorBRL, decimal fluxoAnualBRL, decimal? valorizacaoPct)
@@ -104,6 +92,13 @@ public class GetResumoPatrimonialQueryHandler(
     {
         var ativos   = (await ativoRepository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
         var passivos = (await passivoRepository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
+
+        // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
+        var fx = (await moedaRepository.GetAllAsync(cancellationToken))
+            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
+            moeda == MoedaPatrimonio.BRL ? valor
+            : valor * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
 
         // ── Bens ──
         var totalBensBRL     = ativos.Sum(a => ParaBRL(a.ValorAtual, a.Moeda));

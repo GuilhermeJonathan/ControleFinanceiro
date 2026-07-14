@@ -134,12 +134,12 @@ INSERT INTO "TiposInvestimentoParam" ("Id","Nome","Ordem","Ativo","IsSystem") VA
   (99,'Outro',        99,TRUE, TRUE)
 ON CONFLICT ("Id") DO NOTHING;
 
-INSERT INTO "MoedasParam" ("Id","Codigo","Nome","Ordem","Ativo","IsSystem") VALUES
-  (1,'BRL','Real Brasileiro',   1,TRUE,TRUE),
-  (2,'USD','Dólar Americano',   2,TRUE,TRUE),
-  (3,'EUR','Euro',              3,TRUE,TRUE),
-  (4,'CHF','Franco Suíço',      4,TRUE,TRUE),
-  (5,'GBP','Libra Esterlina',   5,TRUE,TRUE)
+INSERT INTO "MoedasParam" ("Id","Codigo","Nome","CotacaoBRL","Ordem","Ativo","IsSystem") VALUES
+  (1,'BRL','Real Brasileiro',   1.00, 1,TRUE,TRUE),
+  (2,'USD','Dólar Americano',   5.40, 2,TRUE,TRUE),
+  (3,'EUR','Euro',              5.90, 3,TRUE,TRUE),
+  (4,'CHF','Franco Suíço',      6.10, 4,TRUE,TRUE),
+  (5,'GBP','Libra Esterlina',   6.90, 5,TRUE,TRUE)
 ON CONFLICT ("Id") DO NOTHING;
 "@
 

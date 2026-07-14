@@ -77,7 +77,7 @@ public class ParametrosCommandHandlerTests
     public async Task SaveMoeda_Create_ShouldAddAndReturnId()
     {
         var handler = new SaveMoedaCommandHandler(_moedaRepo.Object, _currentUser.Object, _uow.Object);
-        await handler.Handle(new SaveMoedaCommand(null, "JPY", "Iene Japones", 6, true), CancellationToken.None);
+        await handler.Handle(new SaveMoedaCommand(null, "JPY", "Iene Japones", 0.035m, 6, true), CancellationToken.None);
 
         _moedaRepo.Verify(r => r.AddAsync(It.Is<MoedaParam>(x => x.Codigo == "JPY"), It.IsAny<CancellationToken>()), Times.Once);
     }

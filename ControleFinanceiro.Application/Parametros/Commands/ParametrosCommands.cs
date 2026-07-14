@@ -122,7 +122,7 @@ public class DeleteTipoInvestimentoCommandHandler(
 
 // ── Save Moeda ────────────────────────────────────────────────────────────
 
-public record SaveMoedaCommand(int? Id, string Codigo, string Nome, int Ordem, bool Ativo) : IRequest<int>;
+public record SaveMoedaCommand(int? Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo) : IRequest<int>;
 
 public class SaveMoedaCommandHandler(
     IMoedaParamRepository repo,
@@ -139,12 +139,12 @@ public class SaveMoedaCommandHandler(
         {
             var existing = await repo.GetByIdAsync(request.Id.Value, ct)
                 ?? throw new KeyNotFoundException($"Moeda {request.Id} não encontrada.");
-            existing.Atualizar(request.Codigo, request.Nome, request.Ordem, request.Ativo);
+            existing.Atualizar(request.Codigo, request.Nome, request.Ordem, request.Ativo, request.CotacaoBRL);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
 
-        var entity = new MoedaParam(request.Codigo, request.Nome, request.Ordem);
+        var entity = new MoedaParam(request.Codigo, request.Nome, request.Ordem, request.CotacaoBRL);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;

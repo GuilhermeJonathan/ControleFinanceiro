@@ -12,6 +12,7 @@ public class GetResumoPatrimonialQueryHandlerTests
 {
     private readonly Mock<IAtivoPatrimonialRepository> _ativoRepoMock = new();
     private readonly Mock<IPassivoPatrimonialRepository> _passivoRepoMock = new();
+    private readonly Mock<IMoedaParamRepository> _moedaRepoMock = new();
     private readonly Mock<ICurrentUser> _currentUserMock = new();
     private static readonly Guid UserId = Guid.NewGuid();
 
@@ -21,10 +22,20 @@ public class GetResumoPatrimonialQueryHandlerTests
         // Por padrão, sem dívidas — cada teste sobrescreve quando precisa.
         _passivoRepoMock.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<PassivoPatrimonial>());
+        // Cotações (antes fixas no código) agora vêm dos parâmetros de moeda.
+        _moedaRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<MoedaParam>
+            {
+                new(1, "BRL", "Real",   1, true, 1.00m),
+                new(2, "USD", "Dólar",  2, true, 5.40m),
+                new(3, "EUR", "Euro",   3, true, 5.90m),
+                new(4, "CHF", "Franco", 4, true, 6.10m),
+                new(5, "GBP", "Libra",  5, true, 6.90m),
+            });
     }
 
     private GetResumoPatrimonialQueryHandler CreateHandler() =>
-        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _currentUserMock.Object);
+        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _moedaRepoMock.Object, _currentUserMock.Object);
 
     [Fact]
     public async Task Handle_MultiMoeda_ShouldGroupAndConsolidate()

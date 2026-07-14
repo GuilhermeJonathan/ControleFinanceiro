@@ -26,26 +26,22 @@ public record GetProjecaoDividasQuery(int? Meses = null) : IRequest<ProjecaoDivi
 
 public class GetProjecaoDividasQueryHandler(
     IPassivoPatrimonialRepository repository,
+    IMoedaParamRepository moedaRepository,
     ICurrentUser currentUser)
     : IRequestHandler<GetProjecaoDividasQuery, ProjecaoDividasDto>
 {
     private const int HorizonteMax = 360;   // 30 anos
     private const int HorizontePadrao = 120; // 10 anos quando não há cronograma
 
-    private static readonly Dictionary<MoedaPatrimonio, decimal> FxStub = new()
-    {
-        [MoedaPatrimonio.BRL] = 1.00m,
-        [MoedaPatrimonio.USD] = 5.40m,
-        [MoedaPatrimonio.EUR] = 5.90m,
-        [MoedaPatrimonio.CHF] = 6.10m,
-        [MoedaPatrimonio.GBP] = 6.90m,
-    };
-
     public async Task<ProjecaoDividasDto> Handle(GetProjecaoDividasQuery request, CancellationToken cancellationToken)
     {
         var passivos = (await repository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
         if (passivos.Count == 0)
             return new ProjecaoDividasDto(0m, 0, true, []);
+
+        // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
+        var fxMap = (await moedaRepository.GetAllAsync(cancellationToken))
+            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
 
         var comCronograma = passivos.Where(p => p.PrazoMeses is > 0).ToList();
         var horizonte = request.Meses
@@ -56,7 +52,8 @@ public class GetProjecaoDividasQueryHandler(
         var saldosPorMes = new decimal[horizonte + 1];
         foreach (var p in passivos)
         {
-            var fx = FxStub.GetValueOrDefault(p.Moeda, 1m);
+            var fx = p.Moeda == MoedaPatrimonio.BRL ? 1m
+                : (fxMap.TryGetValue(p.Moeda.ToString(), out var r) && r > 0 ? r : 1m);
             var saldo = p.Valor;
             var n = p.PrazoMeses ?? 0;
             var i = (p.TaxaJurosAnualPct ?? 0m) / 100m / 12m;

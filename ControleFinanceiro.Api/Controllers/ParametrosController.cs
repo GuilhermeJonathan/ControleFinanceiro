@@ -71,7 +71,7 @@ public class ParametrosController(IMediator mediator) : ControllerBase
     [Authorize]
     public async Task<IActionResult> SaveMoeda([FromBody] SaveMoedaRequest req, CancellationToken ct)
     {
-        var id = await mediator.Send(new SaveMoedaCommand(req.Id, req.Codigo, req.Nome, req.Ordem, req.Ativo), ct);
+        var id = await mediator.Send(new SaveMoedaCommand(req.Id, req.Codigo, req.Nome, req.CotacaoBRL, req.Ordem, req.Ativo), ct);
         return Ok(new { id });
     }
 
@@ -85,4 +85,4 @@ public class ParametrosController(IMediator mediator) : ControllerBase
 }
 
 public record SaveParamRequest(int? Id, string Nome, string? Icone, int Ordem, bool Ativo);
-public record SaveMoedaRequest(int? Id, string Codigo, string Nome, int Ordem, bool Ativo);
+public record SaveMoedaRequest(int? Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo);
