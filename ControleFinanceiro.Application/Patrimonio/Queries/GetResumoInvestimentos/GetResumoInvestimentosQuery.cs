@@ -14,7 +14,9 @@ public record InvestimentoResumoDto(
     string? Ticker,
     decimal ValorAplicado,
     decimal ValorAtual,
-    decimal? RentabilidadeAnualPct);
+    decimal? RentabilidadeAnualPct,
+    decimal ValorAplicadoBRL,
+    decimal ValorAtualBRL);
 
 public record TotalInvestPorMoedaDto(string Moeda, decimal TotalAplicado, decimal TotalAtual, int Quantidade);
 
@@ -37,21 +39,20 @@ public record GetResumoInvestimentosQuery : IRequest<ResumoInvestimentosDto>;
 
 public class GetResumoInvestimentosQueryHandler(
     IInvestimentoRepository repository,
+    IMoedaParamRepository moedaRepository,
     ICurrentUser currentUser)
     : IRequestHandler<GetResumoInvestimentosQuery, ResumoInvestimentosDto>
 {
-    private static readonly Dictionary<MoedaPatrimonio, decimal> FxStub = new()
-    {
-        [MoedaPatrimonio.BRL] = 1.00m,
-        [MoedaPatrimonio.USD] = 5.40m,
-        [MoedaPatrimonio.EUR] = 5.90m,
-        [MoedaPatrimonio.CHF] = 6.10m,
-        [MoedaPatrimonio.GBP] = 6.90m,
-    };
-
     public async Task<ResumoInvestimentosDto> Handle(GetResumoInvestimentosQuery request, CancellationToken cancellationToken)
     {
         var lista = (await repository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
+
+        // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
+        var fx = (await moedaRepository.GetAllAsync(cancellationToken))
+            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
+            moeda == MoedaPatrimonio.BRL ? valor
+            : valor * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
 
         var totaisPorMoeda = lista
             .GroupBy(i => i.Moeda)
@@ -63,16 +64,17 @@ public class GetResumoInvestimentosQueryHandler(
             .OrderByDescending(t => t.TotalAtual)
             .ToList();
 
-        var fx = FxStub;
-        var totalAplicadoBRL = lista.Sum(i => i.ValorAplicado * fx.GetValueOrDefault(i.Moeda, 1m));
-        var totalAtualBRL    = lista.Sum(i => i.ValorAtual    * fx.GetValueOrDefault(i.Moeda, 1m));
+        var totalAplicadoBRL = lista.Sum(i => ParaBRL(i.ValorAplicado, i.Moeda));
+        var totalAtualBRL    = lista.Sum(i => ParaBRL(i.ValorAtual, i.Moeda));
         decimal? rentPct     = totalAplicadoBRL > 0
             ? Math.Round((totalAtualBRL - totalAplicadoBRL) / totalAplicadoBRL * 100, 2)
             : null;
 
         var investimentosDto = lista.Select(i => new InvestimentoResumoDto(
             i.Id, i.Nome, (int)i.Tipo, i.Moeda.ToString(), i.Corretora, i.Ticker,
-            i.ValorAplicado, i.ValorAtual, i.RentabilidadeAnualPct));
+            i.ValorAplicado, i.ValorAtual, i.RentabilidadeAnualPct,
+            Math.Round(ParaBRL(i.ValorAplicado, i.Moeda), 2),
+            Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2)));
 
         return new ResumoInvestimentosDto(
             lista.Count,
