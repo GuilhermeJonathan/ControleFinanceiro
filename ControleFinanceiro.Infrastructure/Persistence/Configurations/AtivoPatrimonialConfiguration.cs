@@ -15,6 +15,8 @@ public class AtivoPatrimonialConfiguration : IEntityTypeConfiguration<AtivoPatri
         builder.Property(a => a.Moeda).HasConversion<int>();
         builder.Property(a => a.ValorAtual).HasPrecision(18, 2);
         builder.Property(a => a.ValorizacaoAnualPct).HasPrecision(9, 4);
+        builder.Property(a => a.ReceitaMensal).HasPrecision(18, 2);
+        builder.Property(a => a.DespesaMensal).HasPrecision(18, 2);
         builder.HasIndex(a => a.UsuarioId);
     }
 }

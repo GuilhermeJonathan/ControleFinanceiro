@@ -34,3 +34,10 @@ public enum MoedaPatrimonio
     CHF = 4,
     GBP = 5,
 }
+
+/// <summary>Horizonte de uma dívida/passivo patrimonial.</summary>
+public enum PrazoDivida
+{
+    Curto = 1,   // vencimento em até 12 meses
+    Longo = 2,   // vencimento acima de 12 meses
+}

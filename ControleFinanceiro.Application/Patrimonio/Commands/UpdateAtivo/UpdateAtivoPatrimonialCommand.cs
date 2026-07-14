@@ -12,7 +12,9 @@ public record UpdateAtivoPatrimonialCommand(
     TipoAtivo Tipo,
     MoedaPatrimonio Moeda,
     decimal ValorAtual,
-    decimal? ValorizacaoAnualPct) : IRequest;
+    decimal? ValorizacaoAnualPct,
+    decimal ReceitaMensal = 0m,
+    decimal DespesaMensal = 0m) : IRequest;
 
 public class UpdateAtivoPatrimonialCommandHandler(
     IAtivoPatrimonialRepository repository,
@@ -28,7 +30,8 @@ public class UpdateAtivoPatrimonialCommandHandler(
         if (ativo.UsuarioId != currentUser.UserId)
             throw new UnauthorizedAccessException("Acesso negado ao ativo.");
 
-        ativo.Atualizar(request.Nome, request.Tipo, request.Moeda, request.ValorAtual, request.ValorizacaoAnualPct);
+        ativo.Atualizar(request.Nome, request.Tipo, request.Moeda, request.ValorAtual, request.ValorizacaoAnualPct,
+            request.ReceitaMensal, request.DespesaMensal);
         repository.Update(ativo);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

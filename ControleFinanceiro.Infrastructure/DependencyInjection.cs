@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IVinculoAssessoriaRepository, VinculoAssessoriaRepository>();
         services.AddScoped<IRecomendacaoRepository, RecomendacaoRepository>();
         services.AddScoped<IAtivoPatrimonialRepository, AtivoPatrimonialRepository>();
+        services.AddScoped<IPassivoPatrimonialRepository, PassivoPatrimonialRepository>();
         services.AddScoped<IInvestimentoRepository, InvestimentoRepository>();
         services.AddScoped<ITipoAtivoParamRepository, TipoAtivoParamRepository>();
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();
