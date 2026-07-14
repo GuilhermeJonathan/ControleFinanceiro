@@ -94,15 +94,24 @@ ON CONFLICT ("Id") DO NOTHING;
 
 -- ---------------------------------------------------------------------
 -- 5) Investimentos (módulo separado). Tipo: 1=Ações 3=ETF 4=RendaFixa 6=Cripto
+--    NOTA: só roda se a tabela existir. Se a migration AddInvestimentos ainda
+--    não foi aplicada em prod, este bloco é ignorado (não quebra o script).
 -- ---------------------------------------------------------------------
-INSERT INTO "Investimentos"
-  ("Id","UsuarioId","Nome","Tipo","Moeda","Corretora","Ticker","ValorAplicado","ValorAtual","RentabilidadeAnualPct","CriadoEm")
-VALUES
-  ('e2000000-0000-0000-0000-000000000001','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','ITSA4',        1, 1,'XP Investimentos','ITSA4',   80000.00,  96000.00, 15.0, now()),
-  ('e2000000-0000-0000-0000-000000000002','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','VOO',          3, 2,'Interactive Brokers','VOO', 120000.00, 152000.00, 20.0, now()),
-  ('e2000000-0000-0000-0000-000000000003','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','Bitcoin',      6, 2,'Binance','BTC',              30000.00,  64000.00, 70.0, now()),
-  ('e2000000-0000-0000-0000-000000000004','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','LCI Bradesco', 4, 1,'Bradesco',NULL,             150000.00, 168000.00, 11.0, now())
-ON CONFLICT ("Id") DO NOTHING;
+DO $$
+BEGIN
+  IF to_regclass('public."Investimentos"') IS NOT NULL THEN
+    INSERT INTO "Investimentos"
+      ("Id","UsuarioId","Nome","Tipo","Moeda","Corretora","Ticker","ValorAplicado","ValorAtual","RentabilidadeAnualPct","CriadoEm")
+    VALUES
+      ('e2000000-0000-0000-0000-000000000001','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','ITSA4',        1, 1,'XP Investimentos','ITSA4',   80000.00,  96000.00, 15.0, now()),
+      ('e2000000-0000-0000-0000-000000000002','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','VOO',          3, 2,'Interactive Brokers','VOO', 120000.00, 152000.00, 20.0, now()),
+      ('e2000000-0000-0000-0000-000000000003','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','Bitcoin',      6, 2,'Binance','BTC',              30000.00,  64000.00, 70.0, now()),
+      ('e2000000-0000-0000-0000-000000000004','1b0707c5-a9bc-45d2-85c1-04d67e4f79df','LCI Bradesco', 4, 1,'Bradesco',NULL,             150000.00, 168000.00, 11.0, now())
+    ON CONFLICT ("Id") DO NOTHING;
+  ELSE
+    RAISE NOTICE 'Tabela Investimentos ausente — bloco de investimentos ignorado (aplique a migration AddInvestimentos).';
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------
 -- 6) Simulação de projeção salva (proteção patrimonial) + 1 cenário.

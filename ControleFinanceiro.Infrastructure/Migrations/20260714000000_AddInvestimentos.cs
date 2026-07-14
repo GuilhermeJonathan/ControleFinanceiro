@@ -1,48 +1,42 @@
-using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ControleFinanceiro.Infrastructure.Migrations
+namespace ControleFinanceiro.Infrastructure.Migrations;
+
+/// <summary>
+/// Cria a tabela de Investimentos. Idempotente (CREATE TABLE/INDEX IF NOT EXISTS)
+/// porque em alguns ambientes a tabela foi criada fora do controle de migrations.
+/// </summary>
+[DbContext(typeof(Persistence.AppDbContext))]
+[Migration("20260714000000_AddInvestimentos")]
+public partial class AddInvestimentos : Migration
 {
-    /// <inheritdoc />
-    public partial class AddInvestimentos : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.CreateTable(
-                name: "Investimentos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Nome = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Tipo = table.Column<int>(type: "integer", nullable: false),
-                    Moeda = table.Column<int>(type: "integer", nullable: false),
-                    Corretora = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Ticker = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    ValorAplicado = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    ValorAtual = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    RentabilidadeAnualPct = table.Column<decimal>(type: "numeric(9,4)", precision: 9, scale: 4, nullable: true),
-                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Investimentos", x => x.Id);
-                });
+        migrationBuilder.Sql(@"
+            CREATE TABLE IF NOT EXISTS ""Investimentos"" (
+                ""Id"" uuid NOT NULL,
+                ""UsuarioId"" uuid NOT NULL,
+                ""Nome"" character varying(200) NOT NULL,
+                ""Tipo"" integer NOT NULL,
+                ""Moeda"" integer NOT NULL,
+                ""Corretora"" character varying(100),
+                ""Ticker"" character varying(20),
+                ""ValorAplicado"" numeric(18,2) NOT NULL,
+                ""ValorAtual"" numeric(18,2) NOT NULL,
+                ""RentabilidadeAnualPct"" numeric(9,4),
+                ""CriadoEm"" timestamp with time zone NOT NULL,
+                ""AtualizadoEm"" timestamp with time zone,
+                CONSTRAINT ""PK_Investimentos"" PRIMARY KEY (""Id"")
+            );
+            CREATE INDEX IF NOT EXISTS ""IX_Investimentos_UsuarioId"" ON ""Investimentos"" (""UsuarioId"");
+        ");
+    }
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Investimentos_UsuarioId",
-                table: "Investimentos",
-                column: "UsuarioId");
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropTable(name: "Investimentos");
-        }
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "Investimentos");
     }
 }
