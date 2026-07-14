@@ -28,7 +28,7 @@ public class ParametrosCommandHandlerTests
     public async Task SaveTipoAtivo_Create_ShouldAddAndReturnId()
     {
         var handler = new SaveTipoAtivoCommandHandler(_tipoAtivoRepo.Object, _currentUser.Object, _uow.Object);
-        var cmd = new SaveTipoAtivoCommand(null, "Novo Tipo", 10, true);
+        var cmd = new SaveTipoAtivoCommand(null, "Novo Tipo", null, 10, true);
 
         await handler.Handle(cmd, CancellationToken.None);
 
@@ -43,7 +43,7 @@ public class ParametrosCommandHandlerTests
         _tipoAtivoRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(existing);
 
         var handler = new SaveTipoAtivoCommandHandler(_tipoAtivoRepo.Object, _currentUser.Object, _uow.Object);
-        await handler.Handle(new SaveTipoAtivoCommand(1, "Atualizado", 2, true), CancellationToken.None);
+        await handler.Handle(new SaveTipoAtivoCommand(1, "Atualizado", null, 2, true), CancellationToken.None);
 
         existing.Nome.Should().Be("Atualizado");
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -55,7 +55,7 @@ public class ParametrosCommandHandlerTests
         _currentUser.Setup(c => c.IsAssessor).Returns(false);
         var handler = new SaveTipoAtivoCommandHandler(_tipoAtivoRepo.Object, _currentUser.Object, _uow.Object);
 
-        await handler.Invoking(h => h.Handle(new SaveTipoAtivoCommand(null, "X", 1, true), CancellationToken.None))
+        await handler.Invoking(h => h.Handle(new SaveTipoAtivoCommand(null, "X", null, 1, true), CancellationToken.None))
             .Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
@@ -100,7 +100,7 @@ public class ParametrosCommandHandlerTests
     public async Task SaveTipoInvestimento_Create_ShouldAdd()
     {
         var handler = new SaveTipoInvestimentoCommandHandler(_tipoInvRepo.Object, _currentUser.Object, _uow.Object);
-        await handler.Handle(new SaveTipoInvestimentoCommand(null, "Previdencia", 8, true), CancellationToken.None);
+        await handler.Handle(new SaveTipoInvestimentoCommand(null, "Previdencia", null, 8, true), CancellationToken.None);
 
         _tipoInvRepo.Verify(r => r.AddAsync(It.Is<TipoInvestimentoParam>(x => x.Nome == "Previdencia"), It.IsAny<CancellationToken>()), Times.Once);
     }

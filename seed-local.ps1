@@ -78,13 +78,24 @@ VALUES ('99999999-0000-0000-0000-000000000001','$CLIENTE_ID','Reserva de emergen
 ON CONFLICT ("Id") DO NOTHING;
 
 -- Ativos patrimoniais demo (modulo B2B). Tipo: 1=Imovel 2=Veiculo 3=Embarcacao 6=Investimento
--- Moeda: 1=BRL 2=USD 3=EUR 4=CHF
-INSERT INTO "AtivosPatrimoniais" ("Id","UsuarioId","Nome","Tipo","Moeda","ValorAtual","ValorizacaoAnualPct","CriadoEm") VALUES
-  ('a1000000-0000-0000-0000-000000000001','$CLIENTE_ID','Apartamento Jardins SP', 1, 1, 2350000.00,  8.0, now()),
-  ('a1000000-0000-0000-0000-000000000002','$CLIENTE_ID','Carteira EUA (ETFs)',    6, 2,  180000.00, 12.0, now()),
-  ('a1000000-0000-0000-0000-000000000003','$CLIENTE_ID','Conta Suica (UBS)',      6, 4,  120000.00,  3.5, now()),
-  ('a1000000-0000-0000-0000-000000000004','$CLIENTE_ID','Porsche 911',            2, 1,  850000.00, -6.0, now()),
-  ('a1000000-0000-0000-0000-000000000005','$CLIENTE_ID','Fundo Europa',           6, 3,   95000.00,  5.0, now())
+-- Moeda: 1=BRL 2=USD 3=EUR 4=CHF   (ReceitaMensal/DespesaMensal = fluxo de caixa por bem)
+INSERT INTO "AtivosPatrimoniais" ("Id","UsuarioId","Nome","Tipo","Moeda","ValorAtual","ValorizacaoAnualPct","ReceitaMensal","DespesaMensal","CriadoEm") VALUES
+  ('a1000000-0000-0000-0000-000000000001','$CLIENTE_ID','Apartamento Jardins SP', 1, 1, 2350000.00,  8.0, 12000.00, 2000.00, now()),
+  ('a1000000-0000-0000-0000-000000000002','$CLIENTE_ID','Carteira EUA (ETFs)',    6, 2,  180000.00, 12.0,     0.00,    0.00, now()),
+  ('a1000000-0000-0000-0000-000000000003','$CLIENTE_ID','Conta Suica (UBS)',      6, 4,  120000.00,  3.5,     0.00,    0.00, now()),
+  ('a1000000-0000-0000-0000-000000000004','$CLIENTE_ID','Porsche 911',            2, 1,  850000.00, -6.0,     0.00, 1500.00, now()),
+  ('a1000000-0000-0000-0000-000000000005','$CLIENTE_ID','Fundo Europa',           6, 3,   95000.00,  5.0,     0.00,    0.00, now())
+ON CONFLICT ("Id") DO NOTHING;
+
+-- Garante o fluxo de caixa mesmo se os ativos ja existiam de um seed anterior
+UPDATE "AtivosPatrimoniais" SET "ReceitaMensal"=12000.00, "DespesaMensal"=2000.00 WHERE "Id"='a1000000-0000-0000-0000-000000000001';
+UPDATE "AtivosPatrimoniais" SET "ReceitaMensal"=0.00,     "DespesaMensal"=1500.00 WHERE "Id"='a1000000-0000-0000-0000-000000000004';
+
+-- Dividas / passivos patrimoniais demo. Prazo: 1=Curto 2=Longo. Moeda: 1=BRL 3=EUR
+-- O financiamento tem juros+prazo (alimenta a projecao de quitacao); o Lombard e bullet (saldo constante).
+INSERT INTO "PassivosPatrimoniais" ("Id","UsuarioId","Nome","Moeda","Valor","Prazo","TaxaJurosAnualPct","PrazoMeses","CriadoEm") VALUES
+  ('c1000000-0000-0000-0000-000000000001','$CLIENTE_ID','Financiamento Apartamento', 1, 800000.00, 2, 9.5, 240, now()),
+  ('c1000000-0000-0000-0000-000000000002','$CLIENTE_ID','Lombard loan - Swissquote', 3, 180000.00, 1, NULL, NULL, now())
 ON CONFLICT ("Id") DO NOTHING;
 
 -- Investimentos demo

@@ -140,7 +140,9 @@ var allowedOrigins = new[]
     "https://app.findog.com.br",
     "https://www.findog.com.br",
     "https://findog.com.br",
-    "https://financeiro-web-two.vercel.app"
+    "https://financeiro-web-two.vercel.app",
+    "https://patrimonio-roan.vercel.app",
+    "https://patrimonio.vercel.app",
 };
 
 builder.Services.AddCors(options =>
