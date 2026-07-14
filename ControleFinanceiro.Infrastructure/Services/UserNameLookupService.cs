@@ -30,7 +30,7 @@ public class UserNameLookupService(AppDbContext db) : IUserNameLookup
             await conn.OpenAsync(ct);
 
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT \"Name\", \"Email\", \"AvatarUrl\" FROM \"Users\" WHERE \"Id\" = @id LIMIT 1";
+        cmd.CommandText = "SELECT \"Name\", \"Email\", \"AvatarUrl\", \"Cellphone\" FROM \"Users\" WHERE \"Id\" = @id LIMIT 1";
         var p = cmd.CreateParameter();
         p.ParameterName = "id";
         p.Value = userId;
@@ -41,6 +41,7 @@ public class UserNameLookupService(AppDbContext db) : IUserNameLookup
         return new UserContato(
             reader.IsDBNull(0) ? null : reader.GetString(0),
             reader.IsDBNull(1) ? null : reader.GetString(1),
-            reader.IsDBNull(2) ? null : reader.GetString(2));
+            reader.IsDBNull(2) ? null : reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3));
     }
 }

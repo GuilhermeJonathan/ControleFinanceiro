@@ -1,6 +1,6 @@
 namespace ControleFinanceiro.Application.Common.Interfaces;
 
-public record UserContato(string? Nome, string? Email, string? AvatarUrl = null);
+public record UserContato(string? Nome, string? Email, string? AvatarUrl = null, string? Cellphone = null);
 
 public interface IUserNameLookup
 {
