@@ -5,6 +5,7 @@ using ControleFinanceiro.Application.Patrimonio.Commands.DeletePassivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdateAtivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdatePassivo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
 using ControleFinanceiro.Application.Relatorios;
 using ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
@@ -56,6 +57,11 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     [HttpGet("resumo")]
     public async Task<IActionResult> GetResumo(CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetResumoPatrimonialQuery(), cancellationToken));
+
+    /// <summary>Dicas e análise do patrimônio geradas por IA.</summary>
+    [HttpGet("dicas")]
+    public async Task<IActionResult> GetDicas(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetDicasPatrimonioQuery(), cancellationToken));
 
     /// <summary>Cadastra um novo ativo patrimonial.</summary>
     [HttpPost("ativos")]
