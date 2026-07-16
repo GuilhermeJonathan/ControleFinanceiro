@@ -27,6 +27,16 @@ public class GetSaudeFinanceiraQueryHandler(ISender mediator)
         var dashboard = await mediator.Send(new GetDashboardQuery(request.Mes, request.Ano), cancellationToken);
         var orcamento = (await mediator.Send(new GetOrcamentoQuery(request.Mes, request.Ano), cancellationToken)).ToList();
 
+        // Cliente recém-entrado / sem nenhuma movimentação: não há o que avaliar.
+        // Evita mostrar um score "neutro" enganoso (ex.: 44 "Atenção") pra quem não tem dados.
+        var semDados = dashboard.TotalCreditos == 0
+            && dashboard.TotalDebitos == 0
+            && (dashboard.DiasReserva is null or <= 0)
+            && !orcamento.Any(o => o.LimiteMensal is > 0);
+
+        if (semDados)
+            return new SaudeFinanceiraDto(0, "Sem dados", new List<PilarSaudeDto>());
+
         var pilares = new List<PilarSaudeDto>
         {
             PilarComprometimento(dashboard.ComprometimentoRenda),

@@ -1,5 +1,6 @@
 using ControleFinanceiro.Application.Consultoria.Commands.SaveConsultoriaConfig;
 using ControleFinanceiro.Application.Consultoria.Queries.GetConsultoriaConfig;
+using ControleFinanceiro.Application.Consultoria.Queries.GetConsultoriaLogo;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,5 +32,19 @@ public class ConsultoriaController(IMediator mediator) : ControllerBase
         await mediator.Send(new SaveConsultoriaConfigCommand(
             req.NomeConsultoria, req.LogoBase64, req.CorMarca, req.WhatsApp, req.MensagemRodape), cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Público: serve a logo da consultoria como imagem, para uso em e-mails
+    /// (clientes de e-mail bloqueiam base64 embutido, mas carregam URL pública).
+    /// </summary>
+    [HttpGet("{assessorId:guid}/logo")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Logo(Guid assessorId, CancellationToken cancellationToken)
+    {
+        var logo = await mediator.Send(new GetConsultoriaLogoQuery(assessorId), cancellationToken);
+        if (logo is null) return NotFound();
+        Response.Headers.CacheControl = "public, max-age=3600";
+        return File(logo.Bytes, logo.ContentType);
     }
 }

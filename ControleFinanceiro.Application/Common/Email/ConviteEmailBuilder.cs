@@ -20,6 +20,18 @@ public static class ConviteEmailBuilder
     public static string BaseUrl(IConfiguration configuration) =>
         (configuration["Frontend:BaseUrl"] ?? FrontendDefault).TrimEnd('/');
 
+    /// <summary>
+    /// URL pública da logo da consultoria (servida pela API), ou null se não há logo.
+    /// E-mails não renderizam base64 embutido — precisam de uma URL remota.
+    /// </summary>
+    public static string? LogoUrl(IConfiguration configuration, Guid assessorId, bool temLogo)
+    {
+        if (!temLogo) return null;
+        var apiBase = configuration["Api:BaseUrl"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(apiBase)) return null;
+        return $"{apiBase}/api/consultoria/{assessorId}/logo";
+    }
+
     // ── Convites ─────────────────────────────────────────────────────────────
 
     public static string CorpoCliente(string marca, string cor, string? logo, string codigo, string link) =>

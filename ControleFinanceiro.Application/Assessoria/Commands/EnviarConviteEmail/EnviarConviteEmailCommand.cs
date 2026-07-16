@@ -42,8 +42,9 @@ public class EnviarConviteEmailCommandHandler(
         var marca = consultoria?.NomeConsultoria is { Length: > 0 } n ? n : (currentUser.RealUserName ?? "Seu assessor");
         var cor = consultoria?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
 
+        var logo = ConviteEmailBuilder.LogoUrl(configuration, currentUser.RealUserId, !string.IsNullOrWhiteSpace(consultoria?.LogoBase64));
         var link = ConviteEmailBuilder.MontarLink(configuration, codigo, "cliente");
-        var body = ConviteEmailBuilder.CorpoCliente(marca, cor, consultoria?.LogoBase64, codigo, link);
+        var body = ConviteEmailBuilder.CorpoCliente(marca, cor, logo, codigo, link);
 
         await emailService.SendAsync(
             request.Email, request.Email,

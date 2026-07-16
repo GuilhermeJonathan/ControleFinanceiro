@@ -137,15 +137,29 @@ public class AssessoriaQueryHandlersTests
     }
 
     [Fact]
-    public async Task Saude_SemDados_ShouldReturnNeutralScore()
+    public async Task Saude_SemDados_ShouldReturnEstadoSemDados()
     {
-        // Sem receitas, sem limites, sem reserva
+        // Cliente recém-entrado: sem receitas, sem despesas, sem limites, sem reserva.
         var dashboard = BuildDashboard(0, 0, variacaoSaldo: null, diasReserva: null, comprometimento: null);
 
         var handler = BuildSaudeHandler(dashboard, Enumerable.Empty<OrcamentoItemDto>());
         var result = await handler.Handle(new GetSaudeFinanceiraQuery(7, 2026), CancellationToken.None);
 
+        result.Classificacao.Should().Be("Sem dados");
+        result.ScoreGeral.Should().Be(0);
+        result.Pilares.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Saude_ComAlgumDado_NaoEhSemDados()
+    {
+        // Basta ter alguma movimentação (ex.: uma despesa) para ser avaliado normalmente.
+        var dashboard = BuildDashboard(0, 500, variacaoSaldo: null, diasReserva: null, comprometimento: null);
+
+        var handler = BuildSaudeHandler(dashboard, Enumerable.Empty<OrcamentoItemDto>());
+        var result = await handler.Handle(new GetSaudeFinanceiraQuery(7, 2026), CancellationToken.None);
+
+        result.Classificacao.Should().NotBe("Sem dados");
         result.Pilares.Should().HaveCount(4);
-        result.ScoreGeral.Should().BeInRange(0, 100);
     }
 }

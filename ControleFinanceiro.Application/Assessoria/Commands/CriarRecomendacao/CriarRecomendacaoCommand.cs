@@ -75,9 +75,10 @@ public class CriarRecomendacaoCommandHandler(
         var marca = consultoria?.NomeConsultoria is { Length: > 0 } n ? n : (vinculo.NomeAssessor ?? "Seu assessor");
         var cor = consultoria?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
         var link = $"{ConviteEmailBuilder.BaseUrl(configuration)}/home";
+        var logo = ConviteEmailBuilder.LogoUrl(configuration, vinculo.AssessorId, !string.IsNullOrWhiteSpace(consultoria?.LogoBase64));
 
         var body = ConviteEmailBuilder.CorpoRecomendacao(
-            marca, cor, consultoria?.LogoBase64, nomeCliente, tipoLabel, texto, link);
+            marca, cor, logo, nomeCliente, tipoLabel, texto, link);
 
         await emailService.SendAsync(
             contato.Email, nomeCliente,
