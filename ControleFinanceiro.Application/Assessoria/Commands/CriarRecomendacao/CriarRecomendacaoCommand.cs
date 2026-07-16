@@ -1,9 +1,11 @@
+using ControleFinanceiro.Application.Common.Email;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ControleFinanceiro.Application.Assessoria.Commands.CriarRecomendacao;
@@ -21,6 +23,8 @@ public class CriarRecomendacaoCommandHandler(
     IUnitOfWork unitOfWork,
     IUserNameLookup userLookup,
     IEmailService emailService,
+    IConsultoriaConfigRepository consultoriaRepo,
+    IConfiguration configuration,
     ILogger<CriarRecomendacaoCommandHandler> logger)
     : IRequestHandler<CriarRecomendacaoCommand, Guid>
 {
@@ -65,41 +69,18 @@ public class CriarRecomendacaoCommandHandler(
             TipoRecomendacao.Alerta          => "🚨 Alerta",
             _                                => "💡 Dica",
         };
-        var nomeAssessor = vinculo.NomeAssessor ?? "Seu assessor";
         var nomeCliente  = contato.Nome ?? vinculo.NomeCliente ?? "Cliente";
 
-        var body = $"""
-            <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0f1117;color:#e2e8f0;border-radius:12px;overflow:hidden">
-              <div style="background:#0f1117;padding:0;border-bottom:2px solid #16a34a">
-                <a href="https://app.findog.com.br" style="display:block;line-height:0">
-                  <img src="https://app.findog.com.br/og-image.png" alt="Meu FinDog" width="560"
-                       style="display:block;width:100%;max-width:560px;height:auto;border:0" />
-                </a>
-              </div>
-              <div style="padding:32px 24px">
-                <p style="font-size:18px;font-weight:700;color:#f1f5f9">Olá, {nomeCliente}!</p>
-                <p style="color:#94a3b8;line-height:1.6">
-                  <strong style="color:#e2e8f0">{nomeAssessor}</strong> enviou uma nova recomendação para você:
-                </p>
-                <div style="background:#1e293b;border-radius:10px;padding:16px;margin:20px 0">
-                  <p style="color:#94a3b8;font-size:13px;margin:0 0 8px">{tipoLabel}</p>
-                  <p style="color:#e2e8f0;font-size:14px;line-height:1.6;margin:0">{texto}</p>
-                </div>
-                <div style="text-align:center;margin:28px 0">
-                  <a href="https://app.findog.com.br"
-                     style="background:#16a34a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;display:inline-block">
-                    Responder no Meu FinDog
-                  </a>
-                </div>
-                <p style="color:#64748b;font-size:12px;text-align:center;margin-top:24px">
-                  Meu FinDog · <a href="https://app.findog.com.br" style="color:#64748b">app.findog.com.br</a>
-                </p>
-              </div>
-            </div>
-            """;
+        var consultoria = await consultoriaRepo.GetByUsuarioAsync(vinculo.AssessorId, cancellationToken);
+        var marca = consultoria?.NomeConsultoria is { Length: > 0 } n ? n : (vinculo.NomeAssessor ?? "Seu assessor");
+        var cor = consultoria?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
+        var link = $"{ConviteEmailBuilder.BaseUrl(configuration)}/home";
+
+        var body = ConviteEmailBuilder.CorpoRecomendacao(
+            marca, cor, consultoria?.LogoBase64, nomeCliente, tipoLabel, texto, link);
 
         await emailService.SendAsync(
             contato.Email, nomeCliente,
-            $"{tipoLabel} — nova recomendação do seu assessor", body, cancellationToken);
+            $"{tipoLabel} — nova recomendação de {marca}", body, cancellationToken);
     }
 }

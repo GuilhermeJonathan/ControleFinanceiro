@@ -21,10 +21,13 @@ public class RecomendacaoHandlersTests
     private readonly Mock<ICurrentUser> _currentUserMock = new();
     private readonly Mock<IUserNameLookup> _lookupMock = new();
     private readonly Mock<IEmailService> _emailMock = new();
+    private readonly Mock<IConsultoriaConfigRepository> _consultoriaMock = new();
+    private readonly Mock<Microsoft.Extensions.Configuration.IConfiguration> _configMock = new();
 
     private CriarRecomendacaoCommandHandler BuildCriarHandler() => new(
         _repoMock.Object, _vinculoRepoMock.Object, _currentUserMock.Object, _uowMock.Object,
-        _lookupMock.Object, _emailMock.Object, NullLogger<CriarRecomendacaoCommandHandler>.Instance);
+        _lookupMock.Object, _emailMock.Object, _consultoriaMock.Object, _configMock.Object,
+        NullLogger<CriarRecomendacaoCommandHandler>.Instance);
 
     private static readonly Guid AssessorId = Guid.NewGuid();
     private static readonly Guid ClienteId = Guid.NewGuid();

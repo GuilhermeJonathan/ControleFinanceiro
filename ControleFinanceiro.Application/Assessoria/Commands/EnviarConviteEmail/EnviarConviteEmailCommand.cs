@@ -43,7 +43,7 @@ public class EnviarConviteEmailCommandHandler(
         var cor = consultoria?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
 
         var link = ConviteEmailBuilder.MontarLink(configuration, codigo, "cliente");
-        var body = ConviteEmailBuilder.CorpoCliente(marca, cor, codigo, link);
+        var body = ConviteEmailBuilder.CorpoCliente(marca, cor, consultoria?.LogoBase64, codigo, link);
 
         await emailService.SendAsync(
             request.Email, request.Email,
