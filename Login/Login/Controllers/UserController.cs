@@ -5,6 +5,7 @@ using Login.Application.Users.Commands.SetUserType;
 using Login.Application.Users.Commands.CreateUser;
 using Login.Application.Users.Commands.DeleteUser;
 using Login.Application.Users.Commands.DeleteSelf;
+using Login.Application.Users.Commands.ProvisionUser;
 using Login.Application.Users.Commands.RegisterUser;
 using Login.Application.Users.Commands.SelfRegisterUser;
 using Login.Application.Users.Commands.ResetPassword;
@@ -28,10 +29,12 @@ namespace Login.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IConfiguration _configuration;
 
-    public UserController(IMediator mediator)
+    public UserController(IMediator mediator, IConfiguration configuration)
     {
         _mediator = mediator;
+        _configuration = configuration;
     }
 
     /// <summary>Auto-cadastro público — sem convite. Inicia trial de 30 dias.</summary>
@@ -56,6 +59,25 @@ public class UserController : ControllerBase
     {
         var accessToken = await _mediator.Send(command, cancellationToken);
         return Ok(new { accessToken });
+    }
+
+    /// <summary>
+    /// Provisiona conta a partir de um convite validado por outra API (server-to-server).
+    /// Protegido por service key — nunca deve ser chamado direto pelo cliente.
+    /// </summary>
+    [HttpPost("provision")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Provision(
+        [FromBody] ProvisionUserCommand command,
+        [FromHeader(Name = "X-Service-Key")] string? serviceKey,
+        CancellationToken cancellationToken)
+    {
+        var expected = _configuration["ServiceAuth:Key"];
+        if (string.IsNullOrWhiteSpace(expected) || serviceKey != expected)
+            return Unauthorized();
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Autentica o usuário e retorna o token JWT.</summary>

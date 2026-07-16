@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConviteAssessoria;
+using ControleFinanceiro.Application.Assessoria.Commands.AceitarConvitePublico;
 using ControleFinanceiro.Application.Assessoria.Commands.CriarRecomendacao;
 using ControleFinanceiro.Application.Assessoria.Commands.EnviarConviteEmail;
 using ControleFinanceiro.Application.Assessoria.Commands.ExcluirRecomendacao;
@@ -11,6 +12,7 @@ using ControleFinanceiro.Application.Assessoria.Queries.GetConvitesHistorico;
 using ControleFinanceiro.Application.Assessoria.Queries.GetMeuAssessor;
 using ControleFinanceiro.Application.Assessoria.Queries.GetRecomendacoes;
 using ControleFinanceiro.Application.Assessoria.Queries.GetSaudeFinanceira;
+using ControleFinanceiro.Application.Assessoria.Queries.ValidarConvite;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +38,21 @@ public class AssessoriaController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new AceitarConviteAssessoriaCommand(body.Codigo, body.NomeCliente), cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>Público: valida um código de convite para a tela /aceitar (sem login).</summary>
+    [HttpGet("convite/validar/{codigo}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ValidarConvite(string codigo, CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new ValidarConviteAssessoriaQuery(codigo), cancellationToken));
+
+    /// <summary>Público: aceita o convite pelo link do e-mail, criando/vinculando a conta do cliente.</summary>
+    [HttpPost("aceitar-publico")]
+    [AllowAnonymous]
+    public async Task<IActionResult> AceitarPublico([FromBody] AceitarConvitePublicoAssessoriaCommand command, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>Assessor: gera um convite e envia por e-mail ao cliente.</summary>

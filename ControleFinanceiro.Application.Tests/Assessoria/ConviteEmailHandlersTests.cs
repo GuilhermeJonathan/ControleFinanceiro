@@ -25,8 +25,11 @@ public class ConviteEmailHandlersTests
         var currentUserMock = new Mock<ICurrentUser>();
         currentUserMock.Setup(c => c.RealUserName).Returns("Assessor Teste");
         var emailMock = new Mock<IEmailService>();
+        var consultoriaMock = new Mock<IConsultoriaConfigRepository>();
+        var configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
 
-        var handler = new EnviarConviteEmailCommandHandler(mediatorMock.Object, currentUserMock.Object, emailMock.Object);
+        var handler = new EnviarConviteEmailCommandHandler(
+            mediatorMock.Object, currentUserMock.Object, emailMock.Object, consultoriaMock.Object, configMock.Object);
         var codigo = await handler.Handle(new EnviarConviteEmailCommand("novo@cliente.com"), CancellationToken.None);
 
         codigo.Should().Be("ABC123");
@@ -46,7 +49,9 @@ public class ConviteEmailHandlersTests
         var emailMock = new Mock<IEmailService>();
 
         var handler = new EnviarConviteEmailCommandHandler(
-            mediatorMock.Object, new Mock<ICurrentUser>().Object, emailMock.Object);
+            mediatorMock.Object, new Mock<ICurrentUser>().Object, emailMock.Object,
+            new Mock<IConsultoriaConfigRepository>().Object,
+            new Mock<Microsoft.Extensions.Configuration.IConfiguration>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             handler.Handle(new EnviarConviteEmailCommand("novo@cliente.com"), CancellationToken.None));

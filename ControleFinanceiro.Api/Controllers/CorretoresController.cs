@@ -34,6 +34,29 @@ public class CorretoresController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Assessor gera um convite de corretor e envia por e-mail.</summary>
+    [HttpPost("convite/email")]
+    public async Task<IActionResult> EnviarConviteEmail([FromBody] EnviarConviteCorretorEmailRequest body, CancellationToken ct)
+    {
+        var codigo = await mediator.Send(new EnviarConviteCorretorEmailCommand(body.Email), ct);
+        return Ok(new { codigo });
+    }
+
+    /// <summary>Público: valida um código de convite de corretor para a tela /aceitar.</summary>
+    [HttpGet("convite/validar/{codigo}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ValidarConvite(string codigo, CancellationToken ct) =>
+        Ok(await mediator.Send(new ValidarConviteCorretorQuery(codigo), ct));
+
+    /// <summary>Público: aceita o convite de corretor pelo link do e-mail, criando/vinculando a conta.</summary>
+    [HttpPost("aceitar-publico")]
+    [AllowAnonymous]
+    public async Task<IActionResult> AceitarPublico([FromBody] AceitarConvitePublicoCorretorCommand command, CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return Ok(result);
+    }
+
     // ── Gerenciamento de corretores (assessor) ────────────────────────────────
 
     /// <summary>Lista todos os corretores do assessor logado.</summary>
@@ -82,3 +105,4 @@ public class CorretoresController(IMediator mediator) : ControllerBase
 
 public record AceitarConviteCorretorRequest(string Codigo);
 public record DelegarCarteiraRequest(Guid CorretorId, Guid ClienteId);
+public record EnviarConviteCorretorEmailRequest(string Email);

@@ -6,7 +6,7 @@ using MediatR;
 
 namespace ControleFinanceiro.Application.Assessoria.Commands.GerarConviteAssessoria;
 
-public record GerarConviteAssessoriaCommand : IRequest<string>;
+public record GerarConviteAssessoriaCommand(string? EmailConvidado = null) : IRequest<string>;
 
 public class GerarConviteAssessoriaCommandHandler(
     IVinculoAssessoriaRepository repository,
@@ -41,7 +41,7 @@ public class GerarConviteAssessoriaCommandHandler(
                 .ToArray());
         } while (await repository.GetByCodigoAsync(codigo, cancellationToken) != null);
 
-        var vinculo = VinculoAssessoria.Criar(currentUser.RealUserId, codigo, currentUser.RealUserName);
+        var vinculo = VinculoAssessoria.Criar(currentUser.RealUserId, codigo, currentUser.RealUserName, request.EmailConvidado);
         await repository.AddAsync(vinculo, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

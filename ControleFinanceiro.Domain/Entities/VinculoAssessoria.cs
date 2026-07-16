@@ -16,13 +16,20 @@ public class VinculoAssessoria
     public DateTime? RevogadoEm { get; private set; }  // preenchido = acesso encerrado
     public string? NomeCliente { get; private set; }   // guardado no aceite para exibir na UI
     public string? NomeAssessor { get; private set; }  // guardado na criação para exibir ao cliente
+    public string? EmailConvidado { get; private set; } // preenchido quando o convite é enviado por e-mail
 
     public bool Ativo => AceitoEm != null && RevogadoEm == null;
 
     private VinculoAssessoria() { }
 
-    public static VinculoAssessoria Criar(Guid assessorId, string codigo, string? nomeAssessor = null) =>
-        new() { AssessorId = assessorId, CodigoConvite = codigo.ToUpperInvariant(), NomeAssessor = nomeAssessor };
+    public static VinculoAssessoria Criar(Guid assessorId, string codigo, string? nomeAssessor = null, string? emailConvidado = null) =>
+        new()
+        {
+            AssessorId = assessorId,
+            CodigoConvite = codigo.ToUpperInvariant(),
+            NomeAssessor = nomeAssessor,
+            EmailConvidado = string.IsNullOrWhiteSpace(emailConvidado) ? null : emailConvidado.Trim().ToLowerInvariant(),
+        };
 
     public void Aceitar(Guid clienteId, string nomeCliente)
     {

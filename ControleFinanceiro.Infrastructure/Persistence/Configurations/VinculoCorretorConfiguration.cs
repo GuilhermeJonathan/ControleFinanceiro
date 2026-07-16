@@ -13,6 +13,7 @@ public class VinculoCorretorConfiguration : IEntityTypeConfiguration<VinculoCorr
         b.Property(x => x.CodigoConvite).HasMaxLength(10).IsRequired();
         b.Property(x => x.NomeAssessor).HasMaxLength(200);
         b.Property(x => x.NomeCorretor).HasMaxLength(200);
+        b.Property(x => x.EmailConvidado).HasMaxLength(200);
         b.HasIndex(x => x.CodigoConvite).IsUnique();
         b.HasIndex(x => x.AssessorId);
         b.HasIndex(x => x.CorretorId);

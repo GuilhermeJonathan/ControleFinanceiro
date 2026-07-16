@@ -61,7 +61,10 @@ public static class DependencyInjection
         services.AddScoped<IDelegacaoCarteiraRepository, DelegacaoCarteiraRepository>();
 
         services.AddScoped<IUserNameLookup, UserNameLookupService>();
-        services.AddScoped<IEmailService, EmailService>();
+        // E-mail centralizado na API de Login (gateway). O EmailService (Resend direto)
+        // continua no projeto, mas não é mais registrado aqui.
+        services.AddHttpClient<IEmailService, LoginEmailGateway>();
+        services.AddHttpClient<ILoginProvisionClient, LoginProvisionClient>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
 
         services.AddHostedService<MetaContribuicaoService>();
