@@ -83,10 +83,17 @@ public static class ConviteEmailBuilder
 
     private static string Header(string marca, string cor, string? logo)
     {
-        var temLogo = !string.IsNullOrWhiteSpace(logo);
-        var conteudo = temLogo
-            ? $"""<img src="{logo}" alt="{Esc(marca)}" style="max-height:52px;max-width:220px;height:auto;display:block;border:0" />"""
-            : $"""<p style="margin:0;font-size:20px;font-weight:800;color:#f1f5f9">{Esc(marca)}</p>""";
+        var nome = $"""<span style="font-size:20px;font-weight:800;color:#f1f5f9;vertical-align:middle">{Esc(marca)}</span>""";
+        var conteudo = string.IsNullOrWhiteSpace(logo)
+            ? nome
+            : $"""
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td style="vertical-align:middle;padding-right:12px">
+                    <img src="{logo}" alt="{Esc(marca)}" style="max-height:44px;max-width:160px;height:auto;display:block;border:0" />
+                  </td>
+                  <td style="vertical-align:middle">{nome}</td>
+                </tr></table>
+                """;
         return $"""
             <div style="padding:24px;border-bottom:2px solid {cor};background:#0f1117">
               {conteudo}
