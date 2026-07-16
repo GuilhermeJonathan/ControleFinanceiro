@@ -44,16 +44,21 @@ public class AssessoriaContextMiddleware(RequestDelegate next)
                 return;
             }
 
-            var geracaoRelatorio = HttpMethods.IsPost(context.Request.Method) &&
-                context.Request.Path.StartsWithSegments("/api/patrimonio/relatorio", StringComparison.OrdinalIgnoreCase);
+            // No view-as, assessor/corretor PODE alterar os dados do cliente (patrimônio,
+            // ativos, dívidas, investimentos, projeção…). A ÚNICA exceção é a Gestão Pessoal
+            // (lançamentos, categorias, metas), que permanece somente leitura.
+            var ehGestaoPessoal =
+                context.Request.Path.StartsWithSegments("/api/lancamentos", StringComparison.OrdinalIgnoreCase) ||
+                context.Request.Path.StartsWithSegments("/api/categorias",  StringComparison.OrdinalIgnoreCase) ||
+                context.Request.Path.StartsWithSegments("/api/metas",       StringComparison.OrdinalIgnoreCase);
 
-            if (!HttpMethods.IsGet(context.Request.Method) &&
+            if (ehGestaoPessoal &&
+                !HttpMethods.IsGet(context.Request.Method) &&
                 !HttpMethods.IsHead(context.Request.Method) &&
-                !HttpMethods.IsOptions(context.Request.Method) &&
-                !geracaoRelatorio)
+                !HttpMethods.IsOptions(context.Request.Method))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsJsonAsync(new { error = "Modo visualização é somente leitura." });
+                await context.Response.WriteAsJsonAsync(new { error = "A Gestão Pessoal é somente leitura na visão do cliente." });
                 return;
             }
 
