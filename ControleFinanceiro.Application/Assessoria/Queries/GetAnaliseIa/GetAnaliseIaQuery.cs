@@ -1,11 +1,13 @@
 using ControleFinanceiro.Application.Assessoria.Queries.GetSaudeFinanceira;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Application.Lancamentos.Queries.GetDashboard;
+using ControleFinanceiro.Domain.Enums;
 using MediatR;
 
 namespace ControleFinanceiro.Application.Assessoria.Queries.GetAnaliseIa;
 
-public record AnaliseIaDto(string Rascunho);
+/// <summary>Rascunho gerado pela IA + o tipo de recomendação sugerido (Dica/Alerta).</summary>
+public record AnaliseIaDto(string Rascunho, int TipoSugerido);
 
 /// <summary>
 /// Gera um rascunho de análise financeira em texto via IA (gpt-4o-mini) a partir
@@ -45,6 +47,17 @@ public class GetAnaliseIaQueryHandler(ISender mediator, IAiService aiService)
             """;
 
         var rascunho = await aiService.ChatAsync(SystemPrompt, contexto, maxTokens: 600, cancellationToken: cancellationToken);
-        return new AnaliseIaDto(rascunho);
+        return new AnaliseIaDto(rascunho, (int)SugerirTipo(saude.ScoreGeral, dashboard.TotalCreditos, dashboard.TotalDebitos, dashboard.Saldo));
+    }
+
+    /// <summary>
+    /// Classifica a recomendação como Alerta quando a situação exige atenção
+    /// (score baixo, saldo negativo ou renda muito comprometida); senão, Dica.
+    /// </summary>
+    public static TipoRecomendacao SugerirTipo(int scoreGeral, decimal receitas, decimal despesas, decimal saldo)
+    {
+        var comprometimento = receitas > 0 ? despesas / receitas : 0m;
+        var critico = scoreGeral < 50 || saldo < 0 || comprometimento >= 0.80m;
+        return critico ? TipoRecomendacao.Alerta : TipoRecomendacao.Dica;
     }
 }
