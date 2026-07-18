@@ -18,6 +18,11 @@ public class Recomendacao
     public string? RespostaCliente { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? RespondidoEm { get; private set; }
+    /// <summary>Quando o assessor visualizou a resposta do cliente. Null = resposta não lida (badge do sino).</summary>
+    public DateTime? RespostaVistaEm { get; private set; }
+
+    /// <summary>Resposta do cliente ainda não vista pelo assessor.</summary>
+    public bool RespostaNaoVista => Status != StatusRecomendacao.Pendente && RespostaVistaEm == null;
 
     private Recomendacao() { }
 
@@ -40,5 +45,13 @@ public class Recomendacao
         Status = resposta;
         RespostaCliente = comentario;
         RespondidoEm = DateTime.UtcNow;
+        RespostaVistaEm = null; // nova resposta → não vista pelo assessor
+    }
+
+    /// <summary>Marca a resposta do cliente como vista pelo assessor (limpa o badge do sino).</summary>
+    public void MarcarRespostaVista()
+    {
+        if (Status != StatusRecomendacao.Pendente && RespostaVistaEm == null)
+            RespostaVistaEm = DateTime.UtcNow;
     }
 }

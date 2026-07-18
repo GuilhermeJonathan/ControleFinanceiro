@@ -22,6 +22,12 @@ public class RecomendacaoRepository(AppDbContext db) : IRecomendacaoRepository
             .OrderByDescending(r => r.CriadoEm)
             .ToListAsync(ct);
 
+    public async Task<IEnumerable<Recomendacao>> GetByAssessorAsync(Guid assessorId, CancellationToken ct = default) =>
+        await db.Recomendacoes
+            .Where(r => r.AssessorId == assessorId)
+            .OrderByDescending(r => r.RespondidoEm ?? r.CriadoEm)
+            .ToListAsync(ct);
+
     public Task<int> CountPendentesByClienteAsync(Guid clienteId, CancellationToken ct = default) =>
         db.Recomendacoes.CountAsync(r => r.ClienteId == clienteId && r.Status == StatusRecomendacao.Pendente, ct);
 

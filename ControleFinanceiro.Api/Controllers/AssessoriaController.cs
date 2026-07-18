@@ -1,6 +1,8 @@
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConviteAssessoria;
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConvitePublico;
 using ControleFinanceiro.Application.Assessoria.Commands.CriarRecomendacao;
+using ControleFinanceiro.Application.Assessoria.Commands.MarcarRespostasVistas;
+using ControleFinanceiro.Application.Assessoria.Commands.ReenviarConvite;
 using ControleFinanceiro.Application.Assessoria.Commands.EnviarConviteEmail;
 using ControleFinanceiro.Application.Assessoria.Commands.ExcluirRecomendacao;
 using ControleFinanceiro.Application.Assessoria.Commands.GerarConviteAssessoria;
@@ -11,6 +13,7 @@ using ControleFinanceiro.Application.Assessoria.Queries.GetClientesAssessoria;
 using ControleFinanceiro.Application.Assessoria.Queries.GetConvitesHistorico;
 using ControleFinanceiro.Application.Assessoria.Queries.GetMeuAssessor;
 using ControleFinanceiro.Application.Assessoria.Queries.GetRecomendacoes;
+using ControleFinanceiro.Application.Assessoria.Queries.GetRespostasRecomendacoes;
 using ControleFinanceiro.Application.Assessoria.Queries.GetSaudeFinanceira;
 using ControleFinanceiro.Application.Assessoria.Queries.ValidarConvite;
 using MediatR;
@@ -37,6 +40,14 @@ public class AssessoriaController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Aceitar([FromBody] AceitarConviteAssessoriaRequest body, CancellationToken cancellationToken)
     {
         await mediator.Send(new AceitarConviteAssessoriaCommand(body.Codigo, body.NomeCliente), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Assessor reenvia o e-mail de um convite de cliente pendente (renova a validade).</summary>
+    [HttpPost("convite/{id:guid}/reenviar")]
+    public async Task<IActionResult> ReenviarConvite(Guid id, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new ReenviarConviteEmailCommand(id), cancellationToken);
         return NoContent();
     }
 
@@ -130,6 +141,19 @@ public class AssessoriaController(IMediator mediator) : ControllerBase
     [HttpGet("recomendacoes/cliente/{clienteId:guid}")]
     public async Task<IActionResult> GetRecomendacoesAssessor(Guid clienteId, CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetRecomendacoesAssessorQuery(clienteId), cancellationToken));
+
+    /// <summary>Assessor: respostas dos clientes às recomendações (sino de notificações).</summary>
+    [HttpGet("recomendacoes/respostas")]
+    public async Task<IActionResult> GetRespostas(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetRespostasRecomendacoesQuery(), cancellationToken));
+
+    /// <summary>Assessor: marca todas as respostas como vistas (zera o badge do sino).</summary>
+    [HttpPost("recomendacoes/respostas/marcar-vistas")]
+    public async Task<IActionResult> MarcarRespostasVistas(CancellationToken cancellationToken)
+    {
+        await mediator.Send(new MarcarRespostasVistasCommand(), cancellationToken);
+        return NoContent();
+    }
 
     // ── Análise com IA (F4) ──────────────────────────────────────────────────
 
