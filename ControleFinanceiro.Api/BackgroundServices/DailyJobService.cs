@@ -1,7 +1,11 @@
+using System.Globalization;
+using ControleFinanceiro.Application.Common.Email;
+using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace ControleFinanceiro.Api.BackgroundServices;
 
@@ -43,6 +47,7 @@ public class DailyJobService(
         await JobAutoVencimentoAsync(ct);
         await JobGerarRecorrentesAsync(ct);
         await JobSnapshotPatrimonioAsync(ct);
+        await JobRelatorioMensalAsync(ct);
 
         logger.LogInformation("[DailyJob] Jobs concluídos — {agora}", DateTime.Now);
     }
@@ -244,5 +249,80 @@ public class DailyJobService(
 
         logger.LogInformation("[DailyJob] Snapshot patrimônio: {qtd} snapshot(s) de {mes}/{ano} criados.",
             novos.Count, mes, ano);
+    }
+
+    // ── Job 4: Resumo mensal por e-mail ───────────────────────────────────────
+    // Uma vez por mês, envia a cada cliente ativo um e-mail com o patrimônio do mês
+    // (dos snapshots) + variação vs. mês anterior, com a marca da consultoria.
+    private static readonly string[] MesesPt =
+        { "janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro" };
+
+    private async Task JobRelatorioMensalAsync(CancellationToken ct)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var lookup = scope.ServiceProvider.GetRequiredService<IUserNameLookup>();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        var hoje = DateTime.UtcNow;
+        int ano = hoje.Year, mes = hoje.Month;
+        int anoMesAtual = ano * 100 + mes;
+        int mesAnt = mes == 1 ? 12 : mes - 1;
+        int anoAnt = mes == 1 ? ano - 1 : ano;
+        var ptBR = CultureInfo.GetCultureInfo("pt-BR");
+        var mesLabel = $"{MesesPt[mes - 1]}/{ano}";
+        var link = $"{ConviteEmailBuilder.BaseUrl(config)}/patrimonio";
+
+        var vinculos = await db.VinculosAssessoria
+            .Where(v => v.AceitoEm != null && v.RevogadoEm == null)
+            .ToListAsync(ct);
+
+        int enviados = 0;
+        foreach (var v in vinculos)
+        {
+            // Já enviado neste mês? pula.
+            if (v.UltimoRelatorioMensalEm is { } u && u.Year * 100 + u.Month >= anoMesAtual) continue;
+
+            var atual = await db.PatrimonioSnapshots
+                .FirstOrDefaultAsync(s => s.UsuarioId == v.ClienteId && s.Ano == ano && s.Mes == mes, ct);
+            if (atual is null) continue; // sem dados do mês → não envia
+
+            var contato = await lookup.GetContatoAsync(v.ClienteId, ct);
+            if (string.IsNullOrWhiteSpace(contato?.Email)) continue;
+
+            var cfg = await db.ConsultoriaConfigs.FirstOrDefaultAsync(c => c.UsuarioId == v.AssessorId, ct);
+            var marca = cfg?.NomeConsultoria is { Length: > 0 } n ? n : (v.NomeAssessor ?? "Seu assessor");
+            var cor = cfg?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
+            var logo = ConviteEmailBuilder.LogoUrl(config, v.AssessorId, !string.IsNullOrWhiteSpace(cfg?.LogoBase64));
+
+            var anterior = await db.PatrimonioSnapshots
+                .FirstOrDefaultAsync(s => s.UsuarioId == v.ClienteId && s.Ano == anoAnt && s.Mes == mesAnt, ct);
+            string? variacao = null;
+            if (anterior is { PatrimonioLiquidoBRL: not 0 })
+            {
+                var pct = (atual.PatrimonioLiquidoBRL - anterior.PatrimonioLiquidoBRL) / Math.Abs(anterior.PatrimonioLiquidoBRL) * 100m;
+                var seta = pct >= 0 ? "▲" : "▼";
+                variacao = $"{seta} {Math.Abs(pct):F1}% vs mês anterior";
+            }
+
+            var patrimonioFmt = "R$ " + atual.PatrimonioLiquidoBRL.ToString("N2", ptBR);
+            var nomeCliente = contato!.Nome ?? v.NomeCliente ?? "Cliente";
+            var body = ConviteEmailBuilder.CorpoRelatorioMensal(marca, cor, logo, nomeCliente, mesLabel, patrimonioFmt, variacao, link);
+
+            try
+            {
+                await email.SendAsync(contato.Email!, nomeCliente, $"Seu patrimônio em {mesLabel} — {marca}", body, ct, marca);
+                v.MarcarRelatorioMensalEnviado();
+                enviados++;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[DailyJob] Falha ao enviar resumo mensal para cliente {ClienteId}.", v.ClienteId);
+            }
+        }
+
+        if (enviados > 0) await db.SaveChangesAsync(ct);
+        logger.LogInformation("[DailyJob] Resumo mensal: {qtd} e-mail(s) enviados.", enviados);
     }
 }

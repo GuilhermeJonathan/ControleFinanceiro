@@ -6,7 +6,11 @@ using ControleFinanceiro.Application.Patrimonio.Commands.UpdateAtivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdatePassivo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
+using ControleFinanceiro.Application.Patrimonio.Commands.ImportarInvestimentos;
+using ControleFinanceiro.Application.Patrimonio.Commands.SaveAlocacaoAlvo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetEvolucaoPatrimonial;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetInsightsPatrimonio;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetRebalanceamento;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
 using ControleFinanceiro.Application.Relatorios;
 using ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
@@ -63,6 +67,29 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     [HttpGet("evolucao")]
     public async Task<IActionResult> GetEvolucao([FromQuery] int meses = 12, CancellationToken cancellationToken = default) =>
         Ok(await mediator.Send(new GetEvolucaoPatrimonialQuery(meses), cancellationToken));
+
+    /// <summary>Insights determinísticos e acionáveis sobre o patrimônio do usuário efetivo.</summary>
+    [HttpGet("insights")]
+    public async Task<IActionResult> GetInsights(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetInsightsPatrimonioQuery(), cancellationToken));
+
+    /// <summary>Alocação atual dos investimentos vs. alocação-alvo (rebalanceamento).</summary>
+    [HttpGet("rebalanceamento")]
+    public async Task<IActionResult> GetRebalanceamento(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetRebalanceamentoQuery(), cancellationToken));
+
+    /// <summary>Importa investimentos a partir de um CSV (cabeçalho + linhas).</summary>
+    [HttpPost("investimentos/importar")]
+    public async Task<IActionResult> ImportarInvestimentos([FromBody] ImportarInvestimentosCommand command, CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(command, cancellationToken));
+
+    /// <summary>Define a alocação-alvo (% por classe) do usuário efetivo.</summary>
+    [HttpPut("alocacao-alvo")]
+    public async Task<IActionResult> SalvarAlocacaoAlvo([FromBody] IEnumerable<AlvoItem> alvos, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new SaveAlocacaoAlvoCommand(alvos), cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>Dicas e análise do patrimônio geradas por IA.</summary>
     [HttpGet("dicas")]

@@ -79,6 +79,21 @@ public static class ConviteEmailBuilder
             {Botao("Responder", link, cor)}
             """);
 
+    // ── Resumo mensal ──────────────────────────────────────────────────────────
+
+    public static string CorpoRelatorioMensal(string marca, string cor, string? logo,
+        string nomeCliente, string mesLabel, string patrimonioFmt, string? variacaoTxt, string link) =>
+        Wrap(marca, cor, logo, $"""
+            <p style="font-size:18px;font-weight:700;color:#f1f5f9;margin:0 0 8px">Olá, {Esc(nomeCliente)}!</p>
+            <p style="color:#94a3b8;line-height:1.6;margin:0">Aqui está o resumo do seu patrimônio em <strong style="color:#e2e8f0">{Esc(mesLabel)}</strong>:</p>
+            <div style="background:#1e293b;border-radius:10px;padding:20px;margin:18px 0;text-align:center">
+              <p style="color:#94a3b8;font-size:13px;margin:0 0 6px">Patrimônio líquido</p>
+              <p style="color:{cor};font-size:30px;font-weight:800;margin:0">{Esc(patrimonioFmt)}</p>
+              {(string.IsNullOrEmpty(variacaoTxt) ? "" : $"<p style=\"color:#94a3b8;font-size:13px;margin:8px 0 0\">{Esc(variacaoTxt!)}</p>")}
+            </div>
+            {Botao("Ver detalhes no app", link, cor)}
+            """);
+
     // ── Blocos base ──────────────────────────────────────────────────────────
 
     private static string Header(string marca, string cor, string? logo)

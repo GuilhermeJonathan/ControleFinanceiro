@@ -18,6 +18,7 @@ public class VinculoAssessoria
     public string? NomeAssessor { get; private set; }  // guardado na criação para exibir ao cliente
     public string? EmailConvidado { get; private set; } // preenchido quando o convite é enviado por e-mail
     public DateTime? ExpiraEm { get; private set; }      // convite pendente expira; null = sem expiração (legado)
+    public DateTime? UltimoRelatorioMensalEm { get; private set; } // controle do e-mail mensal automático
 
     /// <summary>Prazo padrão de validade de um convite (dias).</summary>
     public const int PrazoConviteDias = 7;
@@ -46,6 +47,9 @@ public class VinculoAssessoria
         NomeCliente = nomeCliente;
         AceitoEm = DateTime.UtcNow;
     }
+
+    /// <summary>Marca que o relatório mensal foi enviado (evita reenvio no mesmo mês).</summary>
+    public void MarcarRelatorioMensalEnviado() => UltimoRelatorioMensalEm = DateTime.UtcNow;
 
     /// <summary>Reenvia o convite: renova a validade a partir de agora.</summary>
     public void RenovarValidade()
