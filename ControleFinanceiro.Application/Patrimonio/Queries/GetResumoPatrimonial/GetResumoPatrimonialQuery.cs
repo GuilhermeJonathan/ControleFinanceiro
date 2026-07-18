@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Common.Interfaces;
+using ControleFinanceiro.Domain.Common;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
@@ -66,6 +67,8 @@ public class GetResumoPatrimonialQueryHandler(
     IAtivoPatrimonialRepository ativoRepository,
     IPassivoPatrimonialRepository passivoRepository,
     IMoedaParamRepository moedaRepository,
+    IPatrimonioSnapshotRepository snapshotRepository,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser)
     : IRequestHandler<GetResumoPatrimonialQuery, ResumoPatrimonialDto>
 {
@@ -154,6 +157,26 @@ public class GetResumoPatrimonialQueryHandler(
         }).ToList();
 
         var patrimonioLiquido = totalBensBRL - totalDividasBRL;
+
+        // Captura preguiçosa: registra/atualiza o snapshot do mês corrente (só quando há patrimônio).
+        if (ativos.Count > 0 || passivos.Count > 0)
+        {
+            var hoje = DateTime.UtcNow;
+            var liq  = Math.Round(patrimonioLiquido, 2);
+            var bens = Math.Round(totalBensBRL, 2);
+            var div  = Math.Round(totalDividasBRL, 2);
+            var snap = await snapshotRepository.GetByUsuarioMesAsync(currentUser.UserId, hoje.Year, hoje.Month, cancellationToken);
+            if (snap is null)
+                await snapshotRepository.AddAsync(
+                    PatrimonioSnapshot.Criar(currentUser.UserId, hoje.Year, hoje.Month, liq, bens, div), cancellationToken);
+            else
+            {
+                snap.Atualizar(liq, bens, div);
+                snapshotRepository.Update(snap);
+            }
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
         var alavancagem       = totalBensBRL > 0 ? totalDividasBRL / totalBensBRL * 100m : 0m;
         var roiGeral          = totalBensBRL > 0 && fluxoAnualBRL != 0
             ? Math.Round(fluxoAnualBRL / totalBensBRL * 100m, 2)

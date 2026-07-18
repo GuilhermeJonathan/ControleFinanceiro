@@ -6,6 +6,7 @@ using ControleFinanceiro.Application.Patrimonio.Commands.UpdateAtivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdatePassivo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetEvolucaoPatrimonial;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
 using ControleFinanceiro.Application.Relatorios;
 using ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
@@ -57,6 +58,11 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     [HttpGet("resumo")]
     public async Task<IActionResult> GetResumo(CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetResumoPatrimonialQuery(), cancellationToken));
+
+    /// <summary>Evolução mensal do patrimônio do usuário efetivo (gráfico).</summary>
+    [HttpGet("evolucao")]
+    public async Task<IActionResult> GetEvolucao([FromQuery] int meses = 12, CancellationToken cancellationToken = default) =>
+        Ok(await mediator.Send(new GetEvolucaoPatrimonialQuery(meses), cancellationToken));
 
     /// <summary>Dicas e análise do patrimônio geradas por IA.</summary>
     [HttpGet("dicas")]

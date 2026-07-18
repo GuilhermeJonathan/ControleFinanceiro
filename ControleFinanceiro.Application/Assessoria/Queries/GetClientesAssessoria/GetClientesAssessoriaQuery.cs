@@ -14,6 +14,7 @@ public record ClienteAssessoriaDto(
     DateTime CriadoEm,
     DateTime? AceitoEm,
     string? AvatarUrl,
+    string? Email,
     string? EmailConvidado,
     DateTime? ExpiraEm,
     bool Expirado);
@@ -37,15 +38,17 @@ public class GetClientesAssessoriaQueryHandler(
         foreach (var v in vinculos)
         {
             string? avatar = null;
+            string? email = v.EmailConvidado; // pendente: e-mail do convite
             if (v.AceitoEm != null)
             {
                 var contato = await userLookup.GetContatoAsync(v.ClienteId, cancellationToken);
                 avatar = contato?.AvatarUrl;
+                email = contato?.Email ?? v.EmailConvidado;
             }
             resultado.Add(new ClienteAssessoriaDto(
                 v.Id, v.ClienteId, v.NomeCliente, v.CodigoConvite,
                 v.AceitoEm != null, v.Ativo, v.CriadoEm, v.AceitoEm, avatar,
-                v.EmailConvidado, v.ExpiraEm, v.Expirado));
+                email, v.EmailConvidado, v.ExpiraEm, v.Expirado));
         }
         return resultado;
     }

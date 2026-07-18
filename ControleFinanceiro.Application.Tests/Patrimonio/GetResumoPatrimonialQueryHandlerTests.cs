@@ -13,6 +13,8 @@ public class GetResumoPatrimonialQueryHandlerTests
     private readonly Mock<IAtivoPatrimonialRepository> _ativoRepoMock = new();
     private readonly Mock<IPassivoPatrimonialRepository> _passivoRepoMock = new();
     private readonly Mock<IMoedaParamRepository> _moedaRepoMock = new();
+    private readonly Mock<IPatrimonioSnapshotRepository> _snapshotRepoMock = new();
+    private readonly Mock<ControleFinanceiro.Domain.Common.IUnitOfWork> _uowMock = new();
     private readonly Mock<ICurrentUser> _currentUserMock = new();
     private static readonly Guid UserId = Guid.NewGuid();
 
@@ -35,7 +37,8 @@ public class GetResumoPatrimonialQueryHandlerTests
     }
 
     private GetResumoPatrimonialQueryHandler CreateHandler() =>
-        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _moedaRepoMock.Object, _currentUserMock.Object);
+        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _moedaRepoMock.Object,
+            _snapshotRepoMock.Object, _uowMock.Object, _currentUserMock.Object);
 
     [Fact]
     public async Task Handle_MultiMoeda_ShouldGroupAndConsolidate()

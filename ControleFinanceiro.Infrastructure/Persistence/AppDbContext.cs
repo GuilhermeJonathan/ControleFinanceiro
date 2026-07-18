@@ -24,6 +24,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<AtivoPatrimonial> AtivosPatrimoniais => Set<AtivoPatrimonial>();
     public DbSet<PassivoPatrimonial> PassivosPatrimoniais => Set<PassivoPatrimonial>();
     public DbSet<SimulacaoPatrimonial> SimulacoesPatrimoniais => Set<SimulacaoPatrimonial>();
+    public DbSet<PatrimonioSnapshot> PatrimonioSnapshots => Set<PatrimonioSnapshot>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();

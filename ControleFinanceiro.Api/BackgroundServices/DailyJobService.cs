@@ -42,6 +42,7 @@ public class DailyJobService(
 
         await JobAutoVencimentoAsync(ct);
         await JobGerarRecorrentesAsync(ct);
+        await JobSnapshotPatrimonioAsync(ct);
 
         logger.LogInformation("[DailyJob] Jobs concluídos — {agora}", DateTime.Now);
     }
@@ -188,5 +189,60 @@ public class DailyJobService(
 
         logger.LogInformation("[DailyJob] Geração de recorrentes: {qtd} lançamento(s) gerados em {grupos} grupo(s).",
             novos.Count, resumoGrupos.Count);
+    }
+
+    // ── Job 3: Snapshot mensal do patrimônio ──────────────────────────────────
+    // Garante 1 foto por usuário no mês corrente (mesmo para quem não abre a tela).
+    // A captura preguiçosa (GetResumoPatrimonial) mantém os usuários ativos em dia;
+    // este job cobre os passivos. Não sobrescreve snapshots já existentes do mês.
+    private async Task JobSnapshotPatrimonioAsync(CancellationToken ct)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var hoje = DateTime.UtcNow;
+        int ano = hoje.Year, mes = hoje.Month;
+
+        var fx = await db.MoedasParam.ToDictionaryAsync(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL, ct);
+        decimal ParaBRL(decimal v, MoedaPatrimonio moeda) =>
+            moeda == MoedaPatrimonio.BRL ? v : v * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
+
+        var ativos = await db.AtivosPatrimoniais
+            .Select(a => new { a.UsuarioId, a.ValorAtual, a.Moeda }).ToListAsync(ct);
+        var passivos = await db.PassivosPatrimoniais
+            .Select(p => new { p.UsuarioId, p.Valor, p.Moeda }).ToListAsync(ct);
+
+        var usuarios = ativos.Select(a => a.UsuarioId)
+            .Concat(passivos.Select(p => p.UsuarioId))
+            .Distinct().ToList();
+
+        if (usuarios.Count == 0)
+        {
+            logger.LogInformation("[DailyJob] Snapshot patrimônio: nenhum usuário com patrimônio.");
+            return;
+        }
+
+        var jaExiste = (await db.PatrimonioSnapshots
+            .Where(s => s.Ano == ano && s.Mes == mes)
+            .Select(s => s.UsuarioId).ToListAsync(ct)).ToHashSet();
+
+        var novos = new List<PatrimonioSnapshot>();
+        foreach (var uid in usuarios)
+        {
+            if (jaExiste.Contains(uid)) continue;
+            var bens = ativos.Where(a => a.UsuarioId == uid).Sum(a => ParaBRL(a.ValorAtual, a.Moeda));
+            var div  = passivos.Where(p => p.UsuarioId == uid).Sum(p => ParaBRL(p.Valor, p.Moeda));
+            novos.Add(PatrimonioSnapshot.Criar(uid, ano, mes,
+                Math.Round(bens - div, 2), Math.Round(bens, 2), Math.Round(div, 2)));
+        }
+
+        if (novos.Count > 0)
+        {
+            await db.PatrimonioSnapshots.AddRangeAsync(novos, ct);
+            await db.SaveChangesAsync(ct);
+        }
+
+        logger.LogInformation("[DailyJob] Snapshot patrimônio: {qtd} snapshot(s) de {mes}/{ano} criados.",
+            novos.Count, mes, ano);
     }
 }
