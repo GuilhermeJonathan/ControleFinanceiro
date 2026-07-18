@@ -16,8 +16,8 @@ public class LoginProvisionClient(HttpClient http, IConfiguration configuration)
     {
         var baseUrl = configuration["LoginApi:BaseUrl"]?.TrimEnd('/')
             ?? throw new InvalidOperationException("LoginApi:BaseUrl não configurado.");
-        var serviceKey = configuration["ServiceAuth:Key"]
-            ?? throw new InvalidOperationException("ServiceAuth:Key não configurado.");
+        var serviceKey = configuration["ServiceAuth:ApiKey"]
+            ?? throw new InvalidOperationException("ServiceAuth:ApiKey não configurado.");
 
         using var req = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/user/provision");
         req.Headers.Add("X-Service-Key", serviceKey);
@@ -38,5 +38,29 @@ public class LoginProvisionClient(HttpClient http, IConfiguration configuration)
         return new ProvisionContaResult(dto.AccessToken, dto.UserId, dto.Created);
     }
 
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken ct = default)
+    {
+        var baseUrl = configuration["LoginApi:BaseUrl"]?.TrimEnd('/');
+        var serviceKey = configuration["ServiceAuth:ApiKey"];
+        // Sem config, não dá pra validar — falha aberta (deixa seguir) para não travar convites.
+        if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(serviceKey))
+            return false;
+
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/internal/email-exists/{Uri.EscapeDataString(email)}");
+            req.Headers.Add("X-Service-Key", serviceKey);
+            using var resp = await http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode) return false;
+            var dto = await resp.Content.ReadFromJsonAsync<EmailExistsResponse>(JsonOpts, ct);
+            return dto?.Exists ?? false;
+        }
+        catch
+        {
+            return false; // falha de rede → não bloqueia o envio
+        }
+    }
+
     private record ProvisionResponse(string AccessToken, Guid UserId, bool Created);
+    private record EmailExistsResponse(bool Exists, int? UserTypeId);
 }

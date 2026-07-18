@@ -96,7 +96,7 @@ public class RecomendacaoHandlersTests
         _emailMock.Verify(e => e.SendAsync(
             "cliente@test.com", It.IsAny<string>(),
             It.Is<string>(s => s.Contains("recomendação")),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class RecomendacaoHandlersTests
         _lookupMock.Setup(l => l.GetContatoAsync(ClienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserContato("Cliente", "cliente@test.com"));
         _emailMock.Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ThrowsAsync(new HttpRequestException("resend down"));
 
         var handler = BuildCriarHandler();

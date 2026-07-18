@@ -25,6 +25,19 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
         }
+        catch (InvalidOperationException ex)
+        {
+            // Violação de regra de negócio (ex.: e-mail já existe, convite já utilizado) → 400 com a mensagem.
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Erro inesperado");

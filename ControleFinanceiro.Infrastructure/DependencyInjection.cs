@@ -61,8 +61,8 @@ public static class DependencyInjection
         services.AddScoped<IDelegacaoCarteiraRepository, DelegacaoCarteiraRepository>();
 
         services.AddScoped<IUserNameLookup, UserNameLookupService>();
-        // E-mail centralizado na API de Login (gateway). O EmailService (Resend direto)
-        // continua no projeto, mas não é mais registrado aqui.
+        // E-mail centralizado: a API de Patrimônio não envia direto pelo Resend —
+        // o gateway repassa para a API de Login (único sender real do ecossistema).
         services.AddHttpClient<IEmailService, LoginEmailGateway>();
         services.AddHttpClient<ILoginProvisionClient, LoginProvisionClient>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();

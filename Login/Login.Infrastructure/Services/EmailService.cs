@@ -29,13 +29,15 @@ public class EmailService : IEmailService
         string toName,
         string subject,
         string htmlBody,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? fromName = null)
     {
         try
         {
+            var displayName = string.IsNullOrWhiteSpace(fromName) ? _fromName : fromName;
             var payload = new
             {
-                from    = $"{_fromName} <{_fromEmail}>",
+                from    = $"{displayName} <{_fromEmail}>",
                 to      = new[] { toEmail },
                 subject = subject,
                 html    = htmlBody,

@@ -16,13 +16,13 @@ public class LoginEmailGateway(
     IConfiguration configuration,
     ILogger<LoginEmailGateway> logger) : IEmailService
 {
-    public async Task SendAsync(string toEmail, string toName, string subject, string htmlBody, CancellationToken cancellationToken = default)
+    public async Task SendAsync(string toEmail, string toName, string subject, string htmlBody, CancellationToken cancellationToken = default, string? fromName = null)
     {
         var baseUrl = configuration["LoginApi:BaseUrl"]?.TrimEnd('/');
-        var serviceKey = configuration["ServiceAuth:Key"];
+        var serviceKey = configuration["ServiceAuth:ApiKey"];
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(serviceKey))
         {
-            logger.LogWarning("[LoginEmailGateway] LoginApi:BaseUrl ou ServiceAuth:Key não configurados — e-mail para {to} ignorado.", toEmail);
+            logger.LogWarning("[LoginEmailGateway] LoginApi:BaseUrl ou ServiceAuth:ApiKey não configurados — e-mail para {to} ignorado.", toEmail);
             return;
         }
 
@@ -30,7 +30,7 @@ public class LoginEmailGateway(
         {
             using var req = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/internal/email");
             req.Headers.Add("X-Service-Key", serviceKey);
-            req.Content = JsonContent.Create(new { toEmail, toName, subject, htmlBody });
+            req.Content = JsonContent.Create(new { toEmail, toName, subject, htmlBody, fromName });
 
             using var resp = await http.SendAsync(req, cancellationToken);
             if (!resp.IsSuccessStatusCode)

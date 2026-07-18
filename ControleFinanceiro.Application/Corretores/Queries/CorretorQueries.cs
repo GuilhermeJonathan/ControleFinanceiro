@@ -15,7 +15,10 @@ public record CorretorDto(
     DateTime? AceitoEm,
     DateTime? RevogadoEm,
     bool Ativo,
-    int QtdClientesDelegados);
+    int QtdClientesDelegados,
+    string? EmailConvidado,
+    DateTime? ExpiraEm,
+    bool Expirado);
 
 public record DelegacaoDto(
     Guid Id,
@@ -50,7 +53,8 @@ public class GetCorretoresQueryHandler(
         return vinculos.Select(v => new CorretorDto(
             v.Id, v.CorretorId, v.NomeCorretor, v.CodigoConvite,
             v.CriadoEm, v.AceitoEm, v.RevogadoEm, v.Ativo,
-            delegacoes.Count(d => d.CorretorId == v.CorretorId && d.Ativa)));
+            delegacoes.Count(d => d.CorretorId == v.CorretorId && d.Ativa),
+            v.EmailConvidado, v.ExpiraEm, v.Expirado));
     }
 }
 

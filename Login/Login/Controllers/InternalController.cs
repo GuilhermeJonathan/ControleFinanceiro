@@ -1,4 +1,5 @@
 using Login.Application.Notifications.Commands.SendEmail;
+using Login.Application.Users.Queries.EmailExists;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ public class InternalController(IMediator mediator, IConfiguration configuration
 {
     private bool ServiceKeyValida(string? serviceKey)
     {
-        var expected = configuration["ServiceAuth:Key"];
+        var expected = configuration["ServiceAuth:ApiKey"];
         return !string.IsNullOrWhiteSpace(expected) && serviceKey == expected;
     }
 
@@ -31,5 +32,19 @@ public class InternalController(IMediator mediator, IConfiguration configuration
 
         await mediator.Send(command, cancellationToken);
         return Ok();
+    }
+
+    /// <summary>Verifica se já existe conta com o e-mail (para validar convites antes do envio).</summary>
+    [HttpGet("email-exists/{email}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> EmailExists(
+        string email,
+        [FromHeader(Name = "X-Service-Key")] string? serviceKey,
+        CancellationToken cancellationToken)
+    {
+        if (!ServiceKeyValida(serviceKey)) return Unauthorized();
+
+        var result = await mediator.Send(new EmailExistsQuery(email), cancellationToken);
+        return Ok(result);
     }
 }

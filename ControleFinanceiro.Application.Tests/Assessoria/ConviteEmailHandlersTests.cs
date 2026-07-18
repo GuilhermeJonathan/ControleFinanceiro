@@ -27,9 +27,10 @@ public class ConviteEmailHandlersTests
         var emailMock = new Mock<IEmailService>();
         var consultoriaMock = new Mock<IConsultoriaConfigRepository>();
         var configMock = new Mock<Microsoft.Extensions.Configuration.IConfiguration>();
+        var loginMock = new Mock<ILoginProvisionClient>(); // EmailExistsAsync → false por padrão
 
         var handler = new EnviarConviteEmailCommandHandler(
-            mediatorMock.Object, currentUserMock.Object, emailMock.Object, consultoriaMock.Object, configMock.Object);
+            mediatorMock.Object, currentUserMock.Object, emailMock.Object, consultoriaMock.Object, loginMock.Object, configMock.Object);
         var codigo = await handler.Handle(new EnviarConviteEmailCommand("novo@cliente.com"), CancellationToken.None);
 
         codigo.Should().Be("ABC123");
@@ -37,7 +38,7 @@ public class ConviteEmailHandlersTests
             "novo@cliente.com", It.IsAny<string>(),
             It.Is<string>(s => s.Contains("convidou")),
             It.Is<string>(b => b.Contains("ABC123")),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>(), It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -51,12 +52,34 @@ public class ConviteEmailHandlersTests
         var handler = new EnviarConviteEmailCommandHandler(
             mediatorMock.Object, new Mock<ICurrentUser>().Object, emailMock.Object,
             new Mock<IConsultoriaConfigRepository>().Object,
+            new Mock<ILoginProvisionClient>().Object,
             new Mock<Microsoft.Extensions.Configuration.IConfiguration>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             handler.Handle(new EnviarConviteEmailCommand("novo@cliente.com"), CancellationToken.None));
         emailMock.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EnviarConvite_EmailJaExiste_BloqueiaEnvio()
+    {
+        var mediatorMock = new Mock<ISender>();
+        var emailMock = new Mock<IEmailService>();
+        var loginMock = new Mock<ILoginProvisionClient>();
+        loginMock.Setup(l => l.EmailExistsAsync("existente@cliente.com", It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var handler = new EnviarConviteEmailCommandHandler(
+            mediatorMock.Object, new Mock<ICurrentUser>().Object, emailMock.Object,
+            new Mock<IConsultoriaConfigRepository>().Object, loginMock.Object,
+            new Mock<Microsoft.Extensions.Configuration.IConfiguration>().Object);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            handler.Handle(new EnviarConviteEmailCommand("existente@cliente.com"), CancellationToken.None));
+        // não gera código nem envia e-mail
+        mediatorMock.Verify(m => m.Send(It.IsAny<GerarConviteAssessoriaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        emailMock.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()), Times.Never);
     }
 
     // ── GetConvitesHistorico ─────────────────────────────────────────────────

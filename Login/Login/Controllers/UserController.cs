@@ -72,7 +72,7 @@ public class UserController : ControllerBase
         [FromHeader(Name = "X-Service-Key")] string? serviceKey,
         CancellationToken cancellationToken)
     {
-        var expected = _configuration["ServiceAuth:Key"];
+        var expected = _configuration["ServiceAuth:ApiKey"];
         if (string.IsNullOrWhiteSpace(expected) || serviceKey != expected)
             return Unauthorized();
 

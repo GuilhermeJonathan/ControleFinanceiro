@@ -29,11 +29,16 @@ public class EnviarConviteEmailCommandHandler(
     ICurrentUser currentUser,
     IEmailService emailService,
     IConsultoriaConfigRepository consultoriaRepo,
+    ILoginProvisionClient loginClient,
     IConfiguration configuration)
     : IRequestHandler<EnviarConviteEmailCommand, string>
 {
     public async Task<string> Handle(EnviarConviteEmailCommand request, CancellationToken cancellationToken)
     {
+        // O convite por e-mail cria conta nova — se o e-mail já existe, barra antes de enviar.
+        if (await loginClient.EmailExistsAsync(request.Email, cancellationToken))
+            throw new InvalidOperationException("Já existe uma conta com este e-mail. Peça para a pessoa entrar com a conta atual, ou convide outro e-mail.");
+
         // Reusa toda a validação (perfil assessor, limite de carteira) do GerarConvite
         // e já grava o e-mail do convidado no vínculo.
         var codigo = await mediator.Send(new GerarConviteAssessoriaCommand(request.Email), cancellationToken);
@@ -48,7 +53,7 @@ public class EnviarConviteEmailCommandHandler(
 
         await emailService.SendAsync(
             request.Email, request.Email,
-            $"{marca} convidou você para acompanhar seu patrimônio", body, cancellationToken);
+            $"{marca} convidou você para acompanhar seu patrimônio", body, cancellationToken, marca);
 
         return codigo;
     }

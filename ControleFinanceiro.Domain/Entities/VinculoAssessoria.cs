@@ -17,8 +17,13 @@ public class VinculoAssessoria
     public string? NomeCliente { get; private set; }   // guardado no aceite para exibir na UI
     public string? NomeAssessor { get; private set; }  // guardado na criação para exibir ao cliente
     public string? EmailConvidado { get; private set; } // preenchido quando o convite é enviado por e-mail
+    public DateTime? ExpiraEm { get; private set; }      // convite pendente expira; null = sem expiração (legado)
+
+    /// <summary>Prazo padrão de validade de um convite (dias).</summary>
+    public const int PrazoConviteDias = 7;
 
     public bool Ativo => AceitoEm != null && RevogadoEm == null;
+    public bool Expirado => AceitoEm == null && RevogadoEm == null && ExpiraEm is { } e && e < DateTime.UtcNow;
 
     private VinculoAssessoria() { }
 
@@ -29,15 +34,25 @@ public class VinculoAssessoria
             CodigoConvite = codigo.ToUpperInvariant(),
             NomeAssessor = nomeAssessor,
             EmailConvidado = string.IsNullOrWhiteSpace(emailConvidado) ? null : emailConvidado.Trim().ToLowerInvariant(),
+            ExpiraEm = DateTime.UtcNow.AddDays(PrazoConviteDias),
         };
 
     public void Aceitar(Guid clienteId, string nomeCliente)
     {
         if (AceitoEm != null) throw new InvalidOperationException("Convite já utilizado.");
+        if (Expirado)         throw new InvalidOperationException("Convite expirado. Peça um novo ao assessor.");
         if (clienteId == AssessorId) throw new InvalidOperationException("Assessor não pode ser cliente de si mesmo.");
         ClienteId = clienteId;
         NomeCliente = nomeCliente;
         AceitoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Reenvia o convite: renova a validade a partir de agora.</summary>
+    public void RenovarValidade()
+    {
+        if (AceitoEm != null)   throw new InvalidOperationException("Convite já utilizado.");
+        if (RevogadoEm != null) throw new InvalidOperationException("Convite revogado.");
+        ExpiraEm = DateTime.UtcNow.AddDays(PrazoConviteDias);
     }
 
     public void Revogar()

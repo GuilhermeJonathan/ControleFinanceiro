@@ -51,10 +51,15 @@ public class EnviarConviteCorretorEmailCommandHandler(
     ICurrentUser currentUser,
     IEmailService emailService,
     IConsultoriaConfigRepository consultoriaRepo,
+    ILoginProvisionClient loginClient,
     IConfiguration configuration) : IRequestHandler<EnviarConviteCorretorEmailCommand, string>
 {
     public async Task<string> Handle(EnviarConviteCorretorEmailCommand request, CancellationToken ct)
     {
+        // Convite de corretor cria conta nova — barra se o e-mail já existe (conta existente não vira corretor).
+        if (await loginClient.EmailExistsAsync(request.Email, ct))
+            throw new InvalidOperationException("Já existe uma conta com este e-mail. Convide outro e-mail ou peça para a pessoa entrar com a conta atual.");
+
         var codigo = await mediator.Send(new GerarConviteCorretorCommand(request.Email), ct);
 
         var consultoria = await consultoriaRepo.GetByUsuarioAsync(currentUser.RealUserId, ct);
@@ -67,9 +72,47 @@ public class EnviarConviteCorretorEmailCommandHandler(
 
         await emailService.SendAsync(
             request.Email, request.Email,
-            $"{marca} convidou você para atuar como corretor", body, ct);
+            $"{marca} convidou você para atuar como corretor", body, ct, marca);
 
         return codigo;
+    }
+}
+
+// ── Reenviar convite de corretor por e-mail (renova validade) ────────────────
+
+public record ReenviarConviteCorretorCommand(Guid VinculoId) : IRequest;
+
+public class ReenviarConviteCorretorCommandHandler(
+    IVinculoCorretorRepository repo,
+    ICurrentUser currentUser,
+    IEmailService emailService,
+    IConsultoriaConfigRepository consultoriaRepo,
+    IConfiguration configuration,
+    IUnitOfWork uow) : IRequestHandler<ReenviarConviteCorretorCommand>
+{
+    public async Task Handle(ReenviarConviteCorretorCommand request, CancellationToken ct)
+    {
+        var vinculo = await repo.GetByIdAsync(request.VinculoId, ct)
+            ?? throw new KeyNotFoundException("Convite não encontrado.");
+        if (vinculo.AssessorId != currentUser.RealUserId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+        if (string.IsNullOrWhiteSpace(vinculo.EmailConvidado))
+            throw new InvalidOperationException("Este convite não foi enviado por e-mail.");
+
+        vinculo.RenovarValidade();
+        repo.Update(vinculo);
+        await uow.SaveChangesAsync(ct);
+
+        var consultoria = await consultoriaRepo.GetByUsuarioAsync(currentUser.RealUserId, ct);
+        var marca = consultoria?.NomeConsultoria is { Length: > 0 } n ? n : (currentUser.RealUserName ?? "Seu assessor");
+        var cor = consultoria?.CorMarca is { Length: > 0 } c ? c : "#16a34a";
+        var logo = ConviteEmailBuilder.LogoUrl(configuration, currentUser.RealUserId, !string.IsNullOrWhiteSpace(consultoria?.LogoBase64));
+        var link = ConviteEmailBuilder.MontarLink(configuration, vinculo.CodigoConvite, "corretor");
+        var body = ConviteEmailBuilder.CorpoCorretor(marca, cor, logo, vinculo.CodigoConvite, link);
+
+        await emailService.SendAsync(
+            vinculo.EmailConvidado!, vinculo.EmailConvidado!,
+            $"{marca} convidou você para atuar como corretor", body, ct, marca);
     }
 }
 

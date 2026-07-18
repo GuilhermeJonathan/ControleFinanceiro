@@ -42,6 +42,14 @@ public class CorretoresController(IMediator mediator) : ControllerBase
         return Ok(new { codigo });
     }
 
+    /// <summary>Assessor reenvia o e-mail de um convite de corretor pendente (renova a validade).</summary>
+    [HttpPost("{id:guid}/reenviar")]
+    public async Task<IActionResult> Reenviar(Guid id, CancellationToken ct)
+    {
+        await mediator.Send(new ReenviarConviteCorretorCommand(id), ct);
+        return NoContent();
+    }
+
     /// <summary>Público: valida um código de convite de corretor para a tela /aceitar.</summary>
     [HttpGet("convite/validar/{codigo}")]
     [AllowAnonymous]

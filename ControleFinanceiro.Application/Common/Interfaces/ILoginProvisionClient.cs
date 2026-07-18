@@ -11,4 +11,7 @@ public interface ILoginProvisionClient
     Task<ProvisionContaResult> ProvisionAsync(
         string name, string email, string password, string? document, int userTypeId,
         CancellationToken ct = default);
+
+    /// <summary>Consulta na Login se já existe conta com o e-mail (para validar convites antes de enviar).</summary>
+    Task<bool> EmailExistsAsync(string email, CancellationToken ct = default);
 }

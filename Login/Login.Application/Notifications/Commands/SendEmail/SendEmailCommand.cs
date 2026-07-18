@@ -8,12 +8,12 @@ namespace Login.Application.Notifications.Commands.SendEmail;
 /// outras APIs (ex.: Patrimônio) chamam este comando via endpoint interno protegido
 /// por service key, em vez de manterem sua própria integração com o Resend.
 /// </summary>
-public record SendEmailCommand(string ToEmail, string ToName, string Subject, string HtmlBody) : IRequest;
+public record SendEmailCommand(string ToEmail, string ToName, string Subject, string HtmlBody, string? FromName = null) : IRequest;
 
 public class SendEmailCommandHandler(IEmailService emailService) : IRequestHandler<SendEmailCommand>
 {
     public async Task Handle(SendEmailCommand request, CancellationToken cancellationToken)
     {
-        await emailService.SendAsync(request.ToEmail, request.ToName, request.Subject, request.HtmlBody, cancellationToken);
+        await emailService.SendAsync(request.ToEmail, request.ToName, request.Subject, request.HtmlBody, cancellationToken, request.FromName);
     }
 }

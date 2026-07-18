@@ -17,8 +17,13 @@ public class VinculoCorretor
     public string? NomeCorretor   { get; private set; }
     public string? NomeAssessor   { get; private set; }
     public string? EmailConvidado { get; private set; } // preenchido quando o convite é enviado por e-mail
+    public DateTime? ExpiraEm     { get; private set; } // convite pendente expira; null = sem expiração (legado)
+
+    /// <summary>Prazo padrão de validade de um convite (dias).</summary>
+    public const int PrazoConviteDias = 7;
 
     public bool Ativo => AceitoEm != null && RevogadoEm == null;
+    public bool Expirado => AceitoEm == null && RevogadoEm == null && ExpiraEm is { } e && e < DateTime.UtcNow;
 
     private VinculoCorretor() { }
 
@@ -29,15 +34,25 @@ public class VinculoCorretor
             CodigoConvite = codigo.ToUpperInvariant(),
             NomeAssessor = nomeAssessor,
             EmailConvidado = string.IsNullOrWhiteSpace(emailConvidado) ? null : emailConvidado.Trim().ToLowerInvariant(),
+            ExpiraEm = DateTime.UtcNow.AddDays(PrazoConviteDias),
         };
 
     public void Aceitar(Guid corretorId, string nomeCorretor)
     {
         if (AceitoEm != null)   throw new InvalidOperationException("Convite já utilizado.");
+        if (Expirado)           throw new InvalidOperationException("Convite expirado. Peça um novo ao assessor.");
         if (corretorId == AssessorId) throw new InvalidOperationException("Assessor não pode ser corretor de si mesmo.");
         CorretorId   = corretorId;
         NomeCorretor = nomeCorretor;
         AceitoEm     = DateTime.UtcNow;
+    }
+
+    /// <summary>Reenvia o convite: renova a validade a partir de agora.</summary>
+    public void RenovarValidade()
+    {
+        if (AceitoEm != null)   throw new InvalidOperationException("Convite já utilizado.");
+        if (RevogadoEm != null) throw new InvalidOperationException("Convite revogado.");
+        ExpiraEm = DateTime.UtcNow.AddDays(PrazoConviteDias);
     }
 
     public void Revogar()

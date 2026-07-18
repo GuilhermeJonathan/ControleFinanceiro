@@ -82,6 +82,6 @@ public class CriarRecomendacaoCommandHandler(
 
         await emailService.SendAsync(
             contato.Email, nomeCliente,
-            $"{tipoLabel} — nova recomendação de {marca}", body, cancellationToken);
+            $"{tipoLabel} — nova recomendação de {marca}", body, cancellationToken, marca);
     }
 }
