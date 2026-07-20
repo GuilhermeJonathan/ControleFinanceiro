@@ -90,7 +90,7 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
                             row.ConstantItem(10);
                             row.RelativeItem().Element(cc => CardMetrica(cc, "Saldo", Money(r.SaldoLiquidoMensalBRL), r.SaldoLiquidoMensalBRL >= 0 ? "#16a34a" : "#dc2626"));
                             row.ConstantItem(10);
-                            row.RelativeItem().Element(cc => CardMetrica(cc, "ROI anual", r.RoiAnualPct != null ? Pct(r.RoiAnualPct.Value) : "—", "#374151"));
+                            row.RelativeItem().Element(cc => CardMetrica(cc, "Retorno total a.a.", r.RoiAnualPct != null ? Pct(r.RoiAnualPct.Value) : "—", "#374151"));
                         });
                     }));
 
@@ -132,7 +132,7 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
                                 {
                                     Th(h.Cell(), "BEM"); Th(h.Cell(), "VALOR", true);
                                     Th(h.Cell(), "RECEITA/MÊS", true); Th(h.Cell(), "DESPESA/MÊS", true);
-                                    Th(h.Cell(), "ROI a.a.", true);
+                                    Th(h.Cell(), "Retorno a.a.", true);
                                 });
                                 foreach (var a in r.Ativos)
                                 {

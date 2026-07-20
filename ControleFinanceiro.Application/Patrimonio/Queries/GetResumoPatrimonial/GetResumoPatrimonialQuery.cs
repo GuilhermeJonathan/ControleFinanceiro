@@ -17,7 +17,8 @@ public record AtivoResumoDto(
     decimal ReceitaMensal,
     decimal DespesaMensal,
     decimal FluxoLiquidoMensal,
-    decimal? RoiAnualPct);
+    decimal? RoiAnualPct,        // retorno total anual = yield + valorização
+    decimal? YieldAnualPct);     // só o fluxo de caixa (receita − despesa) / valor
 
 public record PassivoResumoDto(
     Guid Id,
@@ -83,12 +84,12 @@ public class GetResumoPatrimonialQueryHandler(
         [TipoAtivo.Outro]        = "Outros",
     };
 
-    /// <summary>ROI anual estimado a partir do fluxo de caixa; se não há fluxo, cai na valorização.</summary>
-    private static decimal? RoiAnual(decimal valorBRL, decimal fluxoAnualBRL, decimal? valorizacaoPct)
+    /// <summary>Retorno total anual = yield (fluxo de caixa / valor) + valorização anual.</summary>
+    private static decimal? RetornoTotal(decimal valorBRL, decimal fluxoAnualBRL, decimal? valorizacaoPct)
     {
         if (valorBRL <= 0) return null;
-        if (fluxoAnualBRL != 0) return Math.Round(fluxoAnualBRL / valorBRL * 100m, 2);
-        return valorizacaoPct;
+        var rendimento = fluxoAnualBRL / valorBRL * 100m;
+        return Math.Round(rendimento + (valorizacaoPct ?? 0m), 2);
     }
 
     public async Task<ResumoPatrimonialDto> Handle(GetResumoPatrimonialQuery request, CancellationToken cancellationToken)
@@ -122,7 +123,7 @@ public class GetResumoPatrimonialQueryHandler(
                     CategoriaLabel.GetValueOrDefault(g.Key, "Outros"),
                     Math.Round(totalCat, 2),
                     totalBensBRL > 0 ? Math.Round(totalCat / totalBensBRL * 100m, 1) : 0m,
-                    RoiAnual(totalCat, fluxoAnualCat, valoriz));
+                    RetornoTotal(totalCat, fluxoAnualCat, valoriz));
             })
             .OrderByDescending(c => c.TotalBRL)
             .ToList();
@@ -148,12 +149,14 @@ public class GetResumoPatrimonialQueryHandler(
         {
             var valorBRL   = ParaBRL(a.ValorAtual, a.Moeda);
             var fluxoAnual = ParaBRL(a.ReceitaMensal - a.DespesaMensal, a.Moeda) * 12m;
+            var yieldPct   = valorBRL > 0 ? Math.Round(fluxoAnual / valorBRL * 100m, 2) : (decimal?)null;
             return new AtivoResumoDto(
                 a.Id, a.Nome, (int)a.Tipo, a.Moeda.ToString(),
                 a.ValorAtual, a.ValorizacaoAnualPct,
                 a.ReceitaMensal, a.DespesaMensal,
                 a.ReceitaMensal - a.DespesaMensal,
-                RoiAnual(valorBRL, fluxoAnual, a.ValorizacaoAnualPct));
+                RetornoTotal(valorBRL, fluxoAnual, a.ValorizacaoAnualPct),
+                yieldPct);
         }).ToList();
 
         var patrimonioLiquido = totalBensBRL - totalDividasBRL;
@@ -178,8 +181,10 @@ public class GetResumoPatrimonialQueryHandler(
         }
 
         var alavancagem       = totalBensBRL > 0 ? totalDividasBRL / totalBensBRL * 100m : 0m;
-        var roiGeral          = totalBensBRL > 0 && fluxoAnualBRL != 0
-            ? Math.Round(fluxoAnualBRL / totalBensBRL * 100m, 2)
+        // Retorno total geral (blended) = (fluxo anual + valorização anual em R$) / total de bens.
+        var valorizacaoAnualBRL = ativos.Sum(a => ParaBRL(a.ValorAtual, a.Moeda) * (a.ValorizacaoAnualPct ?? 0m) / 100m);
+        var roiGeral          = totalBensBRL > 0
+            ? Math.Round((fluxoAnualBRL + valorizacaoAnualBRL) / totalBensBRL * 100m, 2)
             : (decimal?)null;
 
         return new ResumoPatrimonialDto(

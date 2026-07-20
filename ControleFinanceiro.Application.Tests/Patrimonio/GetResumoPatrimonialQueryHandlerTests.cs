@@ -109,6 +109,26 @@ public class GetResumoPatrimonialQueryHandlerTests
     }
 
     [Fact]
+    public async Task Handle_RetornoTotal_ShouldSumYieldEValorizacao()
+    {
+        _ativoRepoMock.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[]
+            {
+                // Valor 1.000.000, valorização 6% a.a., aluguel líquido 60k/ano → yield 6% → retorno total 12%.
+                new AtivoPatrimonial(UserId, "Loja", TipoAtivo.Imovel, MoedaPatrimonio.BRL,
+                    1_000_000m, 6m, receitaMensal: 5_000m, despesaMensal: 0m),
+            });
+
+        var result = await CreateHandler().Handle(new GetResumoPatrimonialQuery(), CancellationToken.None);
+
+        var ativo = result.Ativos.Single();
+        ativo.YieldAnualPct.Should().Be(6m);
+        ativo.ValorizacaoAnualPct.Should().Be(6m);
+        ativo.RoiAnualPct.Should().Be(12m);      // retorno total = yield + valorização
+        result.RoiAnualPct.Should().Be(12m);     // geral (blended)
+    }
+
+    [Fact]
     public async Task Handle_SemAtivos_ShouldReturnZero()
     {
         _ativoRepoMock.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>()))
