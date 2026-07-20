@@ -15,6 +15,8 @@ using ControleFinanceiro.Application.Assessoria.Queries.GetMeuAssessor;
 using ControleFinanceiro.Application.Assessoria.Queries.GetRecomendacoes;
 using ControleFinanceiro.Application.Assessoria.Queries.GetRespostasRecomendacoes;
 using ControleFinanceiro.Application.Assessoria.Queries.GetSaudeFinanceira;
+using ControleFinanceiro.Application.Assessoria.Queries.GetParametrosSaude;
+using ControleFinanceiro.Application.Assessoria.Commands.SaveParametrosSaude;
 using ControleFinanceiro.Application.Assessoria.Queries.ValidarConvite;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -96,6 +98,19 @@ public class AssessoriaController(IMediator mediator) : ControllerBase
     [HttpGet("saude/{mes:int}/{ano:int}")]
     public async Task<IActionResult> GetSaude(int mes, int ano, CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetSaudeFinanceiraQuery(mes, ano), cancellationToken));
+
+    /// <summary>Parâmetros do termômetro de saúde do assessor logado.</summary>
+    [HttpGet("parametros-saude")]
+    public async Task<IActionResult> GetParametrosSaude(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetParametrosSaudeQuery(), cancellationToken));
+
+    /// <summary>Salva os parâmetros do termômetro de saúde do assessor logado.</summary>
+    [HttpPut("parametros-saude")]
+    public async Task<IActionResult> SaveParametrosSaude([FromBody] SaveParametrosSaudeCommand command, CancellationToken cancellationToken)
+    {
+        await mediator.Send(command, cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>Assessor ou cliente: revoga o vínculo.</summary>
     [HttpDelete("{id:guid}")]

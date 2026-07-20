@@ -94,7 +94,12 @@ public class AssessoriaQueryHandlersTests
             .ReturnsAsync(dashboard);
         mediatorMock.Setup(m => m.Send(It.IsAny<GetOrcamentoQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(orcamento);
-        return new GetSaudeFinanceiraQueryHandler(mediatorMock.Object);
+        var paramsRepo = new Mock<ControleFinanceiro.Domain.Repositories.IParametrosSaudeRepository>();
+        paramsRepo.Setup(r => r.GetByAssessorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ControleFinanceiro.Domain.Entities.ParametrosSaude?)null); // usa padrões
+        var currentUser = new Mock<ICurrentUser>();
+        currentUser.Setup(c => c.RealUserId).Returns(AssessorId);
+        return new GetSaudeFinanceiraQueryHandler(mediatorMock.Object, paramsRepo.Object, currentUser.Object);
     }
 
     private static DashboardDto BuildDashboard(
