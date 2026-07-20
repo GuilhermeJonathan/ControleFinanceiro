@@ -1,3 +1,4 @@
+using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
@@ -28,7 +29,8 @@ public record RelatorioPatrimonialDados(
     ResumoPatrimonialDto Resumo,
     ProjecaoDividasDto Projecao,
     ResumoInvestimentosDto Investimentos,
-    SimulacaoDestaqueDto? SimulacaoDestaque);
+    SimulacaoDestaqueDto? SimulacaoDestaque,
+    PlanoAcaoDto? Plano);
 
 /// <summary>Gera o PDF do relatório patrimonial (implementado na Infraestrutura com QuestPDF).</summary>
 public interface IRelatorioPatrimonialGenerator

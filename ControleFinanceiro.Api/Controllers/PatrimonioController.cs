@@ -5,6 +5,9 @@ using ControleFinanceiro.Application.Patrimonio.Commands.DeletePassivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdateAtivo;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdatePassivo;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoPatrimonio;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
+using ControleFinanceiro.Application.Patrimonio.Commands.SavePlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
 using ControleFinanceiro.Application.Patrimonio.Commands.ImportarInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Commands.SaveAlocacaoAlvo;
@@ -178,6 +181,24 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     [HttpGet("projecao-dividas")]
     public async Task<IActionResult> GetProjecaoDividas([FromQuery] int? meses, CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetProjecaoDividasQuery(meses), cancellationToken));
+
+    /// <summary>Projeção do patrimônio líquido (bens valorizando × dívidas amortizando) no mesmo horizonte.</summary>
+    [HttpGet("projecao-patrimonio")]
+    public async Task<IActionResult> GetProjecaoPatrimonio([FromQuery] int? meses, CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetProjecaoPatrimonioQuery(meses), cancellationToken));
+
+    /// <summary>Plano de Ação (jornada de etapas) do cliente efetivo.</summary>
+    [HttpGet("plano-acao")]
+    public async Task<IActionResult> GetPlanoAcao(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetPlanoAcaoQuery(), cancellationToken));
+
+    /// <summary>Cria ou substitui o Plano de Ação do cliente efetivo (assessor no view-as).</summary>
+    [HttpPut("plano-acao")]
+    public async Task<IActionResult> SavePlanoAcao([FromBody] SavePlanoAcaoCommand command, CancellationToken cancellationToken)
+    {
+        await mediator.Send(command, cancellationToken);
+        return NoContent();
+    }
 
     /// <summary>Gera o relatório patrimonial em PDF (marca do assessor + dados do cliente efetivo).</summary>
     [HttpPost("relatorio")]

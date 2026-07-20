@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Common.Interfaces;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
@@ -29,6 +30,7 @@ public class GerarRelatorioPatrimonialQueryHandler(
         var projecao      = await mediator.Send(new GetProjecaoDividasQuery(), cancellationToken);
         var investimentos = await mediator.Send(new GetResumoInvestimentosQuery(), cancellationToken);
         var simulacoes    = (await mediator.Send(new GetSimulacoesQuery(), cancellationToken)).ToList();
+        var plano         = await mediator.Send(new GetPlanoAcaoQuery(), cancellationToken);
 
         // Simulação em destaque: a favorita ou a mais recente. Calcula o resultado.
         var sim = simulacoes.FirstOrDefault(x => x.Favorita) ?? simulacoes.FirstOrDefault();
@@ -53,7 +55,8 @@ public class GerarRelatorioPatrimonialQueryHandler(
             Resumo: resumo,
             Projecao: projecao,
             Investimentos: investimentos,
-            SimulacaoDestaque: destaque);
+            SimulacaoDestaque: destaque,
+            Plano: plano);
 
         // Marca vem da consultoria configurada pelo assessor (autoritativa); o request é fallback.
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, cancellationToken);
