@@ -1,5 +1,6 @@
 using ControleFinanceiro.Application.Parametros.Commands;
 using ControleFinanceiro.Application.Parametros.Queries;
+using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,7 @@ namespace ControleFinanceiro.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class ParametrosController(IMediator mediator) : ControllerBase
+public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepository cotacaoRepo) : ControllerBase
 {
     // ── Tipos de Ativo ────────────────────────────────────────────────────
 
@@ -81,6 +82,34 @@ public class ParametrosController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new DeleteMoedaCommand(id), ct);
         return NoContent();
+    }
+
+    [HttpGet("moedas/{codigo}/historico")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetHistoricoCotacao(
+        string codigo,
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanhoPagina = 10,
+        CancellationToken ct = default)
+    {
+        tamanhoPagina = Math.Clamp(tamanhoPagina, 1, 50);
+        var (items, total) = await cotacaoRepo.GetByMoedaAsync(
+            codigo.ToUpperInvariant(), pagina, tamanhoPagina, ct);
+
+        return Ok(new
+        {
+            pagina,
+            tamanhoPagina,
+            total,
+            totalPaginas = (int)Math.Ceiling((double)total / tamanhoPagina),
+            items = items.Select(h => new
+            {
+                h.MoedaCodigo,
+                h.CotacaoBRL,
+                h.Fonte,
+                h.DataHora,
+            }),
+        });
     }
 }
 

@@ -17,10 +17,33 @@ namespace ControleFinanceiro.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.17")
+                .HasAnnotation("ProductVersion", "9.0.18")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.AlocacaoAlvo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PercentualAlvo")
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Tipo")
+                        .IsUnique();
+
+                    b.ToTable("AlocacoesAlvo", (string)null);
+                });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.AtivoPatrimonial", b =>
                 {
@@ -34,6 +57,10 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DespesaMensal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<int>("Moeda")
                         .HasColumnType("integer");
 
@@ -41,6 +68,10 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("ReceitaMensal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int>("Tipo")
                         .HasColumnType("integer");
@@ -132,6 +163,121 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ConsultoriaConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CorMarca")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LogoBase64")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MensagemRodape")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("NomeConsultoria")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WhatsApp")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("ConsultoriaConfigs", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.CotacaoHistorico", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CotacaoBRL")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<DateTime>("DataHora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("MoedaCodigo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MoedaCodigo", "DataHora");
+
+                    b.ToTable("CotacoesHistorico", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.DelegacaoCarteira", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CorretorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DelegadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NomeCliente")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NomeCorretor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("RevogadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VinculoAssessoriaId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssessorId");
+
+                    b.HasIndex("CorretorId");
+
+                    b.HasIndex("CorretorId", "ClienteId");
+
+                    b.ToTable("DelegacoesCarteira", (string)null);
+                });
+
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.HorasTrabalhadas", b =>
                 {
                     b.Property<Guid>("Id")
@@ -171,6 +317,59 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("HorasTrabalhadas");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Investimento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Corretora")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Moeda")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal?>("RentabilidadeAnualPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
+
+                    b.Property<string>("Ticker")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ValorAplicado")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("ValorAtual")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Investimentos", (string)null);
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Lancamento", b =>
@@ -332,6 +531,89 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.ToTable("Metas");
                 });
 
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.MoedaParam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("CotacaoBRL")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.ToTable("MoedasParam", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ParametrosSaude", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ComprometimentoApertadoMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ComprometimentoRazoavelMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ComprometimentoSaudavelMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReservaBoaMinDias")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReservaCurtaMinDias")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReservaExcelenteMinDias")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScoreAtencaoMin")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScoreBoaMin")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScoreExcelenteMin")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssessorId")
+                        .IsUnique();
+
+                    b.ToTable("ParametrosSaude", (string)null);
+                });
+
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.ParcelaCartao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -370,6 +652,116 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasIndex("CartaoCreditoId");
 
                     b.ToTable("ParcelasCartao");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.PassivoPatrimonial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Moeda")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Prazo")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PrazoMeses")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("TaxaJurosAnualPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("PassivosPatrimoniais", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.PatrimonioSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Mes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PatrimonioLiquidoBRL")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TotalBensBRL")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TotalDividasBRL")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Ano", "Mes")
+                        .IsUnique();
+
+                    b.ToTable("PatrimonioSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.PlanoAcao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Objetivo")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Prazo")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("PlanosAcao", (string)null);
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Produto", b =>
@@ -482,6 +874,9 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<DateTime?>("RespostaVistaEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -537,6 +932,123 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("SaldosContas");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.SimulacaoPatrimonial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AporteMensal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Favorita")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IdadeAlvo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdadeAtual")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ModoAutomatico")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("PatrimonioInicial")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("RetiradaMensal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxaRetornoRealAnualPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("SimulacoesPatrimoniais", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.TipoAtivoParam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Icone")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TiposAtivoParam", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.TipoInvestimentoParam", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Icone")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TiposInvestimentoParam", (string)null);
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.Venda", b =>
@@ -617,6 +1129,13 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EmailConvidado")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("NomeAssessor")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -626,6 +1145,9 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.Property<DateTime?>("RevogadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UltimoRelatorioMensalEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
@@ -638,6 +1160,59 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("VinculosAssessoria", (string)null);
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.VinculoCorretor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AceitoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AssessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoConvite")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<Guid>("CorretorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmailConvidado")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NomeAssessor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NomeCorretor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("RevogadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssessorId");
+
+                    b.HasIndex("CodigoConvite")
+                        .IsUnique();
+
+                    b.HasIndex("CorretorId");
+
+                    b.ToTable("VinculosCorretor", (string)null);
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.VinculoFamiliar", b =>
@@ -745,6 +1320,99 @@ namespace ControleFinanceiro.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("CartaoCredito");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.PlanoAcao", b =>
+                {
+                    b.OwnsMany("ControleFinanceiro.Domain.Entities.EtapaPlano", "Etapas", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("Alvo")
+                                .HasMaxLength(120)
+                                .HasColumnType("character varying(120)");
+
+                            b1.Property<string>("Descricao")
+                                .HasMaxLength(1000)
+                                .HasColumnType("character varying(1000)");
+
+                            b1.Property<int>("Ordem")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("PlanoAcaoId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Prazo")
+                                .HasMaxLength(60)
+                                .HasColumnType("character varying(60)");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Titulo")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("PlanoAcaoId");
+
+                            b1.ToTable("EtapasPlano", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlanoAcaoId");
+                        });
+
+                    b.Navigation("Etapas");
+                });
+
+            modelBuilder.Entity("ControleFinanceiro.Domain.Entities.SimulacaoPatrimonial", b =>
+                {
+                    b.OwnsMany("ControleFinanceiro.Domain.Entities.Cenario", "Cenarios", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<int?>("IdadeFim")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("IdadeInicio")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Nome")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<Guid>("SimulacaoId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Tipo")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal>("Valor")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SimulacaoId");
+
+                            b1.ToTable("CenariosSimulacao", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SimulacaoId");
+                        });
+
+                    b.Navigation("Cenarios");
                 });
 
             modelBuilder.Entity("ControleFinanceiro.Domain.Entities.CartaoCredito", b =>

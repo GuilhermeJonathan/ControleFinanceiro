@@ -26,12 +26,11 @@ public class MoedaParam
     }
 
     public int    Id       { get; private set; }
-    /// <summary>Ex.: "BRL", "USD", "EUR".</summary>
     public string Codigo   { get; private set; } = "";
-    /// <summary>Nome de exibição: "Real Brasileiro".</summary>
     public string Nome     { get; private set; } = "";
-    /// <summary>Quanto vale 1 unidade desta moeda em BRL (definido pelo assessor). BRL = 1.</summary>
     public decimal CotacaoBRL { get; private set; } = 1m;
+    /// <summary>Data/hora UTC da última atualização automática de cotação.</summary>
+    public DateTime? CotacaoAtualizadaEm { get; private set; }
     public int    Ordem    { get; private set; }
     public bool   Ativo    { get; private set; }
     public bool   IsSystem { get; private set; }
@@ -43,5 +42,12 @@ public class MoedaParam
         Ordem      = ordem;
         Ativo      = ativo;
         CotacaoBRL = cotacaoBRL;
+    }
+
+    /// <summary>Atualiza apenas a cotação BRL (usado pelo job automático de câmbio).</summary>
+    public void AtualizarCotacao(decimal cotacaoBRL)
+    {
+        CotacaoBRL = cotacaoBRL;
+        CotacaoAtualizadaEm = DateTime.UtcNow;
     }
 }

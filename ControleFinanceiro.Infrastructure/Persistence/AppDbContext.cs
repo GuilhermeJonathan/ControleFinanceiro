@@ -32,6 +32,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();
     public DbSet<MoedaParam> MoedasParam => Set<MoedaParam>();
+    public DbSet<CotacaoHistorico> CotacoesHistorico => Set<CotacaoHistorico>();
     public DbSet<ConsultoriaConfig> ConsultoriaConfigs => Set<ConsultoriaConfig>();
     public DbSet<Meta> Metas => Set<Meta>();
     public DbSet<WhatsAppVinculo> WhatsAppVinculos => Set<WhatsAppVinculo>();

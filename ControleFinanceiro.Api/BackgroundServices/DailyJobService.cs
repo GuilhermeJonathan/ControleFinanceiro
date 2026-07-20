@@ -3,6 +3,7 @@ using ControleFinanceiro.Application.Common.Email;
 using ControleFinanceiro.Application.Common.Interfaces;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
+using ControleFinanceiro.Domain.Repositories;
 using ControleFinanceiro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -48,6 +49,7 @@ public class DailyJobService(
         await JobGerarRecorrentesAsync(ct);
         await JobSnapshotPatrimonioAsync(ct);
         await JobRelatorioMensalAsync(ct);
+        await JobAtualizarCotacoesAsync(ct);
 
         logger.LogInformation("[DailyJob] Jobs concluídos — {agora}", DateTime.Now);
     }
@@ -324,5 +326,47 @@ public class DailyJobService(
 
         if (enviados > 0) await db.SaveChangesAsync(ct);
         logger.LogInformation("[DailyJob] Resumo mensal: {qtd} e-mail(s) enviados.", enviados);
+    }
+
+    // ── Job 5: Atualizar cotações de moedas ──────────────────────────────────
+    private async Task JobAtualizarCotacoesAsync(CancellationToken ct)
+    {
+        using var scope      = scopeFactory.CreateScope();
+        var db               = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var rateService      = scope.ServiceProvider.GetRequiredService<ICurrencyRateService>();
+        var historicoRepo    = scope.ServiceProvider.GetRequiredService<ICotacaoHistoricoRepository>();
+
+        var moedas = await db.MoedasParam
+            .Where(m => m.Ativo && m.Codigo != "BRL")
+            .ToListAsync(ct);
+
+        if (moedas.Count == 0)
+        {
+            logger.LogInformation("[DailyJob] Cotações: nenhuma moeda ativa não-BRL cadastrada.");
+            return;
+        }
+
+        var codigos = moedas.Select(m => m.Codigo).ToList();
+        var rates   = await rateService.GetRatesVsBrlAsync(codigos, ct);
+
+        if (rates.Count == 0)
+        {
+            logger.LogWarning("[DailyJob] Cotações: nenhuma cotação retornada pela API.");
+            return;
+        }
+
+        int atualizadas = 0;
+        foreach (var moeda in moedas)
+        {
+            if (!rates.TryGetValue(moeda.Codigo, out var novaCotacao)) continue;
+
+            moeda.AtualizarCotacao(novaCotacao);
+            await historicoRepo.AddAsync(
+                new CotacaoHistorico(moeda.Codigo, novaCotacao, "AwesomeAPI"), ct);
+            atualizadas++;
+        }
+
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("[DailyJob] Cotações: {qtd} moeda(s) atualizadas.", atualizadas);
     }
 }

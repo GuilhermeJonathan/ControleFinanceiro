@@ -35,7 +35,7 @@ public class GetTiposInvestimentoQueryHandler(ITipoInvestimentoParamRepository r
 
 // ── Moedas
 
-public record MoedaParamDto(int Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo, bool IsSystem);
+public record MoedaParamDto(int Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo, bool IsSystem, DateTime? CotacaoAtualizadaEm);
 public record GetMoedasQuery : IRequest<List<MoedaParamDto>>;
 
 public class GetMoedasQueryHandler(IMoedaParamRepository repo)
@@ -44,6 +44,6 @@ public class GetMoedasQueryHandler(IMoedaParamRepository repo)
     public async Task<List<MoedaParamDto>> Handle(GetMoedasQuery request, CancellationToken ct)
     {
         var list = await repo.GetAllAsync(ct);
-        return list.Select(x => new MoedaParamDto(x.Id, x.Codigo, x.Nome, x.CotacaoBRL, x.Ordem, x.Ativo, x.IsSystem)).ToList();
+        return list.Select(x => new MoedaParamDto(x.Id, x.Codigo, x.Nome, x.CotacaoBRL, x.Ordem, x.Ativo, x.IsSystem, x.CotacaoAtualizadaEm)).ToList();
     }
 }
