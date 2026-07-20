@@ -12,7 +12,7 @@ public class PlanoAcaoConfiguration : IEntityTypeConfiguration<PlanoAcao>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Objetivo).IsRequired().HasMaxLength(300);
         builder.Property(x => x.Prazo).HasMaxLength(60);
-        builder.HasIndex(x => x.UsuarioId).IsUnique();
+        builder.HasIndex(x => x.UsuarioId);
 
         builder.OwnsMany(x => x.Etapas, eb =>
         {

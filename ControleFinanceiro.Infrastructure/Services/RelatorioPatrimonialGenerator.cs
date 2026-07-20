@@ -202,79 +202,16 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
                             });
                         }));
 
-                    // 8) Plano de Ação (jornada de etapas) — estilizado como no app
-                    if (d.Plano is { } plano && plano.Etapas.Any())
-                        col.Item().Element(c => Secao(c, "Plano de Ação", inner =>
+                    // 8) Planos de Ação (jornadas de etapas) — estilizados como no app
+                    var planos = d.Planos.Where(p => p.Etapas.Any()).ToList();
+                    if (planos.Count > 0)
+                        col.Item().Element(c => Secao(c, planos.Count > 1 ? "Planos de Ação" : "Plano de Ação", inner =>
                         {
-                            var etapas = plano.Etapas.OrderBy(e => e.Ordem).ToList();
-                            var concl = etapas.Count(e => e.Status == 3);
-                            var pct = etapas.Count > 0 ? (decimal)concl / etapas.Count * 100m : 0m;
-                            inner.Column(cc =>
+                            inner.Column(cont =>
                             {
-                                cc.Spacing(7);
-
-                                // Objetivo + barra de progresso
-                                cc.Item().Column(o =>
-                                {
-                                    o.Item().Text(t =>
-                                    {
-                                        t.Span("Objetivo: ").Bold();
-                                        t.Span(plano.Objetivo).Bold().FontColor("#111827");
-                                        if (!string.IsNullOrWhiteSpace(plano.Prazo)) t.Span($"   ·   meta {plano.Prazo}").FontColor("#6b7280");
-                                    });
-                                    o.Item().PaddingTop(6).Element(x => Barra(x, pct, "#C79A4E"));
-                                    o.Item().PaddingTop(3).Text($"{concl} de {etapas.Count} etapas concluídas · {pct.ToString("0", Pt)}%")
-                                        .FontSize(8).FontColor("#6b7280");
-                                });
-
-                                // Trilha (gráfico vetorial, igual ao app)
-                                cc.Item().PaddingVertical(4).Svg(TrilhaSvg(plano));
-
-                                // Cards de etapa (faixa de status + pill + alvo)
-                                for (var i = 0; i < etapas.Count; i++)
-                                {
-                                    var e = etapas[i];
-                                    var cor = StatusCor(e.Status);
-                                    cc.Item().Border(1).BorderColor("#e5e7eb").Row(row =>
-                                    {
-                                        row.ConstantItem(4).Background(cor);
-                                        row.RelativeItem().Padding(10).Column(card =>
-                                        {
-                                            card.Item().Row(h =>
-                                            {
-                                                h.RelativeItem().Text(t =>
-                                                {
-                                                    t.Span($"{i + 1}.  ").Bold().FontColor("#9ca3af");
-                                                    t.Span(e.Titulo).Bold().FontColor("#111827");
-                                                });
-                                                if (!string.IsNullOrWhiteSpace(e.Prazo))
-                                                    h.ConstantItem(70).AlignRight().Text(e.Prazo!).FontSize(8).FontColor("#6b7280");
-                                            });
-                                            if (!string.IsNullOrWhiteSpace(e.Descricao))
-                                                card.Item().PaddingTop(3).Text(e.Descricao!).FontSize(8).FontColor("#6b7280");
-                                            card.Item().PaddingTop(7).Row(f =>
-                                            {
-                                                f.AutoItem().Background(StatusBg(e.Status)).PaddingVertical(2).PaddingHorizontal(7)
-                                                    .Text(StatusLabel(e.Status)).FontSize(7.5f).Bold().FontColor(cor);
-                                                f.RelativeItem();
-                                                if (!string.IsNullOrWhiteSpace(e.Alvo))
-                                                    f.AutoItem().AlignRight().AlignMiddle().Text(e.Alvo!).FontSize(8.5f).Bold().FontColor("#9a6c22");
-                                            });
-                                        });
-                                    });
-                                }
-
-                                // Card do objetivo final (destaque)
-                                cc.Item().Background("#0e2a26").Padding(12).Row(g =>
-                                {
-                                    g.RelativeItem().Column(x =>
-                                    {
-                                        x.Item().Text("★  " + plano.Objetivo).Bold().FontColor("#ffffff");
-                                        x.Item().PaddingTop(2).Text("Objetivo final").FontSize(8).Bold().FontColor("#E7C57E");
-                                    });
-                                    if (!string.IsNullOrWhiteSpace(plano.Prazo))
-                                        g.ConstantItem(70).AlignRight().AlignMiddle().Text(plano.Prazo!).Bold().FontColor("#E7C57E");
-                                });
+                                cont.Spacing(16);
+                                foreach (var plano in planos)
+                                    cont.Item().Element(pc => PlanoBloco(pc, plano));
                             });
                         }));
 
@@ -337,6 +274,77 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
     private static string StatusLabel(int status) => status switch { 3 => "Concluída", 2 => "Em andamento", _ => "A fazer" };
     private static string StatusCor(int status) => status switch { 3 => "#16a34a", 2 => "#b45309", _ => "#9ca3af" };
     private static string StatusBg(int status) => status switch { 3 => "#dcfce7", 2 => "#fef3c7", _ => "#f3f4f6" };
+
+    /// <summary>Renderiza um plano (objetivo + progresso + trilha SVG + cards de etapa).</summary>
+    private static void PlanoBloco(IContainer container, PlanoAcaoDto plano)
+    {
+        var etapas = plano.Etapas.OrderBy(e => e.Ordem).ToList();
+        var concl = etapas.Count(e => e.Status == 3);
+        var pct = etapas.Count > 0 ? (decimal)concl / etapas.Count * 100m : 0m;
+        container.Column(cc =>
+        {
+            cc.Spacing(7);
+
+            cc.Item().Column(o =>
+            {
+                o.Item().Text(t =>
+                {
+                    t.Span("Objetivo: ").Bold();
+                    t.Span(plano.Objetivo).Bold().FontColor("#111827");
+                    if (!string.IsNullOrWhiteSpace(plano.Prazo)) t.Span($"   ·   meta {plano.Prazo}").FontColor("#6b7280");
+                });
+                o.Item().PaddingTop(6).Element(x => Barra(x, pct, "#C79A4E"));
+                o.Item().PaddingTop(3).Text($"{concl} de {etapas.Count} etapas concluídas · {pct.ToString("0", Pt)}%")
+                    .FontSize(8).FontColor("#6b7280");
+            });
+
+            cc.Item().PaddingVertical(4).Svg(TrilhaSvg(plano));
+
+            for (var i = 0; i < etapas.Count; i++)
+            {
+                var e = etapas[i];
+                var cor = StatusCor(e.Status);
+                cc.Item().Border(1).BorderColor("#e5e7eb").Row(row =>
+                {
+                    row.ConstantItem(4).Background(cor);
+                    row.RelativeItem().Padding(10).Column(card =>
+                    {
+                        card.Item().Row(h =>
+                        {
+                            h.RelativeItem().Text(t =>
+                            {
+                                t.Span($"{i + 1}.  ").Bold().FontColor("#9ca3af");
+                                t.Span(e.Titulo).Bold().FontColor("#111827");
+                            });
+                            if (!string.IsNullOrWhiteSpace(e.Prazo))
+                                h.ConstantItem(70).AlignRight().Text(e.Prazo!).FontSize(8).FontColor("#6b7280");
+                        });
+                        if (!string.IsNullOrWhiteSpace(e.Descricao))
+                            card.Item().PaddingTop(3).Text(e.Descricao!).FontSize(8).FontColor("#6b7280");
+                        card.Item().PaddingTop(7).Row(f =>
+                        {
+                            f.AutoItem().Background(StatusBg(e.Status)).PaddingVertical(2).PaddingHorizontal(7)
+                                .Text(StatusLabel(e.Status)).FontSize(7.5f).Bold().FontColor(cor);
+                            f.RelativeItem();
+                            if (!string.IsNullOrWhiteSpace(e.Alvo))
+                                f.AutoItem().AlignRight().AlignMiddle().Text(e.Alvo!).FontSize(8.5f).Bold().FontColor("#9a6c22");
+                        });
+                    });
+                });
+            }
+
+            cc.Item().Background("#0e2a26").Padding(12).Row(g =>
+            {
+                g.RelativeItem().Column(x =>
+                {
+                    x.Item().Text("★  " + plano.Objetivo).Bold().FontColor("#ffffff");
+                    x.Item().PaddingTop(2).Text("Objetivo final").FontSize(8).Bold().FontColor("#E7C57E");
+                });
+                if (!string.IsNullOrWhiteSpace(plano.Prazo))
+                    g.ConstantItem(70).AlignRight().AlignMiddle().Text(plano.Prazo!).Bold().FontColor("#E7C57E");
+            });
+        });
+    }
 
     /// <summary>Gera o SVG da trilha ascendente do Plano de Ação (nós + estrela do objetivo).</summary>
     private static string TrilhaSvg(PlanoAcaoDto plano)

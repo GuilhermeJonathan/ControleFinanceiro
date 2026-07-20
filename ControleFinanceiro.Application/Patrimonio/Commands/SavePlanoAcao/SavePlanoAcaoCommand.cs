@@ -10,19 +10,19 @@ namespace ControleFinanceiro.Application.Patrimonio.Commands.SavePlanoAcao;
 public record EtapaPlanoInput(string Titulo, string? Descricao, string? Prazo, string? Alvo, int Status);
 
 /// <summary>
-/// Cria ou substitui o Plano de Ação do usuário efetivo (um plano por cliente).
-/// As etapas são reescritas por completo, na ordem recebida. Só o assessor (view-as) chama.
+/// Cria um novo plano (Id nulo) ou atualiza um existente (por Id) do usuário efetivo.
+/// Um cliente pode ter vários planos. As etapas são reescritas por completo, na ordem recebida.
 /// </summary>
-public record SavePlanoAcaoCommand(string Objetivo, string? Prazo, IEnumerable<EtapaPlanoInput> Etapas)
-    : IRequest<Unit>;
+public record SavePlanoAcaoCommand(Guid? Id, string Objetivo, string? Prazo, IEnumerable<EtapaPlanoInput> Etapas)
+    : IRequest<Guid>;
 
 public class SavePlanoAcaoCommandHandler(
     IPlanoAcaoRepository repository,
     ICurrentUser currentUser,
     IUnitOfWork unitOfWork)
-    : IRequestHandler<SavePlanoAcaoCommand, Unit>
+    : IRequestHandler<SavePlanoAcaoCommand, Guid>
 {
-    public async Task<Unit> Handle(SavePlanoAcaoCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(SavePlanoAcaoCommand request, CancellationToken cancellationToken)
     {
         var objetivo = (request.Objetivo ?? string.Empty).Trim();
         if (objetivo.Length == 0)
@@ -41,19 +41,20 @@ public class SavePlanoAcaoCommandHandler(
 
         var prazo = string.IsNullOrWhiteSpace(request.Prazo) ? null : request.Prazo.Trim();
 
-        var existente = await repository.GetByUsuarioAsync(currentUser.UserId, cancellationToken);
-        if (existente is null)
+        if (request.Id is { } id)
         {
-            var novo = new PlanoAcao(currentUser.UserId, objetivo, prazo, etapas);
-            await repository.AddAsync(novo, cancellationToken);
-        }
-        else
-        {
+            var existente = await repository.GetByIdAsync(id, cancellationToken);
+            if (existente is null || existente.UsuarioId != currentUser.UserId)
+                throw new KeyNotFoundException("Plano não encontrado.");
             existente.Atualizar(objetivo, prazo, etapas);
             repository.Update(existente);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            return existente.Id;
         }
 
+        var novo = new PlanoAcao(currentUser.UserId, objetivo, prazo, etapas);
+        await repository.AddAsync(novo, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return Unit.Value;
+        return novo.Id;
     }
 }

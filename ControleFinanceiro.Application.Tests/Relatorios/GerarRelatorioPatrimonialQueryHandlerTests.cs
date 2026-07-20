@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Common.Interfaces;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
@@ -30,6 +31,8 @@ public class GerarRelatorioPatrimonialQueryHandlerTests
             .ReturnsAsync(new ResumoInvestimentosDto());
         _mediator.Setup(m => m.Send(It.IsAny<GetSimulacoesQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Empty<SimulacaoDto>());
+        _mediator.Setup(m => m.Send(It.IsAny<GetPlanosAcaoQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Enumerable.Empty<PlanoAcaoDto>());
         _generator.Setup(g => g.Gerar(It.IsAny<RelatorioPatrimonialDados>(), It.IsAny<RelatorioBranding>()))
             .Returns(PdfFake);
     }

@@ -30,7 +30,7 @@ public class GerarRelatorioPatrimonialQueryHandler(
         var projecao      = await mediator.Send(new GetProjecaoDividasQuery(), cancellationToken);
         var investimentos = await mediator.Send(new GetResumoInvestimentosQuery(), cancellationToken);
         var simulacoes    = (await mediator.Send(new GetSimulacoesQuery(), cancellationToken)).ToList();
-        var plano         = await mediator.Send(new GetPlanoAcaoQuery(), cancellationToken);
+        var planos        = (await mediator.Send(new GetPlanosAcaoQuery(), cancellationToken)).ToList();
 
         // Simulação em destaque: a favorita ou a mais recente. Calcula o resultado.
         var sim = simulacoes.FirstOrDefault(x => x.Favorita) ?? simulacoes.FirstOrDefault();
@@ -56,7 +56,7 @@ public class GerarRelatorioPatrimonialQueryHandler(
             Projecao: projecao,
             Investimentos: investimentos,
             SimulacaoDestaque: destaque,
-            Plano: plano);
+            Planos: planos);
 
         // Marca vem da consultoria configurada pelo assessor (autoritativa); o request é fallback.
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, cancellationToken);

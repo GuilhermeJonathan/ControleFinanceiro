@@ -30,7 +30,7 @@ public record RelatorioPatrimonialDados(
     ProjecaoDividasDto Projecao,
     ResumoInvestimentosDto Investimentos,
     SimulacaoDestaqueDto? SimulacaoDestaque,
-    PlanoAcaoDto? Plano);
+    IEnumerable<PlanoAcaoDto> Planos);
 
 /// <summary>Gera o PDF do relatório patrimonial (implementado na Infraestrutura com QuestPDF).</summary>
 public interface IRelatorioPatrimonialGenerator

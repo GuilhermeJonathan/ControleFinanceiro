@@ -8,6 +8,7 @@ using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoPatrimonio;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Commands.SavePlanoAcao;
+using ControleFinanceiro.Application.Patrimonio.Commands.DeletePlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
 using ControleFinanceiro.Application.Patrimonio.Commands.ImportarInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Commands.SaveAlocacaoAlvo;
@@ -187,16 +188,32 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetProjecaoPatrimonio([FromQuery] int? meses, CancellationToken cancellationToken) =>
         Ok(await mediator.Send(new GetProjecaoPatrimonioQuery(meses), cancellationToken));
 
-    /// <summary>Plano de Ação (jornada de etapas) do cliente efetivo.</summary>
+    /// <summary>Planos de Ação (jornadas de etapas) do cliente efetivo — um cliente pode ter vários.</summary>
     [HttpGet("plano-acao")]
-    public async Task<IActionResult> GetPlanoAcao(CancellationToken cancellationToken) =>
-        Ok(await mediator.Send(new GetPlanoAcaoQuery(), cancellationToken));
+    public async Task<IActionResult> GetPlanosAcao(CancellationToken cancellationToken) =>
+        Ok(await mediator.Send(new GetPlanosAcaoQuery(), cancellationToken));
 
-    /// <summary>Cria ou substitui o Plano de Ação do cliente efetivo (assessor no view-as).</summary>
-    [HttpPut("plano-acao")]
-    public async Task<IActionResult> SavePlanoAcao([FromBody] SavePlanoAcaoCommand command, CancellationToken cancellationToken)
+    /// <summary>Cria um novo plano de ação do cliente efetivo (assessor no view-as). Retorna o id.</summary>
+    [HttpPost("plano-acao")]
+    public async Task<IActionResult> CriarPlanoAcao([FromBody] SavePlanoAcaoCommand command, CancellationToken cancellationToken)
     {
-        await mediator.Send(command, cancellationToken);
+        var id = await mediator.Send(command with { Id = null }, cancellationToken);
+        return Ok(new { id });
+    }
+
+    /// <summary>Atualiza um plano de ação existente do cliente efetivo.</summary>
+    [HttpPut("plano-acao/{id:guid}")]
+    public async Task<IActionResult> AtualizarPlanoAcao(Guid id, [FromBody] SavePlanoAcaoCommand command, CancellationToken cancellationToken)
+    {
+        var salvo = await mediator.Send(command with { Id = id }, cancellationToken);
+        return Ok(new { id = salvo });
+    }
+
+    /// <summary>Exclui um plano de ação do cliente efetivo.</summary>
+    [HttpDelete("plano-acao/{id:guid}")]
+    public async Task<IActionResult> ExcluirPlanoAcao(Guid id, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new DeletePlanoAcaoCommand(id), cancellationToken);
         return NoContent();
     }
 
