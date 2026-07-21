@@ -7,6 +7,7 @@ using MediatR;
 namespace ControleFinanceiro.Application.Parametros.Commands;
 
 // ── Save TipoAtivo ────────────────────────────────────────────────────────
+// Admin edita o catálogo global (AssessorId=null); assessor edita apenas os seus custom.
 
 public record SaveTipoAtivoCommand(int? Id, string Nome, string? Icone, int Ordem, bool Ativo) : IRequest<int>;
 
@@ -19,18 +20,22 @@ public class SaveTipoAtivoCommandHandler(
     public async Task<int> Handle(SaveTipoAtivoCommand request, CancellationToken ct)
     {
         if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+            throw new UnauthorizedAccessException("Apenas admin ou assessores podem gerenciar parâmetros.");
+
+        Guid? escopo = currentUser.IsAdmin ? null : currentUser.RealUserId; // null = global
 
         if (request.Id.HasValue)
         {
             var existing = await repo.GetByIdAsync(request.Id.Value, ct)
                 ?? throw new KeyNotFoundException($"TipoAtivo {request.Id} não encontrado.");
+            if (existing.AssessorId != escopo)
+                throw new UnauthorizedAccessException("Você só pode editar os seus próprios tipos.");
             existing.Atualizar(request.Nome, request.Ordem, request.Ativo, request.Icone);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
 
-        var entity = new TipoAtivoParam(request.Nome, request.Ordem, request.Icone);
+        var entity = new TipoAtivoParam(request.Nome, request.Ordem, request.Icone, escopo);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;
@@ -50,10 +55,14 @@ public class DeleteTipoAtivoCommandHandler(
     public async Task Handle(DeleteTipoAtivoCommand request, CancellationToken ct)
     {
         if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+            throw new UnauthorizedAccessException("Apenas admin ou assessores podem gerenciar parâmetros.");
 
         var entity = await repo.GetByIdAsync(request.Id, ct)
             ?? throw new KeyNotFoundException($"TipoAtivo {request.Id} não encontrado.");
+
+        Guid? escopo = currentUser.IsAdmin ? null : currentUser.RealUserId;
+        if (entity.AssessorId != escopo)
+            throw new UnauthorizedAccessException("Você só pode excluir os seus próprios tipos.");
 
         if (entity.IsSystem)
             throw new InvalidOperationException("Itens do sistema não podem ser excluídos.");
@@ -76,18 +85,22 @@ public class SaveTipoInvestimentoCommandHandler(
     public async Task<int> Handle(SaveTipoInvestimentoCommand request, CancellationToken ct)
     {
         if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+            throw new UnauthorizedAccessException("Apenas admin ou assessores podem gerenciar parâmetros.");
+
+        Guid? escopo = currentUser.IsAdmin ? null : currentUser.RealUserId;
 
         if (request.Id.HasValue)
         {
             var existing = await repo.GetByIdAsync(request.Id.Value, ct)
                 ?? throw new KeyNotFoundException($"TipoInvestimento {request.Id} não encontrado.");
+            if (existing.AssessorId != escopo)
+                throw new UnauthorizedAccessException("Você só pode editar os seus próprios tipos.");
             existing.Atualizar(request.Nome, request.Ordem, request.Ativo, request.Icone);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
 
-        var entity = new TipoInvestimentoParam(request.Nome, request.Ordem, request.Icone);
+        var entity = new TipoInvestimentoParam(request.Nome, request.Ordem, request.Icone, escopo);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;
@@ -107,10 +120,14 @@ public class DeleteTipoInvestimentoCommandHandler(
     public async Task Handle(DeleteTipoInvestimentoCommand request, CancellationToken ct)
     {
         if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+            throw new UnauthorizedAccessException("Apenas admin ou assessores podem gerenciar parâmetros.");
 
         var entity = await repo.GetByIdAsync(request.Id, ct)
             ?? throw new KeyNotFoundException($"TipoInvestimento {request.Id} não encontrado.");
+
+        Guid? escopo = currentUser.IsAdmin ? null : currentUser.RealUserId;
+        if (entity.AssessorId != escopo)
+            throw new UnauthorizedAccessException("Você só pode excluir os seus próprios tipos.");
 
         if (entity.IsSystem)
             throw new InvalidOperationException("Itens do sistema não podem ser excluídos.");
@@ -120,7 +137,63 @@ public class DeleteTipoInvestimentoCommandHandler(
     }
 }
 
-// ── Save Moeda ────────────────────────────────────────────────────────────
+// ── Ocultar / Reexibir default global (por assessoria) ─────────────────────
+// O assessor esconde do seu catálogo um tipo global que não usa (sem afetar os demais).
+
+public record OcultarParametroCommand(TipoParametroCatalogo Tipo, int ParametroId) : IRequest;
+
+public class OcultarParametroCommandHandler(
+    IParametroOcultoRepository ocultoRepo,
+    ITipoAtivoParamRepository tipoAtivoRepo,
+    ITipoInvestimentoParamRepository tipoInvestimentoRepo,
+    ICurrentUser currentUser,
+    IUnitOfWork uow)
+    : IRequestHandler<OcultarParametroCommand>
+{
+    public async Task Handle(OcultarParametroCommand request, CancellationToken ct)
+    {
+        if (!currentUser.IsAssessor || currentUser.IsAdmin)
+            throw new UnauthorizedAccessException("Apenas assessores podem ocultar tipos do próprio catálogo.");
+
+        var assessorId = currentUser.RealUserId;
+
+        // Só é possível ocultar um default GLOBAL existente.
+        var ehGlobal = request.Tipo == TipoParametroCatalogo.TipoAtivo
+            ? (await tipoAtivoRepo.GetByIdAsync(request.ParametroId, ct))?.AssessorId is null
+            : (await tipoInvestimentoRepo.GetByIdAsync(request.ParametroId, ct))?.AssessorId is null;
+        if (!ehGlobal)
+            throw new InvalidOperationException("Só é possível ocultar tipos globais (padrão).");
+
+        var jaOculto = await ocultoRepo.GetAsync(assessorId, request.Tipo, request.ParametroId, ct);
+        if (jaOculto is not null) return; // idempotente
+
+        await ocultoRepo.AddAsync(new ParametroOculto(assessorId, request.Tipo, request.ParametroId), ct);
+        await uow.SaveChangesAsync(ct);
+    }
+}
+
+public record ReexibirParametroCommand(TipoParametroCatalogo Tipo, int ParametroId) : IRequest;
+
+public class ReexibirParametroCommandHandler(
+    IParametroOcultoRepository ocultoRepo,
+    ICurrentUser currentUser,
+    IUnitOfWork uow)
+    : IRequestHandler<ReexibirParametroCommand>
+{
+    public async Task Handle(ReexibirParametroCommand request, CancellationToken ct)
+    {
+        if (!currentUser.IsAssessor || currentUser.IsAdmin)
+            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar o próprio catálogo.");
+
+        var existente = await ocultoRepo.GetAsync(currentUser.RealUserId, request.Tipo, request.ParametroId, ct);
+        if (existente is null) return; // idempotente
+
+        ocultoRepo.Remove(existente);
+        await uow.SaveChangesAsync(ct);
+    }
+}
+
+// ── Save Moeda (somente admin — catálogo global) ───────────────────────────
 
 public record SaveMoedaCommand(int? Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo) : IRequest<int>;
 
@@ -132,8 +205,8 @@ public class SaveMoedaCommandHandler(
 {
     public async Task<int> Handle(SaveMoedaCommand request, CancellationToken ct)
     {
-        if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+        if (!currentUser.IsAdmin)
+            throw new UnauthorizedAccessException("As moedas são globais — apenas o admin pode gerenciá-las.");
 
         if (request.Id.HasValue)
         {
@@ -151,7 +224,7 @@ public class SaveMoedaCommandHandler(
     }
 }
 
-// ── Delete Moeda ──────────────────────────────────────────────────────────
+// ── Delete Moeda (somente admin) ───────────────────────────────────────────
 
 public record DeleteMoedaCommand(int Id) : IRequest;
 
@@ -163,8 +236,8 @@ public class DeleteMoedaCommandHandler(
 {
     public async Task Handle(DeleteMoedaCommand request, CancellationToken ct)
     {
-        if (!currentUser.IsAssessor)
-            throw new UnauthorizedAccessException("Apenas assessores podem gerenciar parâmetros.");
+        if (!currentUser.IsAdmin)
+            throw new UnauthorizedAccessException("As moedas são globais — apenas o admin pode gerenciá-las.");
 
         var entity = await repo.GetByIdAsync(request.Id, ct)
             ?? throw new KeyNotFoundException($"Moeda {request.Id} não encontrada.");

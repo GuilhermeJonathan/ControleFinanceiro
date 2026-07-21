@@ -52,8 +52,7 @@ public class AtualizarPrecosInvestimentosCommandHandler(
             if (!precos.TryGetValue(ticker, out var preco)) continue;
             foreach (var inv in investimentos.Where(i => string.Equals(i.Ticker!.Trim(), ticker, StringComparison.OrdinalIgnoreCase)))
             {
-                inv.AtualizarValorAutomatico(preco);
-                atualizados++;
+                if (inv.AtualizarValorAutomatico(preco)) atualizados++;
             }
             await historicoRepo.AddAsync(new PrecoAtivoHistorico(ticker, preco, "brapi.dev"), ct);
         }

@@ -15,7 +15,8 @@ public record CreateInvestimentoCommand(
     string? Ticker,
     decimal ValorAplicado,
     decimal ValorAtual,
-    decimal? RentabilidadeAnualPct) : IRequest<Guid>;
+    decimal? RentabilidadeAnualPct,
+    decimal? Quantidade = null) : IRequest<Guid>;
 
 public class CreateInvestimentoCommandHandler(
     IInvestimentoRepository repository,
@@ -34,7 +35,8 @@ public class CreateInvestimentoCommandHandler(
             request.Ticker,
             request.ValorAplicado,
             request.ValorAtual,
-            request.RentabilidadeAnualPct);
+            request.RentabilidadeAnualPct,
+            request.Quantidade);
 
         await repository.AddAsync(inv, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

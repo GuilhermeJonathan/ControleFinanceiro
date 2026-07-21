@@ -159,9 +159,14 @@ builder.Services.AddCors(options =>
 // Camadas CQRS + Clean Architecture
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddHostedService<Login.Infrastructure.Services.TrialExpirationEmailService>();
-builder.Services.AddHostedService<Login.Infrastructure.Services.ReengagementEmailService>();
-builder.Services.AddHostedService<Login.Infrastructure.Services.WarmupService>();
+// Processos de background só em produção — evita e-mails de trial/reengajamento e warmup
+// rodando localmente. (Sem ASPNETCORE_ENVIRONMENT, o padrão é Production.)
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddHostedService<Login.Infrastructure.Services.TrialExpirationEmailService>();
+    builder.Services.AddHostedService<Login.Infrastructure.Services.ReengagementEmailService>();
+    builder.Services.AddHostedService<Login.Infrastructure.Services.WarmupService>();
+}
 
 // IUserAccessor — resolve via HttpContext
 builder.Services.AddScoped<IUserAccessor, Login.Infrastructure.HttpUserAccessor>();

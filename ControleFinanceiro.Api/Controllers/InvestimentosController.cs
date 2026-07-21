@@ -19,7 +19,8 @@ public record InvestimentoRequest(
     string? Ticker,
     decimal ValorAplicado,
     decimal ValorAtual,
-    decimal? RentabilidadeAnualPct);
+    decimal? RentabilidadeAnualPct,
+    decimal? Quantidade);
 
 [ApiController]
 [Authorize]
@@ -47,7 +48,7 @@ public class InvestimentosController(IMediator mediator, IPrecoAtivoHistoricoRep
 
         var id = await mediator.Send(
             new CreateInvestimentoCommand(request.Nome, request.Tipo, moeda, request.Corretora,
-                request.Ticker, request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct), ct);
+                request.Ticker, request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct, request.Quantidade), ct);
 
         return CreatedAtAction(nameof(GetResumo), new { }, new { id });
     }
@@ -60,7 +61,7 @@ public class InvestimentosController(IMediator mediator, IPrecoAtivoHistoricoRep
 
         await mediator.Send(
             new UpdateInvestimentoCommand(id, request.Nome, request.Tipo, moeda, request.Corretora,
-                request.Ticker, request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct), ct);
+                request.Ticker, request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct, request.Quantidade), ct);
 
         return NoContent();
     }

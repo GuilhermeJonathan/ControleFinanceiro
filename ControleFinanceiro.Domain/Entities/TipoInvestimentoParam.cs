@@ -5,12 +5,13 @@ public class TipoInvestimentoParam
 {
     private TipoInvestimentoParam() { }
 
-    public TipoInvestimentoParam(string nome, int ordem, string? icone = null)
+    public TipoInvestimentoParam(string nome, int ordem, string? icone = null, Guid? assessorId = null)
     {
-        Nome  = nome;
-        Ordem = ordem;
-        Icone = icone;
-        Ativo = true;
+        Nome       = nome;
+        Ordem      = ordem;
+        Icone      = icone;
+        Ativo      = true;
+        AssessorId = assessorId;
     }
 
     public TipoInvestimentoParam(int id, string nome, int ordem, bool isSystem, string? icone = null)
@@ -30,6 +31,8 @@ public class TipoInvestimentoParam
     public int     Ordem    { get; private set; }
     public bool    Ativo    { get; private set; }
     public bool    IsSystem { get; private set; }
+    /// <summary>null = tipo global (catálogo do admin). Preenchido = tipo custom de uma assessoria.</summary>
+    public Guid?   AssessorId { get; private set; }
 
     public void Atualizar(string nome, int ordem, bool ativo, string? icone = null)
     {

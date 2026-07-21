@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<ITipoAtivoParamRepository, TipoAtivoParamRepository>();
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();
         services.AddScoped<IMoedaParamRepository, MoedaParamRepository>();
+        services.AddScoped<IParametroOcultoRepository, ParametroOcultoRepository>();
+        services.AddScoped<IAssessoriaOwnerResolver, AssessoriaOwnerResolver>();
         services.AddScoped<ICotacaoHistoricoRepository, CotacaoHistoricoRepository>();
         services.AddScoped<IPrecoAtivoHistoricoRepository, PrecoAtivoHistoricoRepository>();
         services.AddScoped<IConsultoriaConfigRepository, ConsultoriaConfigRepository>();
@@ -75,7 +77,8 @@ public static class DependencyInjection
         services.AddHttpClient<IAssetPriceService, BrapiAssetPriceService>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
 
-        services.AddHostedService<MetaContribuicaoService>();
+        // Nota: MetaContribuicaoService (background) é registrado no Program.cs,
+        // gateado por IsProduction() junto com os demais processos.
 
         return services;
     }

@@ -15,6 +15,8 @@ public class Investimento
     public MoedaPatrimonio Moeda { get; private set; }
     public string? Corretora { get; private set; }
     public string? Ticker { get; private set; }
+    /// <summary>Quantidade de cotas/ações. Para posições com ticker, ValorAtual = Quantidade × preço unitário.</summary>
+    public decimal? Quantidade { get; private set; }
     public decimal ValorAplicado { get; private set; }
     public decimal ValorAtual { get; private set; }
     /// <summary>Rentabilidade anual estimada em %. Null = não informado.</summary>
@@ -29,7 +31,7 @@ public class Investimento
     public Investimento(
         Guid usuarioId, string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct = null)
+        decimal? rentabilidadeAnualPct = null, decimal? quantidade = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -37,6 +39,7 @@ public class Investimento
         Moeda = moeda;
         Corretora = corretora;
         Ticker = ticker;
+        Quantidade = quantidade;
         ValorAplicado = valorAplicado;
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
@@ -44,25 +47,34 @@ public class Investimento
 
     public void Atualizar(string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct)
+        decimal? rentabilidadeAnualPct, decimal? quantidade = null)
     {
         Nome = nome;
         Tipo = tipo;
         Moeda = moeda;
         Corretora = corretora;
         Ticker = ticker;
+        Quantidade = quantidade;
         ValorAplicado = valorAplicado;
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         AtualizadoEm = DateTime.UtcNow;
     }
 
-    /// <summary>Atualiza apenas o valor atual via cotação automática (job diário).</summary>
-    public void AtualizarValorAutomatico(decimal novoValorAtual)
+    /// <summary>
+    /// Atualiza o valor atual via cotação automática (preço UNITÁRIO do ativo).
+    /// Só funciona quando há quantidade: ValorAtual = Quantidade × preço unitário.
+    /// Retorna false (e não altera nada) quando não há quantidade — sem ela não dá para
+    /// derivar o valor da posição a partir do preço por ação.
+    /// </summary>
+    public bool AtualizarValorAutomatico(decimal precoUnitario)
     {
-        ValorAtual = novoValorAtual;
+        if (Quantidade is not > 0) return false;
+
+        ValorAtual = Math.Round(Quantidade.Value * precoUnitario, 2);
         var agora = DateTime.UtcNow;
         AtualizadoEm = agora;
         ValorAtualizadoEm = agora;
+        return true;
     }
 }

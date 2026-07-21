@@ -18,7 +18,10 @@ public class ParametrosCommandHandlerTests
 
     public ParametrosCommandHandlerTests()
     {
+        // Estes testes exercitam a gestão do catálogo GLOBAL (moedas + tipos com AssessorId=null),
+        // que agora pertence ao admin. Assessor/admin ambos passam pelo gate IsAssessor.
         _currentUser.Setup(c => c.IsAssessor).Returns(true);
+        _currentUser.Setup(c => c.IsAdmin).Returns(true);
         _uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
     }
 

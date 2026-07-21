@@ -1,6 +1,6 @@
-using System.Globalization;
 using ControleFinanceiro.Application.Common.Email;
 using ControleFinanceiro.Application.Common.Interfaces;
+using ControleFinanceiro.Application.Parametros.Commands;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
@@ -8,6 +8,7 @@ using ControleFinanceiro.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Globalization;
 
 namespace ControleFinanceiro.Api.BackgroundServices;
 
@@ -337,7 +338,7 @@ public class DailyJobService(
         var mediator    = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         // Reutiliza o command (dedup + histórico + guarda de frescor). Forcar=false: não martela a API a cada restart.
-        var r = await mediator.Send(new ControleFinanceiro.Application.Parametros.Commands.AtualizarCotacoesMoedasCommand(false), ct);
+        var r = await mediator.Send(new AtualizarCotacoesMoedasCommand(false), ct);
         if (r.Pulado) logger.LogInformation("[DailyJob] Cotações: puladas (atualizadas recentemente).");
         else logger.LogInformation("[DailyJob] Cotações: {qtd} moeda(s) atualizadas.", r.Atualizadas);
     }
@@ -350,6 +351,14 @@ public class DailyJobService(
         var priceService     = scope.ServiceProvider.GetRequiredService<IAssetPriceService>();
         var historicoRepo    = scope.ServiceProvider.GetRequiredService<IPrecoAtivoHistoricoRepository>();
 
+        // Mercado fechado no fim de semana — não gasta cota da brapi.dev à toa.
+        var diaSemana = DateTime.Now.DayOfWeek;
+        if (diaSemana is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        {
+            logger.LogInformation("[DailyJob] Investimentos: fim de semana ({dia}) — pulado (mercado fechado).", diaSemana);
+            return;
+        }
+
         var investimentos = await db.Investimentos
             .Where(i => !string.IsNullOrEmpty(i.Ticker))
             .ToListAsync(ct);
@@ -360,15 +369,15 @@ public class DailyJobService(
             return;
         }
 
-        // Guarda de frescor: não reconsulta a cada restart se já atualizou há < 3h.
+        // No máximo 1× por dia: se já atualizou hoje, não reconsulta (poupa cota da brapi.dev em restarts).
         var maisRecente = investimentos
             .Where(i => i.ValorAtualizadoEm.HasValue)
             .Select(i => i.ValorAtualizadoEm!.Value)
             .DefaultIfEmpty()
             .Max();
-        if (maisRecente != default && DateTime.UtcNow - maisRecente < TimeSpan.FromHours(3))
+        if (maisRecente != default && maisRecente.Date == DateTime.UtcNow.Date)
         {
-            logger.LogInformation("[DailyJob] Investimentos: preços atualizados recentemente — pulado.");
+            logger.LogInformation("[DailyJob] Investimentos: já atualizado hoje — pulado.");
             return;
         }
 
@@ -391,8 +400,7 @@ public class DailyJobService(
             // brapi retorna preço unitário; aqui aplicamos direto em valorAtual (simplificação — sem quantidade separada).
             foreach (var inv in investimentos.Where(i => string.Equals(i.Ticker!.Trim(), ticker, StringComparison.OrdinalIgnoreCase)))
             {
-                inv.AtualizarValorAutomatico(preco);
-                atualizados++;
+                if (inv.AtualizarValorAutomatico(preco)) atualizados++;
             }
             await historicoRepo.AddAsync(new PrecoAtivoHistorico(ticker, preco, "brapi.dev"), ct);
         }

@@ -113,7 +113,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddHostedService<DailyJobService>();
+
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddHostedService<DailyJobService>();
+    builder.Services.AddHostedService<ControleFinanceiro.Infrastructure.Services.MetaContribuicaoService>();
+}
 builder.Services.AddWhatsApp();
 
 var app = builder.Build();

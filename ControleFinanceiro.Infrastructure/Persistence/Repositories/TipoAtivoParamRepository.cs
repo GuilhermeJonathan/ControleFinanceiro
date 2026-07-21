@@ -10,6 +10,13 @@ public class TipoAtivoParamRepository(AppDbContext db) : ITipoAtivoParamReposito
     public Task<List<TipoAtivoParam>> GetAllAsync(CancellationToken ct = default) =>
         db.TiposAtivoParam.OrderBy(x => x.Ordem).ToListAsync(ct);
 
+    public Task<List<TipoAtivoParam>> GetGlobaisAsync(CancellationToken ct = default) =>
+        db.TiposAtivoParam.Where(x => x.AssessorId == null).OrderBy(x => x.Ordem).ToListAsync(ct);
+
+    public Task<List<TipoAtivoParam>> GetGlobaisEDoAssessorAsync(Guid assessorId, CancellationToken ct = default) =>
+        db.TiposAtivoParam.Where(x => x.AssessorId == null || x.AssessorId == assessorId)
+                          .OrderBy(x => x.Ordem).ToListAsync(ct);
+
     public Task<TipoAtivoParam?> GetByIdAsync(int id, CancellationToken ct = default) =>
         db.TiposAtivoParam.FirstOrDefaultAsync(x => x.Id == id, ct);
 

@@ -1,24 +1,32 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ControleFinanceiro.Application.Common.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ControleFinanceiro.Infrastructure.Services;
 
 /// <summary>
-/// Consulta preços de ativos (ações, FIIs, ETFs, criptos) via brapi.dev (gratuita).
-/// Endpoint: https://brapi.dev/api/quote/{tickers}?token={token}
-/// Tickers em lote, separados por vírgula: PETR4,MXRF11,BTC
+/// Consulta preços de ativos (ações, FIIs, ETFs, criptos) via brapi.dev.
+/// A brapi.dev passou a exigir token — configure em "Brapi:Token" (env Brapi__Token).
+/// Endpoint: https://brapi.dev/api/quote/{ticker}?token={token}
+/// ATENÇÃO: o plano gratuito permite apenas 1 ativo por requisição → consultamos 1 a 1.
 /// </summary>
 public class BrapiAssetPriceService(
     HttpClient http,
+    IConfiguration configuration,
     ILogger<BrapiAssetPriceService> logger) : IAssetPriceService
 {
     private static readonly JsonSerializerOptions _jsonOpts =
         new() { PropertyNameCaseInsensitive = true };
 
-    // Máximo de tickers por requisição (brapi limita a URL)
-    private const int LoteTamanho = 10;
+    private readonly string? _token = configuration["Brapi:Token"];
+
+    // Plano gratuito da brapi.dev aceita só 1 ativo por requisição.
+    private const int LoteTamanho = 1;
+
+    // Pausa entre requisições para não acionar rate limit (429).
+    private static readonly TimeSpan DelayEntreRequisicoes = TimeSpan.FromSeconds(1);
 
     public async Task<Dictionary<string, decimal>> GetPricesAsync(
         IEnumerable<string> tickers, CancellationToken ct = default)
@@ -33,7 +41,14 @@ public class BrapiAssetPriceService(
 
         if (lista.Count == 0) return result;
 
-        // Processa em lotes para não ultrapassar limite de URL
+        if (string.IsNullOrWhiteSpace(_token))
+        {
+            logger.LogWarning("[AssetPrice] Token da brapi.dev não configurado (Brapi:Token). " +
+                "A brapi.dev exige token — os preços não serão atualizados até configurar.");
+            return result;
+        }
+
+        // Consulta 1 ativo por requisição (limite do plano gratuito da brapi.dev).
         for (int i = 0; i < lista.Count; i += LoteTamanho)
         {
             if (ct.IsCancellationRequested) break;
@@ -41,9 +56,8 @@ public class BrapiAssetPriceService(
             var lote = lista.Skip(i).Take(LoteTamanho).ToList();
             await ProcessarLoteAsync(lote, result, ct);
 
-            // Delay entre lotes para não acionar rate limit
             if (i + LoteTamanho < lista.Count)
-                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+                await Task.Delay(DelayEntreRequisicoes, ct);
         }
 
         logger.LogInformation("[AssetPrice] Preços obtidos: {tickers}", string.Join(", ", result.Keys));
@@ -52,7 +66,7 @@ public class BrapiAssetPriceService(
 
     private async Task ProcessarLoteAsync(List<string> tickers, Dictionary<string, decimal> result, CancellationToken ct)
     {
-        var url = $"https://brapi.dev/api/quote/{string.Join(",", tickers)}?fundamental=false";
+        var url = $"https://brapi.dev/api/quote/{string.Join(",", tickers)}?fundamental=false&token={_token}";
         try
         {
             using var response = await http.GetAsync(url, ct);
@@ -73,7 +87,9 @@ public class BrapiAssetPriceService(
 
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("[AssetPrice] brapi.dev retornou {status} para tickers: {tickers}.", response.StatusCode, string.Join(",", tickers));
+                var corpo = await response.Content.ReadAsStringAsync(ct);
+                logger.LogWarning("[AssetPrice] brapi.dev retornou {status} para {tickers}: {corpo}",
+                    response.StatusCode, string.Join(",", tickers), corpo);
                 return;
             }
 

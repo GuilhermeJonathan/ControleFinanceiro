@@ -1,21 +1,27 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ControleFinanceiro.Application.Common.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ControleFinanceiro.Infrastructure.Services;
 
 /// <summary>
-/// Consulta cotações em relação ao BRL via AwesomeAPI (gratuita, sem chave).
+/// Consulta cotações em relação ao BRL via AwesomeAPI.
+/// Sem token o plano grátis tem limite baixo (429). Configure "AwesomeApi:Token"
+/// (env AwesomeApi__Token) para elevar o limite.
 /// Endpoint: https://economia.awesomeapi.com.br/json/last/{pares}
 /// Ex.: USD-BRL,EUR-BRL,GBP-BRL
 /// </summary>
 public class AwesomeApiCurrencyRateService(
     HttpClient http,
+    IConfiguration configuration,
     ILogger<AwesomeApiCurrencyRateService> logger) : ICurrencyRateService
 {
     private static readonly JsonSerializerOptions _jsonOpts =
         new() { PropertyNameCaseInsensitive = true };
+
+    private readonly string? _token = configuration["AwesomeApi:Token"];
 
     public async Task<Dictionary<string, decimal>> GetRatesVsBrlAsync(
         IEnumerable<string> moedas, CancellationToken ct = default)
@@ -34,14 +40,34 @@ public class AwesomeApiCurrencyRateService(
             if (ct.IsCancellationRequested) break;
 
             var url = $"https://economia.awesomeapi.com.br/json/last/{moeda}-BRL";
+            if (!string.IsNullOrWhiteSpace(_token))
+                url += $"?token={_token}";
             try
             {
                 using var response = await http.GetAsync(url, ct);
-                
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync(ct);
-                var valor = ParseSingle(json, moeda);
-                if (valor.HasValue) result[moeda] = valor.Value;
+
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    logger.LogWarning("[CurrencyRate] AwesomeAPI retornou 429 em {moeda}-BRL — aguardando 15s e tentando novamente...", moeda);
+                    await Task.Delay(TimeSpan.FromSeconds(15), ct);
+                    using var retry = await http.GetAsync(url, ct);
+                    if (retry.IsSuccessStatusCode)
+                    {
+                        var valorRetry = ParseSingle(await retry.Content.ReadAsStringAsync(ct), moeda);
+                        if (valorRetry.HasValue) result[moeda] = valorRetry.Value;
+                    }
+                    else
+                    {
+                        logger.LogWarning("[CurrencyRate] AwesomeAPI ainda em {status} para {moeda}-BRL. " +
+                            "Configure AwesomeApi:Token para elevar o limite.", retry.StatusCode, moeda);
+                    }
+                }
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                    var valor = ParseSingle(await response.Content.ReadAsStringAsync(ct), moeda);
+                    if (valor.HasValue) result[moeda] = valor.Value;
+                }
             }
             catch (Exception ex)
             {

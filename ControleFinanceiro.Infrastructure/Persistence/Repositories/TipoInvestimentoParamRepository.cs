@@ -10,6 +10,13 @@ public class TipoInvestimentoParamRepository(AppDbContext db) : ITipoInvestiment
     public Task<List<TipoInvestimentoParam>> GetAllAsync(CancellationToken ct = default) =>
         db.TiposInvestimentoParam.OrderBy(x => x.Ordem).ToListAsync(ct);
 
+    public Task<List<TipoInvestimentoParam>> GetGlobaisAsync(CancellationToken ct = default) =>
+        db.TiposInvestimentoParam.Where(x => x.AssessorId == null).OrderBy(x => x.Ordem).ToListAsync(ct);
+
+    public Task<List<TipoInvestimentoParam>> GetGlobaisEDoAssessorAsync(Guid assessorId, CancellationToken ct = default) =>
+        db.TiposInvestimentoParam.Where(x => x.AssessorId == null || x.AssessorId == assessorId)
+                                 .OrderBy(x => x.Ordem).ToListAsync(ct);
+
     public Task<TipoInvestimentoParam?> GetByIdAsync(int id, CancellationToken ct = default) =>
         db.TiposInvestimentoParam.FirstOrDefaultAsync(x => x.Id == id, ct);
 

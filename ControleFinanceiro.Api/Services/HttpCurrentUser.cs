@@ -53,6 +53,16 @@ public class HttpCurrentUser : ICurrentUser
         }
     }
 
+    /// <summary>Admin da plataforma (userType=1) — dono do catálogo global.</summary>
+    public bool IsAdmin
+    {
+        get
+        {
+            var userType = _accessor.HttpContext?.User.FindFirstValue("userType");
+            return userType == "1";
+        }
+    }
+
     /// <summary>Plano Assessor ativo (planType=4); Admin não precisa de plano.</summary>
     public bool TemPlanoAssessor
     {

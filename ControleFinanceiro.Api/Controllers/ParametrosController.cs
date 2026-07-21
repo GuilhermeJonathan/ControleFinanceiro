@@ -1,5 +1,6 @@
 using ControleFinanceiro.Application.Parametros.Commands;
 using ControleFinanceiro.Application.Parametros.Queries;
+using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -38,6 +39,23 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
         return NoContent();
     }
 
+    /// <summary>Assessor oculta um tipo de ativo global do seu próprio catálogo.</summary>
+    [HttpPost("tipos-ativo/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> OcultarTipoAtivo(int id, CancellationToken ct)
+    {
+        await mediator.Send(new OcultarParametroCommand(TipoParametroCatalogo.TipoAtivo, id), ct);
+        return NoContent();
+    }
+
+    [HttpDelete("tipos-ativo/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> ReexibirTipoAtivo(int id, CancellationToken ct)
+    {
+        await mediator.Send(new ReexibirParametroCommand(TipoParametroCatalogo.TipoAtivo, id), ct);
+        return NoContent();
+    }
+
     // ── Tipos de Investimento ─────────────────────────────────────────────
 
     [HttpGet("tipos-investimento")]
@@ -58,6 +76,23 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
     public async Task<IActionResult> DeleteTipoInvestimento(int id, CancellationToken ct)
     {
         await mediator.Send(new DeleteTipoInvestimentoCommand(id), ct);
+        return NoContent();
+    }
+
+    /// <summary>Assessor oculta um tipo de investimento global do seu próprio catálogo.</summary>
+    [HttpPost("tipos-investimento/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> OcultarTipoInvestimento(int id, CancellationToken ct)
+    {
+        await mediator.Send(new OcultarParametroCommand(TipoParametroCatalogo.TipoInvestimento, id), ct);
+        return NoContent();
+    }
+
+    [HttpDelete("tipos-investimento/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> ReexibirTipoInvestimento(int id, CancellationToken ct)
+    {
+        await mediator.Send(new ReexibirParametroCommand(TipoParametroCatalogo.TipoInvestimento, id), ct);
         return NoContent();
     }
 

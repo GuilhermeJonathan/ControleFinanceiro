@@ -13,5 +13,6 @@ public class TipoInvestimentoParamConfiguration : IEntityTypeConfiguration<TipoI
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.Nome).IsRequired().HasMaxLength(100);
         builder.Property(x => x.Icone).HasMaxLength(10);
+        builder.HasIndex(x => x.AssessorId);
     }
 }

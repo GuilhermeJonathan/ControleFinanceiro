@@ -5,12 +5,13 @@ public class TipoAtivoParam
 {
     private TipoAtivoParam() { }
 
-    public TipoAtivoParam(string nome, int ordem, string? icone = null)
+    public TipoAtivoParam(string nome, int ordem, string? icone = null, Guid? assessorId = null)
     {
-        Nome   = nome;
-        Ordem  = ordem;
-        Icone  = icone;
-        Ativo  = true;
+        Nome       = nome;
+        Ordem      = ordem;
+        Icone      = icone;
+        Ativo      = true;
+        AssessorId = assessorId;
     }
 
     /// <summary>Usado pelo seed/migrations para inserir itens do sistema com Id fixo.</summary>
@@ -32,6 +33,8 @@ public class TipoAtivoParam
     public bool    Ativo    { get; private set; }
     /// <summary>Itens do sistema não podem ser excluídos.</summary>
     public bool    IsSystem { get; private set; }
+    /// <summary>null = tipo global (catálogo do admin). Preenchido = tipo custom de uma assessoria.</summary>
+    public Guid?   AssessorId { get; private set; }
 
     public void Atualizar(string nome, int ordem, bool ativo, string? icone = null)
     {
