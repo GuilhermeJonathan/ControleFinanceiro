@@ -1,8 +1,10 @@
 using ControleFinanceiro.Application.Patrimonio.Commands.CreateInvestimento;
 using ControleFinanceiro.Application.Patrimonio.Commands.DeleteInvestimento;
 using ControleFinanceiro.Application.Patrimonio.Commands.UpdateInvestimento;
+using ControleFinanceiro.Application.Patrimonio.Commands.AtualizarPrecosInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Domain.Enums;
+using ControleFinanceiro.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +24,7 @@ public record InvestimentoRequest(
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class InvestimentosController(IMediator mediator) : ControllerBase
+public class InvestimentosController(IMediator mediator, IPrecoAtivoHistoricoRepository precoRepo) : ControllerBase
 {
     private static readonly Dictionary<string, MoedaPatrimonio> MoedaMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -68,5 +70,27 @@ public class InvestimentosController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new DeleteInvestimentoCommand(id), ct);
         return NoContent();
+    }
+
+    /// <summary>Atualiza os preços dos investimentos (com ticker) do cliente efetivo via mercado.</summary>
+    [HttpPost("atualizar-precos")]
+    public async Task<IActionResult> AtualizarPrecos(CancellationToken ct)
+    {
+        var r = await mediator.Send(new AtualizarPrecosInvestimentosCommand(true), ct);
+        return Ok(new { atualizados = r.Atualizados });
+    }
+
+    /// <summary>Histórico de preço de um ticker.</summary>
+    [HttpGet("historico/{ticker}")]
+    public async Task<IActionResult> GetHistorico(string ticker, [FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, CancellationToken ct = default)
+    {
+        tamanhoPagina = Math.Clamp(tamanhoPagina, 1, 50);
+        var (items, total) = await precoRepo.GetByTickerAsync(ticker.ToUpperInvariant(), pagina, tamanhoPagina, ct);
+        return Ok(new
+        {
+            pagina, tamanhoPagina, total,
+            totalPaginas = (int)Math.Ceiling((double)total / tamanhoPagina),
+            items = items.Select(h => new { h.Ticker, h.Preco, h.Fonte, h.DataHora }),
+        });
     }
 }

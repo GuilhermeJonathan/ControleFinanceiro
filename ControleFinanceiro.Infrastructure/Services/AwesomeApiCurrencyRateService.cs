@@ -59,21 +59,22 @@ public class AwesomeApiCurrencyRateService(
 
     private decimal? ParseSingle(string json, string moedaCodigo)
     {
-        try
-        {
-            var doc = JsonSerializer.Deserialize<Dictionary<string, AwesomeRateDto>>(json, _jsonOpts);
-            if (doc is null) return null;
-            var entry = doc.Values.FirstOrDefault();
-            if (entry is null) return null;
-            if (decimal.TryParse(entry.Bid, System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var valor))
-                return valor;
-        }
+        try { return ParseBid(json); }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[CurrencyRate] Falha ao parsear resposta de {moeda}-BRL.", moedaCodigo);
+            return null;
         }
-        return null;
+    }
+
+    /// <summary>Extrai o "bid" da resposta da AwesomeAPI (ex.: {"USDBRL":{"bid":"5.42"}}). Público p/ teste.</summary>
+    public static decimal? ParseBid(string json)
+    {
+        var doc = JsonSerializer.Deserialize<Dictionary<string, AwesomeRateDto>>(json, _jsonOpts);
+        var entry = doc?.Values.FirstOrDefault();
+        if (entry is null) return null;
+        return decimal.TryParse(entry.Bid, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var valor) ? valor : null;
     }
 
     private sealed class AwesomeRateDto

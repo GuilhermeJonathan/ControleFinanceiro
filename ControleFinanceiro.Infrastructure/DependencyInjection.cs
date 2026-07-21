@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();
         services.AddScoped<IMoedaParamRepository, MoedaParamRepository>();
         services.AddScoped<ICotacaoHistoricoRepository, CotacaoHistoricoRepository>();
+        services.AddScoped<IPrecoAtivoHistoricoRepository, PrecoAtivoHistoricoRepository>();
         services.AddScoped<IConsultoriaConfigRepository, ConsultoriaConfigRepository>();
         services.AddScoped<IMetaRepository, MetaRepository>();
         services.AddScoped<IWhatsAppVinculoRepository, WhatsAppVinculoRepository>();
@@ -71,6 +72,7 @@ public static class DependencyInjection
         services.AddHttpClient<IEmailService, LoginEmailGateway>();
         services.AddHttpClient<ILoginProvisionClient, LoginProvisionClient>();
         services.AddHttpClient<ICurrencyRateService, AwesomeApiCurrencyRateService>();
+        services.AddHttpClient<IAssetPriceService, BrapiAssetPriceService>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
 
         services.AddHostedService<MetaContribuicaoService>();

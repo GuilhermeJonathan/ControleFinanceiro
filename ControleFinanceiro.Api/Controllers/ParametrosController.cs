@@ -84,6 +84,14 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
         return NoContent();
     }
 
+    [HttpPost("moedas/atualizar-cotacoes")]
+    [Authorize]
+    public async Task<IActionResult> AtualizarCotacoes(CancellationToken ct)
+    {
+        var r = await mediator.Send(new ControleFinanceiro.Application.Parametros.Commands.AtualizarCotacoesMoedasCommand(true), ct);
+        return Ok(new { atualizadas = r.Atualizadas });
+    }
+
     [HttpGet("moedas/{codigo}/historico")]
     [AllowAnonymous]
     public async Task<IActionResult> GetHistoricoCotacao(

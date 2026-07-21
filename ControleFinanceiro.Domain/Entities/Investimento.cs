@@ -21,6 +21,8 @@ public class Investimento
     public decimal? RentabilidadeAnualPct { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
+    /// <summary>Data/hora UTC da última atualização automática do valor atual (cotação de preço).</summary>
+    public DateTime? ValorAtualizadoEm { get; private set; }
 
     private Investimento() { }
 
@@ -53,5 +55,14 @@ public class Investimento
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Atualiza apenas o valor atual via cotação automática (job diário).</summary>
+    public void AtualizarValorAutomatico(decimal novoValorAtual)
+    {
+        ValorAtual = novoValorAtual;
+        var agora = DateTime.UtcNow;
+        AtualizadoEm = agora;
+        ValorAtualizadoEm = agora;
     }
 }

@@ -5,6 +5,7 @@ using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using ControleFinanceiro.Domain.Repositories;
 using ControleFinanceiro.Infrastructure.Persistence;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -50,6 +51,7 @@ public class DailyJobService(
         await JobSnapshotPatrimonioAsync(ct);
         await JobRelatorioMensalAsync(ct);
         await JobAtualizarCotacoesAsync(ct);
+        await JobAtualizarInvestimentosAsync(ct);
 
         logger.LogInformation("[DailyJob] Jobs concluídos — {agora}", DateTime.Now);
     }
@@ -331,42 +333,71 @@ public class DailyJobService(
     // ── Job 5: Atualizar cotações de moedas ──────────────────────────────────
     private async Task JobAtualizarCotacoesAsync(CancellationToken ct)
     {
+        using var scope = scopeFactory.CreateScope();
+        var mediator    = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        // Reutiliza o command (dedup + histórico + guarda de frescor). Forcar=false: não martela a API a cada restart.
+        var r = await mediator.Send(new ControleFinanceiro.Application.Parametros.Commands.AtualizarCotacoesMoedasCommand(false), ct);
+        if (r.Pulado) logger.LogInformation("[DailyJob] Cotações: puladas (atualizadas recentemente).");
+        else logger.LogInformation("[DailyJob] Cotações: {qtd} moeda(s) atualizadas.", r.Atualizadas);
+    }
+
+    // ── Job 6: Atualizar valor atual dos investimentos via ticker ────────────
+    private async Task JobAtualizarInvestimentosAsync(CancellationToken ct)
+    {
         using var scope      = scopeFactory.CreateScope();
         var db               = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var rateService      = scope.ServiceProvider.GetRequiredService<ICurrencyRateService>();
-        var historicoRepo    = scope.ServiceProvider.GetRequiredService<ICotacaoHistoricoRepository>();
+        var priceService     = scope.ServiceProvider.GetRequiredService<IAssetPriceService>();
+        var historicoRepo    = scope.ServiceProvider.GetRequiredService<IPrecoAtivoHistoricoRepository>();
 
-        var moedas = await db.MoedasParam
-            .Where(m => m.Ativo && m.Codigo != "BRL")
+        var investimentos = await db.Investimentos
+            .Where(i => !string.IsNullOrEmpty(i.Ticker))
             .ToListAsync(ct);
 
-        if (moedas.Count == 0)
+        if (investimentos.Count == 0)
         {
-            logger.LogInformation("[DailyJob] Cotações: nenhuma moeda ativa não-BRL cadastrada.");
+            logger.LogInformation("[DailyJob] Investimentos: nenhum investimento com ticker cadastrado.");
             return;
         }
 
-        var codigos = moedas.Select(m => m.Codigo).ToList();
-        var rates   = await rateService.GetRatesVsBrlAsync(codigos, ct);
-
-        if (rates.Count == 0)
+        // Guarda de frescor: não reconsulta a cada restart se já atualizou há < 3h.
+        var maisRecente = investimentos
+            .Where(i => i.ValorAtualizadoEm.HasValue)
+            .Select(i => i.ValorAtualizadoEm!.Value)
+            .DefaultIfEmpty()
+            .Max();
+        if (maisRecente != default && DateTime.UtcNow - maisRecente < TimeSpan.FromHours(3))
         {
-            logger.LogWarning("[DailyJob] Cotações: nenhuma cotação retornada pela API.");
+            logger.LogInformation("[DailyJob] Investimentos: preços atualizados recentemente — pulado.");
             return;
         }
 
-        int atualizadas = 0;
-        foreach (var moeda in moedas)
-        {
-            if (!rates.TryGetValue(moeda.Codigo, out var novaCotacao)) continue;
+        var tickers = investimentos
+            .Select(i => i.Ticker!.Trim().ToUpperInvariant())
+            .Distinct()
+            .ToList();
 
-            moeda.AtualizarCotacao(novaCotacao);
-            await historicoRepo.AddAsync(
-                new CotacaoHistorico(moeda.Codigo, novaCotacao, "AwesomeAPI"), ct);
-            atualizadas++;
+        var prices = await priceService.GetPricesAsync(tickers, ct);
+        if (prices.Count == 0)
+        {
+            logger.LogWarning("[DailyJob] Investimentos: nenhum preço retornado pela API.");
+            return;
+        }
+
+        var atualizados = 0;
+        foreach (var ticker in tickers)
+        {
+            if (!prices.TryGetValue(ticker, out var preco)) continue;
+            // brapi retorna preço unitário; aqui aplicamos direto em valorAtual (simplificação — sem quantidade separada).
+            foreach (var inv in investimentos.Where(i => string.Equals(i.Ticker!.Trim(), ticker, StringComparison.OrdinalIgnoreCase)))
+            {
+                inv.AtualizarValorAutomatico(preco);
+                atualizados++;
+            }
+            await historicoRepo.AddAsync(new PrecoAtivoHistorico(ticker, preco, "brapi.dev"), ct);
         }
 
         await db.SaveChangesAsync(ct);
-        logger.LogInformation("[DailyJob] Cotações: {qtd} moeda(s) atualizadas.", atualizadas);
+        logger.LogInformation("[DailyJob] Investimentos: {qtd} investimento(s) atualizados via ticker.", atualizados);
     }
 }
