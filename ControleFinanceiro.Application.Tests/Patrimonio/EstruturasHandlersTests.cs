@@ -79,6 +79,13 @@ public class EstruturasHandlersTests
         var invFilha = new Investimento(UserId, "Fundo", TipoInvestimento.RendaFixa, MoedaPatrimonio.BRL, null, null, 0m, 400_000m, estruturaId: filha);
         _ativoRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { imovel });
         _invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { invFilha });
+        var benef = new Beneficiario(UserId, "Filho João", PapelBeneficiario.Filho, 100m);
+        _repo.Setup(r => r.GetBeneficiariosByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Beneficiario> { benef });
+        _repo.Setup(r => r.GetDistribuicoesByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Distribuicao>
+        {
+            new(UserId, new DateTime(2026, 3, 15), 50_000m, MoedaPatrimonio.BRL, holding, benef.Id, "Adiantamento"),
+            new(UserId, new DateTime(2026, 1, 1),  10_000m, MoedaPatrimonio.BRL, filha, null, "Outra estrutura"),
+        });
 
         var h = new GetEstruturaDetalheQueryHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _fx.Object, _user.Object);
         var d = await h.Handle(new GetEstruturaDetalheQuery(holding), CancellationToken.None);
@@ -88,6 +95,8 @@ public class EstruturasHandlersTests
         d.Filhas.Should().ContainSingle(f => f.Id == filha);
         d.Filhas.Single().ValorParticipacaoBRL.Should().Be(200_000m); // 50% de 400k
         d.ValorTotalBRL.Should().Be(1_200_000m);                       // direto + 50% da filha
+        // Só a distribuição desta estrutura (não a da filha).
+        d.Distribuicoes.Should().ContainSingle(x => x.Valor == 50_000m && x.Beneficiario == "Filho João");
     }
 
     // ── Anticiclo ─────────────────────────────────────────────────────────

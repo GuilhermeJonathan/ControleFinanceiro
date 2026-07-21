@@ -11,11 +11,16 @@ public record ItemEstruturaDto(string Nome, string Origem, int Tipo, string Moed
 /// <summary>Uma estrutura detida por esta (participação para baixo).</summary>
 public record FilhaEstruturaDto(Guid Id, string Nome, decimal PercentualParticipacao, decimal ValorTotalBRL, decimal ValorParticipacaoBRL);
 
+/// <summary>Uma distribuição cuja origem é esta estrutura.</summary>
+public record DistribuicaoEstruturaDto(
+    Guid Id, DateTime Data, decimal Valor, string Moeda, decimal ValorBRL, string? Beneficiario, string? Descricao);
+
 public record EstruturaDetalheDto(
     Guid Id, string Nome, int Tipo, string? Jurisdicao, string? Observacoes,
     decimal ValorDiretoBRL, decimal ValorTotalBRL,
     IReadOnlyList<ItemEstruturaDto> Itens,
-    IReadOnlyList<FilhaEstruturaDto> Filhas);
+    IReadOnlyList<FilhaEstruturaDto> Filhas,
+    IReadOnlyList<DistribuicaoEstruturaDto> Distribuicoes);
 
 public record GetEstruturaDetalheQuery(Guid Id) : IRequest<EstruturaDetalheDto>;
 
@@ -80,6 +85,19 @@ public class GetEstruturaDetalheQueryHandler(
             return total;
         }
 
+        // Distribuições cuja origem é esta estrutura (com nome do beneficiário).
+        var beneficiarios = await estruturaRepo.GetBeneficiariosByUsuarioAsync(userId, ct);
+        var nomeBenef = beneficiarios.ToDictionary(b => b.Id, b => b.Nome);
+        var distribuicoes = (await estruturaRepo.GetDistribuicoesByUsuarioAsync(userId, ct))
+            .Where(d => d.EstruturaId == estrutura.Id)
+            .OrderByDescending(d => d.Data)
+            .Select(d => new DistribuicaoEstruturaDto(
+                d.Id, d.Data, Math.Round(d.Valor, 2), d.Moeda.ToString(),
+                Math.Round(ParaBRL(d.Valor, d.Moeda), 2),
+                d.BeneficiarioId.HasValue && nomeBenef.TryGetValue(d.BeneficiarioId.Value, out var nb) ? nb : null,
+                d.Descricao))
+            .ToList();
+
         var nomePorId = estruturas.ToDictionary(e => e.Id, e => e.Nome);
         var filhas = (filhasPorPai.GetValueOrDefault(estrutura.Id) ?? [])
             .Where(p => nomePorId.ContainsKey(p.EstruturaFilhaId))
@@ -99,6 +117,7 @@ public class GetEstruturaDetalheQueryHandler(
             Math.Round(valorDireto.GetValueOrDefault(estrutura.Id), 2),
             Math.Round(ValorTotal(estrutura.Id, []), 2),
             itens.OrderByDescending(i => i.ValorBRL).ToList(),
-            filhas);
+            filhas,
+            distribuicoes);
     }
 }
