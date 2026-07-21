@@ -52,6 +52,7 @@ public class EstruturasHandlersTests
         var imovel = new AtivoPatrimonial(UserId, "Ed. SP", TipoAtivo.Imovel, MoedaPatrimonio.BRL, 1_000_000m, estruturaId: holdingImoveis);
         _ativoRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { imovel });
         _invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Investimento>());
+        _repo.Setup(r => r.GetBeneficiariosByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Beneficiario>());
 
         var h = new GetEstruturasQueryHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _fx.Object, _user.Object);
         var r = await h.Handle(new GetEstruturasQuery(), CancellationToken.None);

@@ -85,6 +85,28 @@ public class DeleteEstruturaCommandHandler(
     }
 }
 
+// ── Salvar posição no mapa ──────────────────────────────────────────────────
+
+public record SalvarPosicaoEstruturaCommand(Guid Id, double PosX, double PosY) : IRequest;
+
+public class SalvarPosicaoEstruturaCommandHandler(
+    IEstruturaRepository repo,
+    ICurrentUser currentUser,
+    IUnitOfWork uow)
+    : IRequestHandler<SalvarPosicaoEstruturaCommand>
+{
+    public async Task Handle(SalvarPosicaoEstruturaCommand request, CancellationToken ct)
+    {
+        var e = await repo.GetByIdAsync(request.Id, ct)
+            ?? throw new KeyNotFoundException($"Estrutura {request.Id} não encontrada.");
+        if (e.UsuarioId != currentUser.UserId)
+            throw new UnauthorizedAccessException("Acesso negado à estrutura.");
+
+        e.DefinirPosicao(request.PosX, request.PosY);
+        await uow.SaveChangesAsync(ct);
+    }
+}
+
 // ── Save Participação (aresta do grafo) ─────────────────────────────────────
 
 public record SaveParticipacaoCommand(

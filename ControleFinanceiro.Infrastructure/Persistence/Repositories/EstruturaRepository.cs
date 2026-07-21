@@ -29,4 +29,26 @@ public class EstruturaRepository(AppDbContext db) : IEstruturaRepository
 
     public void RemoveParticipacao(ParticipacaoEstrutura entity) =>
         db.ParticipacoesEstrutura.Remove(entity);
+
+    public Task<List<Beneficiario>> GetBeneficiariosByUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
+        db.Beneficiarios.Where(b => b.UsuarioId == usuarioId).OrderBy(b => b.CriadoEm).ToListAsync(ct);
+
+    public Task<Beneficiario?> GetBeneficiarioByIdAsync(Guid id, CancellationToken ct = default) =>
+        db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == id, ct);
+
+    public async Task AddBeneficiarioAsync(Beneficiario entity, CancellationToken ct = default) =>
+        await db.Beneficiarios.AddAsync(entity, ct);
+
+    public void RemoveBeneficiario(Beneficiario entity) => db.Beneficiarios.Remove(entity);
+
+    public Task<List<Distribuicao>> GetDistribuicoesByUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
+        db.Distribuicoes.Where(d => d.UsuarioId == usuarioId).OrderByDescending(d => d.Data).ToListAsync(ct);
+
+    public Task<Distribuicao?> GetDistribuicaoByIdAsync(Guid id, CancellationToken ct = default) =>
+        db.Distribuicoes.FirstOrDefaultAsync(d => d.Id == id, ct);
+
+    public async Task AddDistribuicaoAsync(Distribuicao entity, CancellationToken ct = default) =>
+        await db.Distribuicoes.AddAsync(entity, ct);
+
+    public void RemoveDistribuicao(Distribuicao entity) => db.Distribuicoes.Remove(entity);
 }

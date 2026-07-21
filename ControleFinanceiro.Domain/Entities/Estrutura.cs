@@ -17,6 +17,9 @@ public class Estrutura
     public string? Jurisdicao { get; private set; }
     public DateTime? ConstituidaEm { get; private set; }
     public string? Observacoes { get; private set; }
+    /// <summary>Posição manual no mapa (px). null = usa o layout automático.</summary>
+    public double? PosX { get; private set; }
+    public double? PosY { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -42,5 +45,11 @@ public class Estrutura
         ConstituidaEm = constituidaEm;
         Observacoes = observacoes;
         AtualizadoEm = DateTime.UtcNow;
+    }
+
+    public void DefinirPosicao(double posX, double posY)
+    {
+        PosX = posX;
+        PosY = posY;
     }
 }

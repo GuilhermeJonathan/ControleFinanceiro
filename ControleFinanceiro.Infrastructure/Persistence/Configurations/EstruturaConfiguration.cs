@@ -31,3 +31,30 @@ public class ParticipacaoEstruturaConfiguration : IEntityTypeConfiguration<Parti
         builder.HasIndex(p => new { p.UsuarioId, p.EstruturaPaiId, p.EstruturaFilhaId }).IsUnique();
     }
 }
+
+public class BeneficiarioConfiguration : IEntityTypeConfiguration<Beneficiario>
+{
+    public void Configure(EntityTypeBuilder<Beneficiario> builder)
+    {
+        builder.ToTable("Beneficiarios");
+        builder.HasKey(b => b.Id);
+        builder.Property(b => b.Nome).IsRequired().HasMaxLength(200);
+        builder.Property(b => b.Papel).HasConversion<int>();
+        builder.Property(b => b.PercentualDistribuicao).HasPrecision(9, 4);
+        builder.Property(b => b.CondicaoLiberacao).HasMaxLength(500);
+        builder.HasIndex(b => b.UsuarioId);
+    }
+}
+
+public class DistribuicaoConfiguration : IEntityTypeConfiguration<Distribuicao>
+{
+    public void Configure(EntityTypeBuilder<Distribuicao> builder)
+    {
+        builder.ToTable("Distribuicoes");
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.Valor).HasPrecision(18, 2);
+        builder.Property(d => d.Moeda).HasConversion<int>();
+        builder.Property(d => d.Descricao).HasMaxLength(500);
+        builder.HasIndex(d => d.UsuarioId);
+    }
+}

@@ -17,7 +17,9 @@ public record EstruturaDto(
     /// <summary>Soma (BRL) dos ativos + investimentos ligados diretamente à estrutura.</summary>
     decimal ValorDiretoBRL,
     /// <summary>Valor direto + percentual das estruturas detidas (derivado, recursivo).</summary>
-    decimal ValorTotalBRL);
+    decimal ValorTotalBRL,
+    double? PosX,
+    double? PosY);
 
 public record ParticipacaoDto(
     Guid Id,
@@ -26,13 +28,17 @@ public record ParticipacaoDto(
     decimal PercentualParticipacao,
     int TipoRelacao);
 
+public record BeneficiarioGrafoDto(
+    Guid Id, string Nome, int Papel, decimal PercentualDistribuicao, string? CondicaoLiberacao);
+
 public record GrafoEstruturasDto(
     decimal TotalEmEstruturasBRL,
     decimal TotalPessoaFisicaBRL,
     IReadOnlyList<EstruturaDto> Estruturas,
-    IReadOnlyList<ParticipacaoDto> Participacoes)
+    IReadOnlyList<ParticipacaoDto> Participacoes,
+    IReadOnlyList<BeneficiarioGrafoDto> Beneficiarios)
 {
-    public GrafoEstruturasDto() : this(0m, 0m, [], []) { }
+    public GrafoEstruturasDto() : this(0m, 0m, [], [], []) { }
 }
 
 public record GetEstruturasQuery : IRequest<GrafoEstruturasDto>;
@@ -100,7 +106,8 @@ public class GetEstruturasQueryHandler(
             e.Id, e.Nome, (int)e.Tipo, e.Jurisdicao, e.ConstituidaEm, e.Observacoes,
             qtdAtivos[e.Id], qtdInvest[e.Id],
             Math.Round(valorDireto[e.Id], 2),
-            Math.Round(ValorTotal(e.Id, []), 2))).ToList();
+            Math.Round(ValorTotal(e.Id, []), 2),
+            e.PosX, e.PosY)).ToList();
 
         var totalEstruturas = ativos.Where(a => a.EstruturaId.HasValue).Sum(a => ParaBRL(a.ValorAtual, a.Moeda))
                             + investimentos.Where(i => i.EstruturaId.HasValue).Sum(i => ParaBRL(i.ValorAtual, i.Moeda));
@@ -110,7 +117,11 @@ public class GetEstruturasQueryHandler(
         var partDtos = participacoes.Select(p => new ParticipacaoDto(
             p.Id, p.EstruturaPaiId, p.EstruturaFilhaId, p.PercentualParticipacao, (int)p.TipoRelacao)).ToList();
 
+        var beneficiarios = (await estruturaRepo.GetBeneficiariosByUsuarioAsync(userId, ct))
+            .Select(b => new BeneficiarioGrafoDto(b.Id, b.Nome, (int)b.Papel, b.PercentualDistribuicao, b.CondicaoLiberacao))
+            .ToList();
+
         return new GrafoEstruturasDto(
-            Math.Round(totalEstruturas, 2), Math.Round(totalPF, 2), dtos, partDtos);
+            Math.Round(totalEstruturas, 2), Math.Round(totalPF, 2), dtos, partDtos, beneficiarios);
     }
 }
