@@ -19,7 +19,8 @@ public record InvestimentoResumoDto(
     decimal ValorAtualBRL,
     DateTime? ValorAtualizadoEm,
     decimal? Quantidade,
-    Guid? EstruturaId);
+    Guid? EstruturaId,
+    Guid? ContaId);
 
 public record TotalInvestPorMoedaDto(string Moeda, decimal TotalAplicado, decimal TotalAtual, int Quantidade);
 
@@ -79,7 +80,8 @@ public class GetResumoInvestimentosQueryHandler(
             Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2),
             i.ValorAtualizadoEm,
             i.Quantidade,
-            i.EstruturaId));
+            i.EstruturaId,
+            i.ContaId));
 
         return new ResumoInvestimentosDto(
             lista.Count,

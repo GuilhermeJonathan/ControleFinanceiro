@@ -58,6 +58,7 @@ public class DeleteEstruturaCommandHandler(
     IEstruturaRepository repo,
     IAtivoPatrimonialRepository ativoRepo,
     IInvestimentoRepository investimentoRepo,
+    IContaFinanceiraRepository contaRepo,
     ICurrentUser currentUser,
     IUnitOfWork uow)
     : IRequestHandler<DeleteEstruturaCommand>
@@ -74,6 +75,9 @@ public class DeleteEstruturaCommandHandler(
             a.DesvincularEstrutura();
         foreach (var i in (await investimentoRepo.GetByUsuarioAsync(currentUser.UserId, ct)).Where(i => i.EstruturaId == entity.Id))
             i.DesvincularEstrutura();
+        // Solta as contas ligadas (voltam para pessoa física).
+        foreach (var c in (await contaRepo.GetByUsuarioAsync(currentUser.UserId, ct)).Where(c => c.EstruturaId == entity.Id))
+            c.DesvincularEstrutura();
 
         // Remove as arestas onde ela participa (como pai ou filha).
         foreach (var p in (await repo.GetParticipacoesByUsuarioAsync(currentUser.UserId, ct))

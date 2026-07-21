@@ -19,6 +19,8 @@ public class Investimento
     public decimal? Quantidade { get; private set; }
     /// <summary>Estrutura à qual o investimento pertence (holding, offshore…). null = pessoa física.</summary>
     public Guid? EstruturaId { get; private set; }
+    /// <summary>Conta de investimento/custódia à qual o investimento está vinculado. null = solto.</summary>
+    public Guid? ContaId { get; private set; }
     public decimal ValorAplicado { get; private set; }
     public decimal ValorAtual { get; private set; }
     /// <summary>Rentabilidade anual estimada em %. Null = não informado.</summary>
@@ -33,7 +35,8 @@ public class Investimento
     public Investimento(
         Guid usuarioId, string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct = null, decimal? quantidade = null, Guid? estruturaId = null)
+        decimal? rentabilidadeAnualPct = null, decimal? quantidade = null, Guid? estruturaId = null,
+        Guid? contaId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -46,11 +49,13 @@ public class Investimento
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
+        ContaId = contaId;
     }
 
     public void Atualizar(string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct, decimal? quantidade = null, Guid? estruturaId = null)
+        decimal? rentabilidadeAnualPct, decimal? quantidade = null, Guid? estruturaId = null,
+        Guid? contaId = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -62,6 +67,7 @@ public class Investimento
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
+        ContaId = contaId;
         AtualizadoEm = DateTime.UtcNow;
     }
 
@@ -69,6 +75,13 @@ public class Investimento
     public void DesvincularEstrutura()
     {
         EstruturaId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta o investimento da conta de custódia — usado ao excluir a conta.</summary>
+    public void DesvincularConta()
+    {
+        ContaId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 

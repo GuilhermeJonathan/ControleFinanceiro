@@ -41,3 +41,12 @@ public enum PrazoDivida
     Curto = 1,   // vencimento em até 12 meses
     Longo = 2,   // vencimento acima de 12 meses
 }
+
+/// <summary>Tipo de conta financeira patrimonial (bancária/custódia/internacional).</summary>
+public enum TipoContaFinanceira
+{
+    Corrente             = 1,  // conta corrente/poupança — saldo manual
+    InvestimentoCustodia = 2,  // conta de investimento/custódia — agrega os investimentos ligados
+    Internacional        = 3,  // conta no exterior — saldo manual
+    Outro                = 99,
+}

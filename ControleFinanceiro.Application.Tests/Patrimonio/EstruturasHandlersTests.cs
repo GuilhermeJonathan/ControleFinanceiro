@@ -15,6 +15,7 @@ public class EstruturasHandlersTests
     private readonly Mock<IEstruturaRepository> _repo = new();
     private readonly Mock<IAtivoPatrimonialRepository> _ativoRepo = new();
     private readonly Mock<IInvestimentoRepository> _invRepo = new();
+    private readonly Mock<IContaFinanceiraRepository> _contaRepo = new();
     private readonly Mock<IFxRateResolver> _fx = new();
     private readonly Mock<ICurrentUser> _user = new();
     private readonly Mock<IUnitOfWork> _uow = new();
@@ -140,8 +141,9 @@ public class EstruturasHandlersTests
         _invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Investimento>());
         var aresta = new ParticipacaoEstrutura(UserId, null, estId, 100m, TipoRelacaoEstrutura.PropriedadeDireta);
         _repo.Setup(r => r.GetParticipacoesByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ParticipacaoEstrutura> { aresta });
+        _contaRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ContaFinanceira>());
 
-        var h = new DeleteEstruturaCommandHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _user.Object, _uow.Object);
+        var h = new DeleteEstruturaCommandHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _contaRepo.Object, _user.Object, _uow.Object);
         await h.Handle(new DeleteEstruturaCommand(estId), CancellationToken.None);
 
         ativo.EstruturaId.Should().BeNull();
