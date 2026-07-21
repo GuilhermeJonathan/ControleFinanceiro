@@ -11,22 +11,22 @@ namespace ControleFinanceiro.Application.Tests.Patrimonio;
 public class GetProjecaoDividasQueryHandlerTests
 {
     private readonly Mock<IPassivoPatrimonialRepository> _repoMock = new();
-    private readonly Mock<IMoedaParamRepository> _moedaRepoMock = new();
+    private readonly Mock<IFxRateResolver> _fxMock = new();
     private readonly Mock<ICurrentUser> _currentUserMock = new();
     private static readonly Guid UserId = Guid.NewGuid();
 
     public GetProjecaoDividasQueryHandlerTests()
     {
         _currentUserMock.Setup(c => c.UserId).Returns(UserId);
-        _moedaRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<MoedaParam>
+        _fxMock.Setup(r => r.GetRatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
             {
-                new(1, "BRL", "Real", 1, true, 1.00m),
-                new(3, "EUR", "Euro", 3, true, 5.90m),
+                ["BRL"] = 1.00m,
+                ["EUR"] = 5.90m,
             });
     }
 
-    private GetProjecaoDividasQueryHandler CreateHandler() => new(_repoMock.Object, _moedaRepoMock.Object, _currentUserMock.Object);
+    private GetProjecaoDividasQueryHandler CreateHandler() => new(_repoMock.Object, _fxMock.Object, _currentUserMock.Object);
 
     [Fact]
     public async Task Handle_SemDividas_ShouldReturnEmpty()

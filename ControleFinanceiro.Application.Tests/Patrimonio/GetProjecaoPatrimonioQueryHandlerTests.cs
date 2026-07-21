@@ -12,18 +12,18 @@ public class GetProjecaoPatrimonioQueryHandlerTests
 {
     private readonly Mock<IAtivoPatrimonialRepository> _ativoRepoMock = new();
     private readonly Mock<IPassivoPatrimonialRepository> _passivoRepoMock = new();
-    private readonly Mock<IMoedaParamRepository> _moedaRepoMock = new();
+    private readonly Mock<IFxRateResolver> _fxMock = new();
     private readonly Mock<ICurrentUser> _currentUserMock = new();
     private static readonly Guid UserId = Guid.NewGuid();
 
     public GetProjecaoPatrimonioQueryHandlerTests()
     {
         _currentUserMock.Setup(c => c.UserId).Returns(UserId);
-        _moedaRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<MoedaParam>
+        _fxMock.Setup(r => r.GetRatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
             {
-                new(1, "BRL", "Real", 1, true, 1.00m),
-                new(2, "USD", "Dólar", 2, true, 5.00m),
+                ["BRL"] = 1.00m,
+                ["USD"] = 5.00m,
             });
         _ativoRepoMock.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<AtivoPatrimonial>());
@@ -32,7 +32,7 @@ public class GetProjecaoPatrimonioQueryHandlerTests
     }
 
     private GetProjecaoPatrimonioQueryHandler CreateHandler() =>
-        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _moedaRepoMock.Object, _currentUserMock.Object);
+        new(_ativoRepoMock.Object, _passivoRepoMock.Object, _fxMock.Object, _currentUserMock.Object);
 
     [Fact]
     public async Task Handle_SemAtivosNemDividas_ShouldReturnEmpty()

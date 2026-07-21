@@ -26,7 +26,7 @@ public record GetProjecaoDividasQuery(int? Meses = null) : IRequest<ProjecaoDivi
 
 public class GetProjecaoDividasQueryHandler(
     IPassivoPatrimonialRepository repository,
-    IMoedaParamRepository moedaRepository,
+    IFxRateResolver fxResolver,
     ICurrentUser currentUser)
     : IRequestHandler<GetProjecaoDividasQuery, ProjecaoDividasDto>
 {
@@ -40,8 +40,7 @@ public class GetProjecaoDividasQueryHandler(
             return new ProjecaoDividasDto(0m, 0, true, []);
 
         // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
-        var fxMap = (await moedaRepository.GetAllAsync(cancellationToken))
-            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        var fxMap = await fxResolver.GetRatesAsync(cancellationToken);
 
         var comCronograma = passivos.Where(p => p.PrazoMeses is > 0).ToList();
         var horizonte = request.Meses

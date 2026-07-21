@@ -29,6 +29,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<PlanoAcao> PlanosAcao => Set<PlanoAcao>();
     public DbSet<ParametrosSaude> ParametrosSaude => Set<ParametrosSaude>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
+    public DbSet<Estrutura> Estruturas => Set<Estrutura>();
+    public DbSet<ParticipacaoEstrutura> ParticipacoesEstrutura => Set<ParticipacaoEstrutura>();
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();
     public DbSet<MoedaParam> MoedasParam => Set<MoedaParam>();

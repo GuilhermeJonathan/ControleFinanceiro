@@ -13,6 +13,7 @@ public class ParametrosOverrideHandlerTests
 {
     private readonly Mock<ITipoAtivoParamRepository> _ativoRepo = new();
     private readonly Mock<ITipoInvestimentoParamRepository> _investRepo = new();
+    private readonly Mock<IMoedaParamRepository> _moedaRepo = new();
     private readonly Mock<IParametroOcultoRepository> _ocultoRepo = new();
     private readonly Mock<IAssessoriaOwnerResolver> _resolver = new();
     private readonly Mock<ICurrentUser> _user = new();
@@ -98,25 +99,79 @@ public class ParametrosOverrideHandlerTests
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    // ── Moeda: somente admin ──────────────────────────────────────────────
+    // ── Moeda: admin → global; assessor → custom ─────────────────────────
 
     [Fact]
-    public async Task SaveMoeda_Assessor_Proibido()
+    public async Task SaveMoeda_Assessor_CriaCustomComAssessorId()
     {
         ComoAssessor();
-        var h = new SaveMoedaCommandHandler(new Mock<IMoedaParamRepository>().Object, _user.Object, _uow.Object);
-        var act = () => h.Handle(new SaveMoedaCommand(null, "JPY", "Iene", 0.03m, 5, true), CancellationToken.None);
+        MoedaParam? capturada = null;
+        var repo = new Mock<IMoedaParamRepository>();
+        repo.Setup(r => r.AddAsync(It.IsAny<MoedaParam>(), It.IsAny<CancellationToken>()))
+            .Callback<MoedaParam, CancellationToken>((e, _) => capturada = e);
+
+        var h = new SaveMoedaCommandHandler(repo.Object, _user.Object, _uow.Object);
+        await h.Handle(new SaveMoedaCommand(null, "JPY", "Iene", 0.03m, 5, true), CancellationToken.None);
+
+        capturada!.AssessorId.Should().Be(Assessor);
+    }
+
+    [Fact]
+    public async Task SaveMoeda_Assessor_NaoEditaGlobal()
+    {
+        ComoAssessor();
+        var global = new MoedaParam("USD", "Dólar", 1, 5m); // AssessorId null
+        var repo = new Mock<IMoedaParamRepository>();
+        repo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(global);
+
+        var h = new SaveMoedaCommandHandler(repo.Object, _user.Object, _uow.Object);
+        var act = () => h.Handle(new SaveMoedaCommand(1, "USD", "Hackeado", 9m, 1, true), CancellationToken.None);
+
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
     [Fact]
-    public async Task SaveMoeda_Admin_Cria()
+    public async Task SaveMoeda_Admin_CriaGlobal()
     {
         ComoAdmin();
+        MoedaParam? capturada = null;
         var repo = new Mock<IMoedaParamRepository>();
+        repo.Setup(r => r.AddAsync(It.IsAny<MoedaParam>(), It.IsAny<CancellationToken>()))
+            .Callback<MoedaParam, CancellationToken>((e, _) => capturada = e);
+
         var h = new SaveMoedaCommandHandler(repo.Object, _user.Object, _uow.Object);
         await h.Handle(new SaveMoedaCommand(null, "JPY", "Iene", 0.03m, 5, true), CancellationToken.None);
-        repo.Verify(r => r.AddAsync(It.IsAny<MoedaParam>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        capturada!.AssessorId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task OcultarMoeda_BRL_Proibido()
+    {
+        ComoAssessor();
+        _moedaRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MoedaParam(1, "BRL", "Real", 0, true, 1m));
+        _ocultoRepo.Setup(r => r.GetAsync(Assessor, TipoParametroCatalogo.Moeda, 1, It.IsAny<CancellationToken>())).ReturnsAsync((ParametroOculto?)null);
+
+        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _moedaRepo.Object, _user.Object, _uow.Object);
+        var act = () => h.Handle(new OcultarParametroCommand(TipoParametroCatalogo.Moeda, 1), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        _ocultoRepo.Verify(r => r.AddAsync(It.IsAny<ParametroOculto>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task OcultarMoeda_GlobalNaoBRL_Oculta()
+    {
+        ComoAssessor();
+        _moedaRepo.Setup(r => r.GetByIdAsync(2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MoedaParam(2, "GBP", "Libra", 5, true, 6.9m));
+        _ocultoRepo.Setup(r => r.GetAsync(Assessor, TipoParametroCatalogo.Moeda, 2, It.IsAny<CancellationToken>())).ReturnsAsync((ParametroOculto?)null);
+
+        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _moedaRepo.Object, _user.Object, _uow.Object);
+        await h.Handle(new OcultarParametroCommand(TipoParametroCatalogo.Moeda, 2), CancellationToken.None);
+
+        _ocultoRepo.Verify(r => r.AddAsync(It.Is<ParametroOculto>(p => p.Tipo == TipoParametroCatalogo.Moeda && p.ParametroId == 2), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ── Ocultar / Reexibir ────────────────────────────────────────────────
@@ -128,7 +183,7 @@ public class ParametrosOverrideHandlerTests
         _ativoRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(new TipoAtivoParam(1, "Imóvel", 1, true));
         _ocultoRepo.Setup(r => r.GetAsync(Assessor, TipoParametroCatalogo.TipoAtivo, 1, It.IsAny<CancellationToken>())).ReturnsAsync((ParametroOculto?)null);
 
-        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _user.Object, _uow.Object);
+        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _moedaRepo.Object, _user.Object, _uow.Object);
         await h.Handle(new OcultarParametroCommand(TipoParametroCatalogo.TipoAtivo, 1), CancellationToken.None);
 
         _ocultoRepo.Verify(r => r.AddAsync(It.Is<ParametroOculto>(p => p.AssessorId == Assessor && p.ParametroId == 1), It.IsAny<CancellationToken>()), Times.Once);
@@ -141,7 +196,7 @@ public class ParametrosOverrideHandlerTests
         ComoAssessor();
         _ativoRepo.Setup(r => r.GetByIdAsync(9, It.IsAny<CancellationToken>())).ReturnsAsync(new TipoAtivoParam("Custom", 9, null, Assessor));
 
-        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _user.Object, _uow.Object);
+        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _moedaRepo.Object, _user.Object, _uow.Object);
         var act = () => h.Handle(new OcultarParametroCommand(TipoParametroCatalogo.TipoAtivo, 9), CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
@@ -151,7 +206,7 @@ public class ParametrosOverrideHandlerTests
     public async Task Ocultar_Admin_Proibido()
     {
         ComoAdmin();
-        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _user.Object, _uow.Object);
+        var h = new OcultarParametroCommandHandler(_ocultoRepo.Object, _ativoRepo.Object, _investRepo.Object, _moedaRepo.Object, _user.Object, _uow.Object);
         var act = () => h.Handle(new OcultarParametroCommand(TipoParametroCatalogo.TipoAtivo, 1), CancellationToken.None);
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }

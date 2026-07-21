@@ -119,6 +119,23 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
         return NoContent();
     }
 
+    /// <summary>Assessor oculta uma moeda global do seu próprio catálogo.</summary>
+    [HttpPost("moedas/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> OcultarMoeda(int id, CancellationToken ct)
+    {
+        await mediator.Send(new OcultarParametroCommand(TipoParametroCatalogo.Moeda, id), ct);
+        return NoContent();
+    }
+
+    [HttpDelete("moedas/{id:int}/ocultar")]
+    [Authorize]
+    public async Task<IActionResult> ReexibirMoeda(int id, CancellationToken ct)
+    {
+        await mediator.Send(new ReexibirParametroCommand(TipoParametroCatalogo.Moeda, id), ct);
+        return NoContent();
+    }
+
     [HttpPost("moedas/atualizar-cotacoes")]
     [Authorize]
     public async Task<IActionResult> AtualizarCotacoes(CancellationToken ct)

@@ -5,6 +5,7 @@ public enum TipoParametroCatalogo
 {
     TipoAtivo = 1,
     TipoInvestimento = 2,
+    Moeda = 3,
 }
 
 /// <summary>

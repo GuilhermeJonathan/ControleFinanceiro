@@ -16,7 +16,8 @@ public record UpdateInvestimentoCommand(
     decimal ValorAplicado,
     decimal ValorAtual,
     decimal? RentabilidadeAnualPct,
-    decimal? Quantidade = null) : IRequest;
+    decimal? Quantidade = null,
+    Guid? EstruturaId = null) : IRequest;
 
 public class UpdateInvestimentoCommandHandler(
     IInvestimentoRepository repository,
@@ -33,7 +34,8 @@ public class UpdateInvestimentoCommandHandler(
             throw new UnauthorizedAccessException("Acesso negado ao investimento.");
 
         inv.Atualizar(request.Nome, request.Tipo, request.Moeda, request.Corretora, request.Ticker,
-            request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct, request.Quantidade);
+            request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct, request.Quantidade,
+            request.EstruturaId);
 
         repository.Update(inv);
         await unitOfWork.SaveChangesAsync(cancellationToken);

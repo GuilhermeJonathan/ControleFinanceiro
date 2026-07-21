@@ -30,7 +30,7 @@ public record GetProjecaoPatrimonioQuery(int? Meses = null) : IRequest<ProjecaoP
 public class GetProjecaoPatrimonioQueryHandler(
     IAtivoPatrimonialRepository ativoRepository,
     IPassivoPatrimonialRepository passivoRepository,
-    IMoedaParamRepository moedaRepository,
+    IFxRateResolver fxResolver,
     ICurrentUser currentUser)
     : IRequestHandler<GetProjecaoPatrimonioQuery, ProjecaoPatrimonioDto>
 {
@@ -45,8 +45,7 @@ public class GetProjecaoPatrimonioQueryHandler(
             return new ProjecaoPatrimonioDto(0, true, 0m, 0m, null, []);
 
         // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
-        var fxMap = (await moedaRepository.GetAllAsync(cancellationToken))
-            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        var fxMap = await fxResolver.GetRatesAsync(cancellationToken);
         decimal Fx(MoedaPatrimonio m) => m == MoedaPatrimonio.BRL ? 1m
             : (fxMap.TryGetValue(m.ToString(), out var r) && r > 0 ? r : 1m);
 

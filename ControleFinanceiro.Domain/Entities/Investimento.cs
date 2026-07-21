@@ -17,6 +17,8 @@ public class Investimento
     public string? Ticker { get; private set; }
     /// <summary>Quantidade de cotas/ações. Para posições com ticker, ValorAtual = Quantidade × preço unitário.</summary>
     public decimal? Quantidade { get; private set; }
+    /// <summary>Estrutura à qual o investimento pertence (holding, offshore…). null = pessoa física.</summary>
+    public Guid? EstruturaId { get; private set; }
     public decimal ValorAplicado { get; private set; }
     public decimal ValorAtual { get; private set; }
     /// <summary>Rentabilidade anual estimada em %. Null = não informado.</summary>
@@ -31,7 +33,7 @@ public class Investimento
     public Investimento(
         Guid usuarioId, string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct = null, decimal? quantidade = null)
+        decimal? rentabilidadeAnualPct = null, decimal? quantidade = null, Guid? estruturaId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -43,11 +45,12 @@ public class Investimento
         ValorAplicado = valorAplicado;
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
+        EstruturaId = estruturaId;
     }
 
     public void Atualizar(string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
-        decimal? rentabilidadeAnualPct, decimal? quantidade = null)
+        decimal? rentabilidadeAnualPct, decimal? quantidade = null, Guid? estruturaId = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -58,6 +61,14 @@ public class Investimento
         ValorAplicado = valorAplicado;
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
+        EstruturaId = estruturaId;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta o investimento da estrutura (volta para pessoa física) — usado ao excluir a estrutura.</summary>
+    public void DesvincularEstrutura()
+    {
+        EstruturaId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 

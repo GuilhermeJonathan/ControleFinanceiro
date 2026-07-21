@@ -213,7 +213,9 @@ public class DailyJobService(
         var hoje = DateTime.UtcNow;
         int ano = hoje.Year, mes = hoje.Month;
 
-        var fx = await db.MoedasParam.ToDictionaryAsync(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL, ct);
+        // Snapshot é agregado/background (sem usuário): usa câmbio GLOBAL (AssessorId null).
+        var fx = await db.MoedasParam.Where(m => m.AssessorId == null)
+            .ToDictionaryAsync(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL, ct);
         decimal ParaBRL(decimal v, MoedaPatrimonio moeda) =>
             moeda == MoedaPatrimonio.BRL ? v : v * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
 

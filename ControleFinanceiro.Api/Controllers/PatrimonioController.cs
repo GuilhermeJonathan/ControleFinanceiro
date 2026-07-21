@@ -33,7 +33,8 @@ public record AtivoPatrimonialRequest(
     decimal ValorAtual,
     decimal? ValorizacaoAnualPct,
     decimal ReceitaMensal = 0m,
-    decimal DespesaMensal = 0m);
+    decimal DespesaMensal = 0m,
+    Guid? EstruturaId = null);
 
 /// <summary>Request body para criação/edição de dívida. Moeda como string; Prazo 1=Curto, 2=Longo.</summary>
 public record PassivoPatrimonialRequest(
@@ -109,7 +110,7 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
 
         var id = await mediator.Send(
             new CreateAtivoPatrimonialCommand(request.Nome, request.Tipo, moeda, request.ValorAtual,
-                request.ValorizacaoAnualPct, request.ReceitaMensal, request.DespesaMensal),
+                request.ValorizacaoAnualPct, request.ReceitaMensal, request.DespesaMensal, request.EstruturaId),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetResumo), new { }, new { id });
@@ -124,7 +125,7 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
 
         await mediator.Send(
             new UpdateAtivoPatrimonialCommand(id, request.Nome, request.Tipo, moeda, request.ValorAtual,
-                request.ValorizacaoAnualPct, request.ReceitaMensal, request.DespesaMensal),
+                request.ValorizacaoAnualPct, request.ReceitaMensal, request.DespesaMensal, request.EstruturaId),
             cancellationToken);
 
         return NoContent();

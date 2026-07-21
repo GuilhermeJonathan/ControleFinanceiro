@@ -18,7 +18,8 @@ public record InvestimentoResumoDto(
     decimal ValorAplicadoBRL,
     decimal ValorAtualBRL,
     DateTime? ValorAtualizadoEm,
-    decimal? Quantidade);
+    decimal? Quantidade,
+    Guid? EstruturaId);
 
 public record TotalInvestPorMoedaDto(string Moeda, decimal TotalAplicado, decimal TotalAtual, int Quantidade);
 
@@ -41,7 +42,7 @@ public record GetResumoInvestimentosQuery : IRequest<ResumoInvestimentosDto>;
 
 public class GetResumoInvestimentosQueryHandler(
     IInvestimentoRepository repository,
-    IMoedaParamRepository moedaRepository,
+    IFxRateResolver fxResolver,
     ICurrentUser currentUser)
     : IRequestHandler<GetResumoInvestimentosQuery, ResumoInvestimentosDto>
 {
@@ -49,9 +50,8 @@ public class GetResumoInvestimentosQueryHandler(
     {
         var lista = (await repository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
 
-        // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
-        var fx = (await moedaRepository.GetAllAsync(cancellationToken))
-            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        // Câmbio efetivo do tenant (globais não ocultas + custom do assessor).
+        var fx = await fxResolver.GetRatesAsync(cancellationToken);
         decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
             moeda == MoedaPatrimonio.BRL ? valor
             : valor * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
@@ -78,7 +78,8 @@ public class GetResumoInvestimentosQueryHandler(
             Math.Round(ParaBRL(i.ValorAplicado, i.Moeda), 2),
             Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2),
             i.ValorAtualizadoEm,
-            i.Quantidade));
+            i.Quantidade,
+            i.EstruturaId));
 
         return new ResumoInvestimentosDto(
             lista.Count,

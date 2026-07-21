@@ -99,17 +99,51 @@ public class GetTiposInvestimentoQueryHandler(
     }
 }
 
-// ── Moedas (globais — mantidas pelo admin) ─────────────────────────────────
+// ── Moedas (global + override por assessoria) ──────────────────────────────
 
-public record MoedaParamDto(int Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo, bool IsSystem, DateTime? CotacaoAtualizadaEm);
+public record MoedaParamDto(
+    int Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo, bool IsSystem,
+    DateTime? CotacaoAtualizadaEm, Guid? AssessorId, bool Oculto, bool PodeEditar);
+
 public record GetMoedasQuery : IRequest<List<MoedaParamDto>>;
 
-public class GetMoedasQueryHandler(IMoedaParamRepository repo)
+public class GetMoedasQueryHandler(
+    IMoedaParamRepository repo,
+    IParametroOcultoRepository ocultoRepo,
+    IAssessoriaOwnerResolver ownerResolver,
+    ICurrentUser currentUser)
     : IRequestHandler<GetMoedasQuery, List<MoedaParamDto>>
 {
+    private static MoedaParamDto Map(Domain.Entities.MoedaParam x, bool oculto, bool podeEditar) =>
+        new(x.Id, x.Codigo, x.Nome, x.CotacaoBRL, x.Ordem, x.Ativo, x.IsSystem, x.CotacaoAtualizadaEm, x.AssessorId, oculto, podeEditar);
+
     public async Task<List<MoedaParamDto>> Handle(GetMoedasQuery request, CancellationToken ct)
     {
-        var list = await repo.GetAllAsync(ct);
-        return list.Select(x => new MoedaParamDto(x.Id, x.Codigo, x.Nome, x.CotacaoBRL, x.Ordem, x.Ativo, x.IsSystem, x.CotacaoAtualizadaEm)).ToList();
+        if (currentUser.IsAdmin)
+        {
+            var globais = await repo.GetGlobaisAsync(ct);
+            return globais.Select(x => Map(x, false, true)).ToList();
+        }
+
+        var owner = await ownerResolver.ResolveOwnerAsync(ct);
+        if (owner is null)
+        {
+            var globais = await repo.GetGlobaisAsync(ct);
+            return globais.Select(x => Map(x, false, false)).ToList();
+        }
+
+        var todos      = await repo.GetGlobaisEDoAssessorAsync(owner.Value, ct);
+        var ocultosIds = await ocultoRepo.GetIdsOcultosAsync(owner.Value, TipoParametroCatalogo.Moeda, ct);
+        var ehDono     = currentUser.IsAssessor;
+
+        var res = new List<MoedaParamDto>();
+        foreach (var x in todos)
+        {
+            var isGlobal = x.AssessorId is null;
+            var oculto   = isGlobal && ocultosIds.Contains(x.Id);
+            if (!ehDono && oculto) continue; // consumo (cliente/corretor): esconde ocultas
+            res.Add(Map(x, oculto, ehDono && !isGlobal));
+        }
+        return res;
     }
 }

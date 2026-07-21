@@ -18,7 +18,8 @@ public record AtivoResumoDto(
     decimal DespesaMensal,
     decimal FluxoLiquidoMensal,
     decimal? RoiAnualPct,        // retorno total anual = yield + valorização
-    decimal? YieldAnualPct);     // só o fluxo de caixa (receita − despesa) / valor
+    decimal? YieldAnualPct,      // só o fluxo de caixa (receita − despesa) / valor
+    Guid? EstruturaId);          // estrutura à qual o bem pertence (null = pessoa física)
 
 public record PassivoResumoDto(
     Guid Id,
@@ -67,7 +68,7 @@ public record GetResumoPatrimonialQuery : IRequest<ResumoPatrimonialDto>;
 public class GetResumoPatrimonialQueryHandler(
     IAtivoPatrimonialRepository ativoRepository,
     IPassivoPatrimonialRepository passivoRepository,
-    IMoedaParamRepository moedaRepository,
+    IFxRateResolver fxResolver,
     IPatrimonioSnapshotRepository snapshotRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser)
@@ -98,8 +99,7 @@ public class GetResumoPatrimonialQueryHandler(
         var passivos = (await passivoRepository.GetByUsuarioAsync(currentUser.UserId, cancellationToken)).ToList();
 
         // Câmbio definido pelo assessor em Cadastros → Moedas (CotacaoBRL).
-        var fx = (await moedaRepository.GetAllAsync(cancellationToken))
-            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        var fx = await fxResolver.GetRatesAsync(cancellationToken);
         decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
             moeda == MoedaPatrimonio.BRL ? valor
             : valor * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);
@@ -156,7 +156,8 @@ public class GetResumoPatrimonialQueryHandler(
                 a.ReceitaMensal, a.DespesaMensal,
                 a.ReceitaMensal - a.DespesaMensal,
                 RetornoTotal(valorBRL, fluxoAnual, a.ValorizacaoAnualPct),
-                yieldPct);
+                yieldPct,
+                a.EstruturaId);
         }).ToList();
 
         var patrimonioLiquido = totalBensBRL - totalDividasBRL;

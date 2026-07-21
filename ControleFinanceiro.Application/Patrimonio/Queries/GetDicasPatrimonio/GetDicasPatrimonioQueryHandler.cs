@@ -11,7 +11,7 @@ namespace ControleFinanceiro.Application.Patrimonio.Queries.GetDicasPatrimonio;
 public class GetDicasPatrimonioQueryHandler(
     IAtivoPatrimonialRepository ativoRepo,
     IPassivoPatrimonialRepository passivoRepo,
-    IMoedaParamRepository moedaRepo,
+    IFxRateResolver fxResolver,
     ICurrentUser currentUser,
     IAiService ai,
     ILogger<GetDicasPatrimonioQueryHandler> logger)
@@ -27,10 +27,8 @@ public class GetDicasPatrimonioQueryHandler(
 
         var ativos   = (await ativoRepo.GetByUsuarioAsync(userId, cancellationToken)).ToList();
         var passivos = (await passivoRepo.GetByUsuarioAsync(userId, cancellationToken)).ToList();
-        var moedas   = (await moedaRepo.GetAllAsync(cancellationToken)).ToList();
-
-        // Conversão simples para BRL (cotações estub)
-        var taxas = moedas.ToDictionary(m => m.Codigo, m => m.CotacaoBRL);
+        // Câmbio efetivo do tenant (globais não ocultas + custom do assessor).
+        var taxas = await fxResolver.GetRatesAsync(cancellationToken);
         decimal ToBRL(decimal valor, string moeda) =>
             taxas.TryGetValue(moeda, out var t) ? valor * t : valor;
 

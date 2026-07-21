@@ -23,7 +23,7 @@ public record GetRebalanceamentoQuery : IRequest<RebalanceamentoDto>;
 public class GetRebalanceamentoQueryHandler(
     IInvestimentoRepository investimentoRepository,
     IAlocacaoAlvoRepository alvoRepository,
-    IMoedaParamRepository moedaRepository,
+    IFxRateResolver fxResolver,
     ICurrentUser currentUser)
     : IRequestHandler<GetRebalanceamentoQuery, RebalanceamentoDto>
 {
@@ -33,8 +33,7 @@ public class GetRebalanceamentoQueryHandler(
         var alvos = (await alvoRepository.GetByUsuarioAsync(currentUser.UserId, cancellationToken))
             .ToDictionary(a => a.Tipo, a => a.PercentualAlvo);
 
-        var fx = (await moedaRepository.GetAllAsync(cancellationToken))
-            .ToDictionary(m => m.Codigo.ToUpperInvariant(), m => m.CotacaoBRL);
+        var fx = await fxResolver.GetRatesAsync(cancellationToken);
         decimal ParaBRL(decimal valor, MoedaPatrimonio moeda) =>
             moeda == MoedaPatrimonio.BRL ? valor
             : valor * (fx.TryGetValue(moeda.ToString(), out var r) && r > 0 ? r : 1m);

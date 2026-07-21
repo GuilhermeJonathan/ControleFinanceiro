@@ -15,15 +15,15 @@ public class AlocacaoAlvoHandlersTests
     private static readonly Guid UserId = Guid.NewGuid();
     private readonly Mock<IInvestimentoRepository> _invRepo = new();
     private readonly Mock<IAlocacaoAlvoRepository> _alvoRepo = new();
-    private readonly Mock<IMoedaParamRepository> _moedaRepo = new();
+    private readonly Mock<IFxRateResolver> _fxMock = new();
     private readonly Mock<IUnitOfWork> _uow = new();
     private readonly Mock<ICurrentUser> _currentUser = new();
 
     public AlocacaoAlvoHandlersTests()
     {
         _currentUser.Setup(c => c.UserId).Returns(UserId);
-        _moedaRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<MoedaParam> { new(1, "BRL", "Real", 1, true, 1m) });
+        _fxMock.Setup(r => r.GetRatesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase) { ["BRL"] = 1m });
     }
 
     private static Investimento Inv(TipoInvestimento tipo, decimal valorAtual) =>
@@ -42,7 +42,7 @@ public class AlocacaoAlvoHandlersTests
                 AlocacaoAlvo.Criar(UserId, TipoInvestimento.RendaFixa, 50m),
             });
 
-        var handler = new GetRebalanceamentoQueryHandler(_invRepo.Object, _alvoRepo.Object, _moedaRepo.Object, _currentUser.Object);
+        var handler = new GetRebalanceamentoQueryHandler(_invRepo.Object, _alvoRepo.Object, _fxMock.Object, _currentUser.Object);
         var result = await handler.Handle(new GetRebalanceamentoQuery(), CancellationToken.None);
 
         result.TotalBRL.Should().Be(100000m);

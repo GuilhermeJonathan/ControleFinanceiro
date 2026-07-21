@@ -20,6 +20,8 @@ public class AtivoPatrimonial
     public decimal ReceitaMensal { get; private set; }
     /// <summary>Despesa mensal atrelada ao bem (condomínio, manutenção, IPTU rateado…). 0 = sem custo.</summary>
     public decimal DespesaMensal { get; private set; }
+    /// <summary>Estrutura à qual o bem pertence (holding, trust…). null = pessoa física.</summary>
+    public Guid? EstruturaId { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -28,7 +30,7 @@ public class AtivoPatrimonial
     public AtivoPatrimonial(
         Guid usuarioId, string nome, TipoAtivo tipo, MoedaPatrimonio moeda,
         decimal valorAtual, decimal? valorizacaoAnualPct = null,
-        decimal receitaMensal = 0m, decimal despesaMensal = 0m)
+        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -38,11 +40,12 @@ public class AtivoPatrimonial
         ValorizacaoAnualPct = valorizacaoAnualPct;
         ReceitaMensal = receitaMensal;
         DespesaMensal = despesaMensal;
+        EstruturaId = estruturaId;
     }
 
     public void Atualizar(string nome, TipoAtivo tipo, MoedaPatrimonio moeda,
         decimal valorAtual, decimal? valorizacaoAnualPct,
-        decimal receitaMensal = 0m, decimal despesaMensal = 0m)
+        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -51,6 +54,14 @@ public class AtivoPatrimonial
         ValorizacaoAnualPct = valorizacaoAnualPct;
         ReceitaMensal = receitaMensal;
         DespesaMensal = despesaMensal;
+        EstruturaId = estruturaId;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta o bem da estrutura (volta para pessoa física) — usado ao excluir a estrutura.</summary>
+    public void DesvincularEstrutura()
+    {
+        EstruturaId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 }
