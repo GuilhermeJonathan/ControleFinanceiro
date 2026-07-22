@@ -230,6 +230,19 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
 
         return File(pdf, "application/pdf", "relatorio-patrimonial.pdf");
     }
+
+    /// <summary>Gera o relatório COMPLETO (patrimonial + sucessão) num único PDF.</summary>
+    [HttpPost("relatorio-completo")]
+    public async Task<IActionResult> GerarRelatorioCompleto([FromBody] RelatorioRequest req, CancellationToken cancellationToken)
+    {
+        var pdf = await mediator.Send(
+            new GerarRelatorioCompletoQuery(
+                req.ClienteNome,
+                new RelatorioBranding(req.NomeConsultoria, req.LogoBase64, req.CorMarca)),
+            cancellationToken);
+
+        return File(pdf, "application/pdf", "relatorio-completo.pdf");
+    }
 }
 
 /// <summary>Request do relatório: dados do cliente vêm do servidor; a marca vem do app.</summary>

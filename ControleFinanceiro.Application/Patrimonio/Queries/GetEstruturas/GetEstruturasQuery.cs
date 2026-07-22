@@ -47,6 +47,7 @@ public class GetEstruturasQueryHandler(
     IEstruturaRepository estruturaRepo,
     IAtivoPatrimonialRepository ativoRepo,
     IInvestimentoRepository investimentoRepo,
+    IContaFinanceiraRepository contaRepo,
     IFxRateResolver fxResolver,
     ICurrentUser currentUser)
     : IRequestHandler<GetEstruturasQuery, GrafoEstruturasDto>
@@ -59,6 +60,9 @@ public class GetEstruturasQueryHandler(
         var participacoes = await estruturaRepo.GetParticipacoesByUsuarioAsync(userId, ct);
         var ativos        = (await ativoRepo.GetByUsuarioAsync(userId, ct)).ToList();
         var investimentos = (await investimentoRepo.GetByUsuarioAsync(userId, ct)).ToList();
+        // Só contas-CAIXA entram no consolidado (custódia já é representada pelos investimentos ligados).
+        var contasCaixa   = (await contaRepo.GetByUsuarioAsync(userId, ct))
+            .Where(c => c.Tipo != TipoContaFinanceira.InvestimentoCustodia).ToList();
         var fx            = await fxResolver.GetRatesAsync(ct);
 
         decimal ParaBRL(decimal v, MoedaPatrimonio moeda) =>
@@ -79,6 +83,9 @@ public class GetEstruturasQueryHandler(
             valorDireto[i.EstruturaId!.Value] += ParaBRL(i.ValorAtual, i.Moeda);
             qtdInvest[i.EstruturaId!.Value]++;
         }
+        // Caixa das contas ligadas a estruturas soma no valor direto delas.
+        foreach (var c in contasCaixa.Where(c => c.EstruturaId.HasValue && valorDireto.ContainsKey(c.EstruturaId!.Value)))
+            valorDireto[c.EstruturaId!.Value] += ParaBRL(c.Saldo, c.Moeda);
 
         // Valor TOTAL = direto + Σ (% × total da filha). Memoizado com guarda anticiclo.
         var filhasPorPai = participacoes
@@ -110,9 +117,11 @@ public class GetEstruturasQueryHandler(
             e.PosX, e.PosY)).ToList();
 
         var totalEstruturas = ativos.Where(a => a.EstruturaId.HasValue).Sum(a => ParaBRL(a.ValorAtual, a.Moeda))
-                            + investimentos.Where(i => i.EstruturaId.HasValue).Sum(i => ParaBRL(i.ValorAtual, i.Moeda));
+                            + investimentos.Where(i => i.EstruturaId.HasValue).Sum(i => ParaBRL(i.ValorAtual, i.Moeda))
+                            + contasCaixa.Where(c => c.EstruturaId.HasValue).Sum(c => ParaBRL(c.Saldo, c.Moeda));
         var totalPF = ativos.Where(a => !a.EstruturaId.HasValue).Sum(a => ParaBRL(a.ValorAtual, a.Moeda))
-                    + investimentos.Where(i => !i.EstruturaId.HasValue).Sum(i => ParaBRL(i.ValorAtual, i.Moeda));
+                    + investimentos.Where(i => !i.EstruturaId.HasValue).Sum(i => ParaBRL(i.ValorAtual, i.Moeda))
+                    + contasCaixa.Where(c => !c.EstruturaId.HasValue).Sum(c => ParaBRL(c.Saldo, c.Moeda));
 
         var partDtos = participacoes.Select(p => new ParticipacaoDto(
             p.Id, p.EstruturaPaiId, p.EstruturaFilhaId, p.PercentualParticipacao, (int)p.TipoRelacao)).ToList();

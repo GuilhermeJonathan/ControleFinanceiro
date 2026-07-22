@@ -26,6 +26,7 @@ public class EstruturasHandlersTests
         _user.Setup(u => u.UserId).Returns(UserId);
         _fx.Setup(f => f.GetRatesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase) { ["BRL"] = 1m });
+        _contaRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ContaFinanceira>());
     }
 
     private static Estrutura Est(Guid id, string nome)
@@ -55,7 +56,7 @@ public class EstruturasHandlersTests
         _invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Investimento>());
         _repo.Setup(r => r.GetBeneficiariosByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Beneficiario>());
 
-        var h = new GetEstruturasQueryHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _fx.Object, _user.Object);
+        var h = new GetEstruturasQueryHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _contaRepo.Object, _fx.Object, _user.Object);
         var r = await h.Handle(new GetEstruturasQuery(), CancellationToken.None);
 
         r.Estruturas.Single(e => e.Id == holdingImoveis).ValorTotalBRL.Should().Be(1_000_000m);
@@ -63,6 +64,31 @@ public class EstruturasHandlersTests
         r.Estruturas.Single(e => e.Id == holdingPart).ValorTotalBRL.Should().Be(1_000_000m); // 100% da filha
         r.TotalEmEstruturasBRL.Should().Be(1_000_000m);
         r.TotalPessoaFisicaBRL.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task GetEstruturas_ConsolidaCaixaDasContas_IgnoraCustodia()
+    {
+        var holding = Guid.NewGuid();
+        _repo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Estrutura> { Est(holding, "Holding") });
+        _repo.Setup(r => r.GetParticipacoesByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ParticipacaoEstrutura>());
+        _ativoRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<AtivoPatrimonial>());
+        _invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Investimento>());
+        _repo.Setup(r => r.GetBeneficiariosByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Beneficiario>());
+        _contaRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ContaFinanceira>
+        {
+            new(UserId, "Corrente PF", TipoContaFinanceira.Corrente, MoedaPatrimonio.BRL, 50_000m),
+            new(UserId, "Caixa Holding", TipoContaFinanceira.Internacional, MoedaPatrimonio.BRL, 20_000m, estruturaId: holding),
+            new(UserId, "Custódia", TipoContaFinanceira.InvestimentoCustodia, MoedaPatrimonio.BRL, 999_999m), // ignorada
+        });
+
+        var h = new GetEstruturasQueryHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _contaRepo.Object, _fx.Object, _user.Object);
+        var r = await h.Handle(new GetEstruturasQuery(), CancellationToken.None);
+
+        r.Estruturas.Single(e => e.Id == holding).ValorDiretoBRL.Should().Be(20_000m); // caixa da holding
+        r.TotalPessoaFisicaBRL.Should().Be(50_000m);                                    // caixa PF
+        r.TotalEmEstruturasBRL.Should().Be(20_000m);                                    // custódia NÃO entra
     }
 
     [Fact]

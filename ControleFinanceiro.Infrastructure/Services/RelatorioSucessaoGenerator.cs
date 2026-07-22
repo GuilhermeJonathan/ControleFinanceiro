@@ -39,7 +39,10 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
         try { return Convert.FromBase64String(raw); } catch { return null; }
     }
 
-    public byte[] Gerar(RelatorioSucessaoDados d, RelatorioBranding branding)
+    public byte[] Gerar(RelatorioSucessaoDados d, RelatorioBranding branding) => Build(d, branding).GeneratePdf();
+
+    /// <summary>Monta o documento (sem gerar bytes) — permite mesclar no relatório completo.</summary>
+    internal IDocument Build(RelatorioSucessaoDados d, RelatorioBranding branding)
     {
         var brand = string.IsNullOrWhiteSpace(branding.CorMarca) ? "#16a34a" : branding.CorMarca!;
         var consultoria = string.IsNullOrWhiteSpace(branding.NomeConsultoria) ? d.AssessorNome : branding.NomeConsultoria!;
@@ -89,6 +92,15 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
                         row.ConstantItem(10);
                         row.RelativeItem().Element(c => CardMetrica(c, "Planejamento", $"{progresso}%", GOLD));
                     });
+
+                    // 1b) Indicadores (gauges)
+                    col.Item().Element(c => Secao(c, "Indicadores", inner =>
+                        inner.Row(row =>
+                        {
+                            row.RelativeItem().Column(x => { x.Item().AlignCenter().Svg(GaugeSvg(d.Indicadores.GovernancaScore)); x.Item().AlignCenter().Text("Governança do Trust").FontSize(8).FontColor("#6b7280"); });
+                            row.RelativeItem().Column(x => { x.Item().AlignCenter().Svg(GaugeSvg(d.Indicadores.ConformidadeScore)); x.Item().AlignCenter().Text("Conformidade").FontSize(8).FontColor("#6b7280"); });
+                            row.RelativeItem().Column(x => { x.Item().AlignCenter().Svg(GaugeSvg(progresso)); x.Item().AlignCenter().Text("Planejamento Sucessório").FontSize(8).FontColor("#6b7280"); });
+                        })));
 
                     // 2) Estrutura Patrimonial Lógica
                     if (d.Grafo.Estruturas.Any())
@@ -203,7 +215,7 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
             });
         });
 
-        return doc.GeneratePdf();
+        return doc;
     }
 
     // ── Contas agrupadas ──────────────────────────────────────────────────
@@ -262,6 +274,27 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
                 }
             });
         });
+    }
+
+    // ── SVG: gauge semicircular (0–100) ────────────────────────────────────
+    private static string GaugeSvg(int? val)
+    {
+        string F(double v) => v.ToString("0.#", Inv);
+        const double cx = 70, cy = 78, r = 58;
+        (double x, double y) P(double deg) { var a = deg * Math.PI / 180; return (cx + r * Math.Cos(a), cy - r * Math.Sin(a)); }
+        var cor = val == null ? "#d1d5db" : val >= 80 ? "#3fb950" : val >= 50 ? GOLD : "#C7574E";
+        var (lx, ly) = P(180); var (rx, ry) = P(0);
+        var s = new StringBuilder($"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 92' width='140' height='92'>");
+        s.Append($"<path d='M {F(lx)} {F(ly)} A {r} {r} 0 0 1 {F(rx)} {F(ry)}' fill='none' stroke='#e5e7eb' stroke-width='11' stroke-linecap='round'/>");
+        if (val is > 0)
+        {
+            var (vx, vy) = P(180 - 180.0 * Math.Clamp(val.Value, 0, 100) / 100);
+            s.Append($"<path d='M {F(lx)} {F(ly)} A {r} {r} 0 0 1 {F(vx)} {F(vy)}' fill='none' stroke='{cor}' stroke-width='11' stroke-linecap='round'/>");
+        }
+        s.Append($"<text x='{F(cx)}' y='{F(cy - 6)}' font-size='22' font-weight='bold' fill='#111827' text-anchor='middle' font-family='Lato,Arial,sans-serif'>{(val?.ToString() ?? "—")}</text>");
+        s.Append($"<text x='{F(cx)}' y='{F(cy + 9)}' font-size='9' fill='#9ca3af' text-anchor='middle' font-family='Lato,Arial,sans-serif'>{(val == null ? "sem nota" : "/ 100")}</text>");
+        s.Append("</svg>");
+        return s.ToString();
     }
 
     // ── SVG: donut ────────────────────────────────────────────────────────
@@ -356,18 +389,18 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
                 double x = startX + i * (BW + GAPX), y = PAD;
                 double x1 = x + BW / 2.0, y1 = y + BH, x2 = fam.X + NW / 2.0, y2 = fam.Y, my = (y1 + y2) / 2;
                 s.Append($"<path d='M {F(x1)} {F(y1)} C {F(x1)} {F(my)}, {F(x2)} {F(my)}, {F(x2)} {F(y2)}' fill='none' stroke='{BLUE}' stroke-width='1.1' stroke-opacity='0.6' stroke-dasharray='4 4'/>");
-                s.Append($"<rect x='{F(x)}' y='{F(y)}' width='{BW}' height='{BH}' rx='8' fill='#0f172a' stroke='{BLUE}' stroke-width='1.4'/>");
-                s.Append($"<text x='{F(x + BW / 2.0)}' y='{F(y + 15)}' font-size='9.5' font-weight='bold' fill='#e5e7eb' text-anchor='middle' font-family='{FF}'>{Esc(Trunc(b.Nome, 14))}</text>");
-                s.Append($"<text x='{F(x + BW / 2.0)}' y='{F(y + 27)}' font-size='8' fill='#9ca3af' text-anchor='middle' font-family='{FF}'>{Esc(Papel.GetValueOrDefault(b.Papel, ""))} · {b.PercentualDistribuicao.ToString("0", Inv)}%</text>");
+                s.Append($"<rect x='{F(x)}' y='{F(y)}' width='{BW}' height='{BH}' rx='8' fill='#eef4fb' stroke='{BLUE}' stroke-width='1.4'/>");
+                s.Append($"<text x='{F(x + BW / 2.0)}' y='{F(y + 15)}' font-size='9.5' font-weight='bold' fill='#1f2937' text-anchor='middle' font-family='{FF}'>{Esc(Trunc(b.Nome, 14))}</text>");
+                s.Append($"<text x='{F(x + BW / 2.0)}' y='{F(y + 27)}' font-size='8' fill='#6b7280' text-anchor='middle' font-family='{FF}'>{Esc(Papel.GetValueOrDefault(b.Papel, ""))} · {b.PercentualDistribuicao.ToString("0", Inv)}%</text>");
             }
         }
         // Família.
-        DesenhaNo(s, pos["familia"], NW, NH, "Família", g.Beneficiarios.Count > 0 ? $"{g.Beneficiarios.Count} beneficiário(s)" : "Família", BLUE, "#0f172a", "#e5e7eb", FF, Esc, Trunc, 2.0);
+        DesenhaNo(s, pos["familia"], NW, NH, "Família", g.Beneficiarios.Count > 0 ? $"{g.Beneficiarios.Count} beneficiário(s)" : "Família", BLUE, "#eef4fb", "#111827", FF, Esc, Trunc, 2.0);
         // Estruturas.
         foreach (var e in estruturas)
         {
             if (!pos.TryGetValue(e.Id.ToString(), out var p)) continue;
-            DesenhaNo(s, p, NW, NH, Trunc(e.Nome, 22), MoneyCurto(e.ValorTotalBRL), GOLD, "#0b1220", "#f3f4f6", FF, Esc, Trunc, 1.4);
+            DesenhaNo(s, p, NW, NH, Trunc(e.Nome, 22), MoneyCurto(e.ValorTotalBRL), GOLD, "#ffffff", "#111827", FF, Esc, Trunc, 1.4);
         }
         s.Append("</svg>");
         return s.ToString();

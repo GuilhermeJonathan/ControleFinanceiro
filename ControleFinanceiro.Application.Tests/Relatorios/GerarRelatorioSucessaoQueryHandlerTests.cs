@@ -30,6 +30,8 @@ public class GerarRelatorioSucessaoQueryHandlerTests
             .ReturnsAsync(new ContasResultDto([], 0m));
         _mediator.Setup(m => m.Send(It.IsAny<GetPlanosAcaoQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Empty<PlanoAcaoDto>());
+        _mediator.Setup(m => m.Send(It.IsAny<GetIndicadoresSucessaoQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new IndicadoresSucessaoDto());
         _generator.Setup(g => g.Gerar(It.IsAny<RelatorioSucessaoDados>(), It.IsAny<RelatorioBranding>()))
             .Returns(PdfFake);
     }

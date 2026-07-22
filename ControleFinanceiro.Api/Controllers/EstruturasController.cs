@@ -60,6 +60,20 @@ public class EstruturasController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetSucessao(CancellationToken ct) =>
         Ok(await mediator.Send(new GetSucessaoQuery(), ct));
 
+    /// <summary>Indicadores de sucessão (governança/conformidade) do cliente.</summary>
+    [HttpGet("indicadores")]
+    public async Task<IActionResult> GetIndicadores(CancellationToken ct) =>
+        Ok(await mediator.Send(new GetIndicadoresSucessaoQuery(), ct));
+
+    public record IndicadoresRequest(int? Governanca, int? Conformidade);
+
+    [HttpPut("indicadores")]
+    public async Task<IActionResult> SalvarIndicadores([FromBody] IndicadoresRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new SaveIndicadoresSucessaoCommand(req.Governanca, req.Conformidade), ct);
+        return NoContent();
+    }
+
     public record RelatorioSucessaoRequest(string? ClienteNome, string? NomeConsultoria, string? LogoBase64, string? CorMarca);
 
     /// <summary>Gera o PDF do relatório de sucessão (estrutura, beneficiários, contas, planos).</summary>

@@ -24,10 +24,11 @@ public class GerarRelatorioSucessaoQueryHandler(
 {
     public async Task<byte[]> Handle(GerarRelatorioSucessaoQuery request, CancellationToken ct)
     {
-        var grafo    = await mediator.Send(new GetEstruturasQuery(), ct);
-        var sucessao = await mediator.Send(new GetSucessaoQuery(), ct);
-        var contas   = await mediator.Send(new GetContasQuery(), ct);
-        var planos   = (await mediator.Send(new GetPlanosAcaoQuery(), ct)).ToList();
+        var grafo      = await mediator.Send(new GetEstruturasQuery(), ct);
+        var sucessao   = await mediator.Send(new GetSucessaoQuery(), ct);
+        var contas     = await mediator.Send(new GetContasQuery(), ct);
+        var planos     = (await mediator.Send(new GetPlanosAcaoQuery(), ct)).ToList();
+        var indicadores = await mediator.Send(new GetIndicadoresSucessaoQuery(), ct);
 
         var dados = new RelatorioSucessaoDados(
             ClienteNome: string.IsNullOrWhiteSpace(request.ClienteNome) ? "Cliente" : request.ClienteNome!,
@@ -36,7 +37,8 @@ public class GerarRelatorioSucessaoQueryHandler(
             Grafo: grafo,
             Sucessao: sucessao,
             Contas: contas,
-            Planos: planos);
+            Planos: planos,
+            Indicadores: indicadores);
 
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, ct);
         var branding = config is not null

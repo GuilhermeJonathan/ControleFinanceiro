@@ -30,7 +30,10 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
         try { return Convert.FromBase64String(raw); } catch { return null; }
     }
 
-    public byte[] Gerar(RelatorioPatrimonialDados d, RelatorioBranding branding)
+    public byte[] Gerar(RelatorioPatrimonialDados d, RelatorioBranding branding) => Build(d, branding).GeneratePdf();
+
+    /// <summary>Monta o documento (sem gerar bytes) — permite mesclar no relatório completo.</summary>
+    internal IDocument Build(RelatorioPatrimonialDados d, RelatorioBranding branding)
     {
         var brand = string.IsNullOrWhiteSpace(branding.CorMarca) ? "#16a34a" : branding.CorMarca!;
         var consultoria = string.IsNullOrWhiteSpace(branding.NomeConsultoria) ? d.AssessorNome : branding.NomeConsultoria!;
@@ -239,7 +242,7 @@ public class RelatorioPatrimonialGenerator : IRelatorioPatrimonialGenerator
             });
         });
 
-        return doc.GeneratePdf();
+        return doc;
     }
 
     // ── Helpers de layout ──

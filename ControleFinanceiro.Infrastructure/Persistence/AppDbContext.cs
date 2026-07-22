@@ -34,6 +34,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
     public DbSet<Distribuicao> Distribuicoes => Set<Distribuicao>();
     public DbSet<ContaFinanceira> ContasFinanceiras => Set<ContaFinanceira>();
+    public DbSet<IndicadoresSucessao> IndicadoresSucessao => Set<IndicadoresSucessao>();
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();
     public DbSet<MoedaParam> MoedasParam => Set<MoedaParam>();

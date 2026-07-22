@@ -49,10 +49,17 @@ public record RelatorioSucessaoDados(
     GrafoEstruturasDto Grafo,
     SucessaoDto Sucessao,
     ContasResultDto Contas,
-    IEnumerable<PlanoAcaoDto> Planos);
+    IEnumerable<PlanoAcaoDto> Planos,
+    IndicadoresSucessaoDto Indicadores);
 
 /// <summary>Gera o PDF do relatório de sucessão (QuestPDF).</summary>
 public interface IRelatorioSucessaoGenerator
 {
     byte[] Gerar(RelatorioSucessaoDados dados, RelatorioBranding branding);
+}
+
+/// <summary>Gera o PDF do relatório COMPLETO (patrimonial + sucessão) num único documento.</summary>
+public interface IRelatorioCompletoGenerator
+{
+    byte[] Gerar(RelatorioPatrimonialDados patrimonial, RelatorioSucessaoDados sucessao, RelatorioBranding branding);
 }
