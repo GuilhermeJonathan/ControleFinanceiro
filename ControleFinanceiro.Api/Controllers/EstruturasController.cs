@@ -1,6 +1,8 @@
 using ControleFinanceiro.Application.Patrimonio.Commands.Estruturas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetEstruturas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetSucessao;
+using ControleFinanceiro.Application.Relatorios;
+using ControleFinanceiro.Application.Relatorios.Queries.GerarRelatorio;
 using ControleFinanceiro.Domain.Entities;
 using ControleFinanceiro.Domain.Enums;
 using MediatR;
@@ -57,6 +59,17 @@ public class EstruturasController(IMediator mediator) : ControllerBase
     [HttpGet("sucessao")]
     public async Task<IActionResult> GetSucessao(CancellationToken ct) =>
         Ok(await mediator.Send(new GetSucessaoQuery(), ct));
+
+    public record RelatorioSucessaoRequest(string? ClienteNome, string? NomeConsultoria, string? LogoBase64, string? CorMarca);
+
+    /// <summary>Gera o PDF do relatório de sucessão (estrutura, beneficiários, contas, planos).</summary>
+    [HttpPost("relatorio")]
+    public async Task<IActionResult> GerarRelatorio([FromBody] RelatorioSucessaoRequest req, CancellationToken ct)
+    {
+        var pdf = await mediator.Send(new GerarRelatorioSucessaoQuery(
+            req.ClienteNome, new RelatorioBranding(req.NomeConsultoria, req.LogoBase64, req.CorMarca)), ct);
+        return File(pdf, "application/pdf", "relatorio-sucessao.pdf");
+    }
 
     /// <summary>Detalhe de uma estrutura: ativos/investimentos ligados + estruturas detidas.</summary>
     [HttpGet("{id:guid}")]

@@ -24,6 +24,15 @@ public class ContaFinanceira
     public string? Identificador { get; private set; }
     /// <summary>Estrutura à qual a conta pertence (holding, offshore…). null = pessoa física.</summary>
     public Guid? EstruturaId { get; private set; }
+    // ── Detalhes family-office (opcionais) ──────────────────────────────────
+    /// <summary>Valor do portfólio investido na conta (separado do caixa).</summary>
+    public decimal? ValorPortfolio { get; private set; }
+    /// <summary>Crédito lombardo — limite total.</summary>
+    public decimal? LombardLimite { get; private set; }
+    /// <summary>Crédito lombardo — valor utilizado.</summary>
+    public decimal? LombardUtilizado { get; private set; }
+    /// <summary>Status livre. Ex.: "Ativa", "Pré-aprovada", "Em revisão".</summary>
+    public string? Status { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -31,7 +40,8 @@ public class ContaFinanceira
 
     public ContaFinanceira(
         Guid usuarioId, string nome, TipoContaFinanceira tipo, MoedaPatrimonio moeda, decimal saldo,
-        string? instituicao = null, string? pais = null, string? identificador = null, Guid? estruturaId = null)
+        string? instituicao = null, string? pais = null, string? identificador = null, Guid? estruturaId = null,
+        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -42,10 +52,15 @@ public class ContaFinanceira
         Pais = pais;
         Identificador = identificador;
         EstruturaId = estruturaId;
+        ValorPortfolio = valorPortfolio;
+        LombardLimite = lombardLimite;
+        LombardUtilizado = lombardUtilizado;
+        Status = status;
     }
 
     public void Atualizar(string nome, TipoContaFinanceira tipo, MoedaPatrimonio moeda, decimal saldo,
-        string? instituicao, string? pais, string? identificador, Guid? estruturaId)
+        string? instituicao, string? pais, string? identificador, Guid? estruturaId,
+        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -55,6 +70,10 @@ public class ContaFinanceira
         Pais = pais;
         Identificador = identificador;
         EstruturaId = estruturaId;
+        ValorPortfolio = valorPortfolio;
+        LombardLimite = lombardLimite;
+        LombardUtilizado = lombardUtilizado;
+        Status = status;
         AtualizadoEm = DateTime.UtcNow;
     }
 

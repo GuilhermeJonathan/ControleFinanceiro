@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddHttpClient<ICurrencyRateService, AwesomeApiCurrencyRateService>();
         services.AddHttpClient<IAssetPriceService, BrapiAssetPriceService>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
+        services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioSucessaoGenerator, RelatorioSucessaoGenerator>();
 
         // Nota: MetaContribuicaoService (background) é registrado no Program.cs,
         // gateado por IsProduction() junto com os demais processos.

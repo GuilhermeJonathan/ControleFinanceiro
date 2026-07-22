@@ -1,7 +1,10 @@
+using ControleFinanceiro.Application.Patrimonio.Queries.GetContas;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetEstruturas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetPlanoAcao;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetProjecaoDividas;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoInvestimentos;
 using ControleFinanceiro.Application.Patrimonio.Queries.GetResumoPatrimonial;
+using ControleFinanceiro.Application.Patrimonio.Queries.GetSucessao;
 using ControleFinanceiro.Application.Simulacoes.Queries.GetSimulacoes;
 
 namespace ControleFinanceiro.Application.Relatorios;
@@ -36,4 +39,20 @@ public record RelatorioPatrimonialDados(
 public interface IRelatorioPatrimonialGenerator
 {
     byte[] Gerar(RelatorioPatrimonialDados dados, RelatorioBranding branding);
+}
+
+/// <summary>Tudo que o relatório de sucessão precisa (estruturas, beneficiários, contas, planos).</summary>
+public record RelatorioSucessaoDados(
+    string ClienteNome,
+    string AssessorNome,
+    DateTime GeradoEm,
+    GrafoEstruturasDto Grafo,
+    SucessaoDto Sucessao,
+    ContasResultDto Contas,
+    IEnumerable<PlanoAcaoDto> Planos);
+
+/// <summary>Gera o PDF do relatório de sucessão (QuestPDF).</summary>
+public interface IRelatorioSucessaoGenerator
+{
+    byte[] Gerar(RelatorioSucessaoDados dados, RelatorioBranding branding);
 }

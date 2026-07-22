@@ -17,6 +17,10 @@ public class ContaFinanceiraConfiguration : IEntityTypeConfiguration<ContaFinanc
         builder.Property(c => c.Moeda).HasConversion<int>();
         builder.Property(c => c.Saldo).HasPrecision(18, 2);
         builder.Property(c => c.Identificador).HasMaxLength(120);
+        builder.Property(c => c.ValorPortfolio).HasPrecision(18, 2);
+        builder.Property(c => c.LombardLimite).HasPrecision(18, 2);
+        builder.Property(c => c.LombardUtilizado).HasPrecision(18, 2);
+        builder.Property(c => c.Status).HasMaxLength(60);
         builder.HasIndex(c => c.UsuarioId);
     }
 }

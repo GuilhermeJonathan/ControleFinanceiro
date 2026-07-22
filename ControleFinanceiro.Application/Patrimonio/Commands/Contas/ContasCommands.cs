@@ -18,7 +18,11 @@ public record SaveContaCommand(
     string? Instituicao,
     string? Pais,
     string? Identificador,
-    Guid? EstruturaId) : IRequest<Guid>;
+    Guid? EstruturaId,
+    decimal? ValorPortfolio = null,
+    decimal? LombardLimite = null,
+    decimal? LombardUtilizado = null,
+    string? Status = null) : IRequest<Guid>;
 
 public class SaveContaCommandHandler(
     IContaFinanceiraRepository repo,
@@ -49,13 +53,15 @@ public class SaveContaCommandHandler(
                 throw new UnauthorizedAccessException("Acesso negado à conta.");
 
             existing.Atualizar(request.Nome.Trim(), request.Tipo, request.Moeda, request.Saldo,
-                request.Instituicao, request.Pais, request.Identificador, request.EstruturaId);
+                request.Instituicao, request.Pais, request.Identificador, request.EstruturaId,
+                request.ValorPortfolio, request.LombardLimite, request.LombardUtilizado, request.Status);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
 
         var entity = new ContaFinanceira(currentUser.UserId, request.Nome.Trim(), request.Tipo,
-            request.Moeda, request.Saldo, request.Instituicao, request.Pais, request.Identificador, request.EstruturaId);
+            request.Moeda, request.Saldo, request.Instituicao, request.Pais, request.Identificador, request.EstruturaId,
+            request.ValorPortfolio, request.LombardLimite, request.LombardUtilizado, request.Status);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;

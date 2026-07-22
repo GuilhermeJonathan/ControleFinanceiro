@@ -8,7 +8,8 @@ namespace ControleFinanceiro.Application.Patrimonio.Queries.GetContas;
 public record ContaDto(
     Guid Id, string Nome, int Tipo, string? Instituicao, string? Pais, string Moeda,
     decimal Saldo, string? Identificador, Guid? EstruturaId, string? EstruturaNome,
-    decimal ValorBRL, int QtdInvestimentos, bool AgregaInvestimentos);
+    decimal ValorBRL, int QtdInvestimentos, bool AgregaInvestimentos,
+    decimal? ValorPortfolio, decimal? LombardLimite, decimal? LombardUtilizado, decimal? LombardDisponivel, string? Status);
 
 public record ContasResultDto(IReadOnlyList<ContaDto> Contas, decimal TotalBRL);
 
@@ -48,11 +49,16 @@ public class GetContasQueryHandler(
                 ? ligados.Sum(i => ParaBRL(i.ValorAtual, i.Moeda))
                 : ParaBRL(c.Saldo, c.Moeda);
 
+            var lombardDisp = c.LombardLimite.HasValue
+                ? Math.Max(0, c.LombardLimite.Value - (c.LombardUtilizado ?? 0))
+                : (decimal?)null;
+
             lista.Add(new ContaDto(
                 c.Id, c.Nome, (int)c.Tipo, c.Instituicao, c.Pais, c.Moeda.ToString(),
                 Math.Round(c.Saldo, 2), c.Identificador, c.EstruturaId,
                 c.EstruturaId.HasValue && nomeEstrutura.TryGetValue(c.EstruturaId.Value, out var ne) ? ne : null,
-                Math.Round(valorBRL, 2), ligados.Count, agrega));
+                Math.Round(valorBRL, 2), ligados.Count, agrega,
+                c.ValorPortfolio, c.LombardLimite, c.LombardUtilizado, lombardDisp, c.Status));
         }
 
         return new ContasResultDto(
