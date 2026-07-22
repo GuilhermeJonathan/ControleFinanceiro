@@ -13,6 +13,7 @@ public class InvestimentoConfiguration : IEntityTypeConfiguration<Investimento>
         builder.Property(i => i.Nome).IsRequired().HasMaxLength(200);
         builder.Property(i => i.Tipo).HasConversion<int>();
         builder.Property(i => i.Moeda).HasConversion<int>();
+        builder.Property(i => i.Subclasse).HasMaxLength(60);
         builder.Property(i => i.Corretora).HasMaxLength(100);
         builder.Property(i => i.Ticker).HasMaxLength(20);
         builder.Property(i => i.Quantidade).HasPrecision(18, 6);

@@ -37,6 +37,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public DbSet<IndicadoresSucessao> IndicadoresSucessao => Set<IndicadoresSucessao>();
     public DbSet<TipoAtivoParam> TiposAtivoParam => Set<TipoAtivoParam>();
     public DbSet<TipoInvestimentoParam> TiposInvestimentoParam => Set<TipoInvestimentoParam>();
+    public DbSet<SubtipoInvestimentoParam> SubtiposInvestimentoParam => Set<SubtipoInvestimentoParam>();
     public DbSet<MoedaParam> MoedasParam => Set<MoedaParam>();
     public DbSet<ParametroOculto> ParametrosOcultos => Set<ParametroOculto>();
     public DbSet<CotacaoHistorico> CotacoesHistorico => Set<CotacaoHistorico>();

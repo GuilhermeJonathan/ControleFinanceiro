@@ -96,6 +96,29 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
         return NoContent();
     }
 
+    // ── Subtipos de Investimento (2º nível, gerenciado pelo admin) ─────────
+
+    [HttpGet("subtipos-investimento")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSubtiposInvestimento([FromQuery] int? tipoId, CancellationToken ct) =>
+        Ok(await mediator.Send(new GetSubtiposInvestimentoQuery(tipoId), ct));
+
+    [HttpPost("subtipos-investimento")]
+    [Authorize]
+    public async Task<IActionResult> SaveSubtipoInvestimento([FromBody] SaveSubtipoRequest req, CancellationToken ct)
+    {
+        var id = await mediator.Send(new SaveSubtipoInvestimentoCommand(req.Id, req.TipoInvestimentoId, req.Nome, req.Ordem, req.Ativo), ct);
+        return Ok(new { id });
+    }
+
+    [HttpDelete("subtipos-investimento/{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteSubtipoInvestimento(int id, CancellationToken ct)
+    {
+        await mediator.Send(new DeleteSubtipoInvestimentoCommand(id), ct);
+        return NoContent();
+    }
+
     // ── Moedas ────────────────────────────────────────────────────────────
 
     [HttpGet("moedas")]
@@ -174,4 +197,5 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
 }
 
 public record SaveParamRequest(int? Id, string Nome, string? Icone, int Ordem, bool Ativo);
+public record SaveSubtipoRequest(int? Id, int TipoInvestimentoId, string Nome, int Ordem, bool Ativo);
 public record SaveMoedaRequest(int? Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo);

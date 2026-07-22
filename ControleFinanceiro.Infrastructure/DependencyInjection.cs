@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IIndicadoresSucessaoRepository, IndicadoresSucessaoRepository>();
         services.AddScoped<ITipoAtivoParamRepository, TipoAtivoParamRepository>();
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();
+        services.AddScoped<ISubtipoInvestimentoParamRepository, SubtipoInvestimentoParamRepository>();
         services.AddScoped<IMoedaParamRepository, MoedaParamRepository>();
         services.AddScoped<IParametroOcultoRepository, ParametroOcultoRepository>();
         services.AddScoped<IAssessoriaOwnerResolver, AssessoriaOwnerResolver>();

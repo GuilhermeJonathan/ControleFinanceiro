@@ -13,6 +13,8 @@ public class Investimento
     public string Nome { get; private set; } = string.Empty;
     public TipoInvestimento Tipo { get; private set; }
     public MoedaPatrimonio Moeda { get; private set; }
+    /// <summary>Subclasse livre dentro do Tipo (classe). Ex.: "IPCA+", "Small Caps", "High Yield".</summary>
+    public string? Subclasse { get; private set; }
     public string? Corretora { get; private set; }
     public string? Ticker { get; private set; }
     /// <summary>Quantidade de cotas/ações. Para posições com ticker, ValorAtual = Quantidade × preço unitário.</summary>
@@ -36,7 +38,7 @@ public class Investimento
         Guid usuarioId, string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
         decimal? rentabilidadeAnualPct = null, decimal? quantidade = null, Guid? estruturaId = null,
-        Guid? contaId = null)
+        Guid? contaId = null, string? subclasse = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -50,12 +52,13 @@ public class Investimento
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
         ContaId = contaId;
+        Subclasse = subclasse;
     }
 
     public void Atualizar(string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
         decimal? rentabilidadeAnualPct, decimal? quantidade = null, Guid? estruturaId = null,
-        Guid? contaId = null)
+        Guid? contaId = null, string? subclasse = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -68,6 +71,7 @@ public class Investimento
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
         ContaId = contaId;
+        Subclasse = subclasse;
         AtualizadoEm = DateTime.UtcNow;
     }
 
