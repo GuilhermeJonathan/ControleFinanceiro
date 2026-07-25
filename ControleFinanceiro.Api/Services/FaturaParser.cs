@@ -35,7 +35,8 @@ public static class FaturaParser
             var cellA = row.Cell(1).GetString().Trim();
             var cellB = row.Cell(2).GetString().Trim();
             var cellC = row.Cell(3).GetString().Trim();
-            var cellD = row.Cell(4).GetString().Trim();
+            var cellDObj = row.Cell(4);
+            var cellD = cellDObj.GetString().Trim();
             var cellE = row.Cell(5).GetString().Trim();
 
             // Detecta linha de header para saber se há coluna Categoria
@@ -75,12 +76,31 @@ public static class FaturaParser
             var diaMax    = DateTime.DaysInMonth(anoCompra, mesCompra);
             var data      = new DateTime(anoCompra, mesCompra, Math.Min(dia, diaMax));
 
-            // Parse do valor
-            var vm = ValueRegex.Match(cellD);
-            if (!vm.Success) continue;
-            var valor = decimal.Parse(
-                vm.Groups[1].Value.Replace(".", "").Replace(",", "."),
-                CultureInfo.InvariantCulture);
+            // Parse do valor.
+            // Se a célula é um número de verdade no Excel (ex.: 21,93 formatado como
+            // moeda), lemos o valor direto — o GetString() devolveria "21.93" (ponto
+            // decimal, cultura invariante) e o parser de texto BR abaixo apagaria o
+            // ponto, transformando 21,93 em 2193. Só usamos o parser de texto quando
+            // a célula é realmente string (fatura exportada como texto BR "1.234,56").
+            decimal valor;
+            if (cellDObj.DataType == XLDataType.Number)
+            {
+                valor = cellDObj.GetValue<decimal>();
+            }
+            else
+            {
+                var vm = ValueRegex.Match(cellD);
+                if (!vm.Success) continue;
+                var raw = vm.Groups[1].Value;
+                // Texto BR: vírgula é o separador decimal; ponto é milhar.
+                // Sem vírgula, tratamos o ponto como decimal (cultura invariante).
+                raw = raw.Contains(',')
+                    ? raw.Replace(".", "").Replace(",", ".")
+                    : raw;
+                if (!decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out valor))
+                    continue;
+            }
+            valor = Math.Abs(valor);
             if (valor <= 0) continue;
 
             // Parse de parcelas
