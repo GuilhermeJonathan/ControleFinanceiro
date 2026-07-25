@@ -9,7 +9,7 @@ public static class FaturaParser
 {
     private static readonly Regex DateRegex   = new(@"^\d{2}/\d{2}(/\d{2,4})?$", RegexOptions.Compiled);
     private static readonly Regex ParcelRegex = new(@"Parc\.(\d+)/(\d+)",       RegexOptions.Compiled);
-    private static readonly Regex ValueRegex  = new(@"R\$\s*([\d.,]+)",         RegexOptions.Compiled);
+    private static readonly Regex ValueRegex  = new(@"\s*([\d.,]+)",         RegexOptions.Compiled);
     private static readonly Regex CardRegex   = new(
         @"(\d{4})\s{1,}([A-ZÁÉÍÓÚÃÕÇÂÊÎÔÛÀÜ][A-ZÁÉÍÓÚÃÕÇÂÊÎÔÛÀÜ\s]+)$",
         RegexOptions.Compiled);
