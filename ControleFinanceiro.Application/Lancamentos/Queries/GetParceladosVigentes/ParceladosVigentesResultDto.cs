@@ -5,6 +5,7 @@ public record ParceladoVigenteItemDto(
     string? CategoriaNome,
     string? CartaoNome,
     DateTime PrimeiraData,
+    DateTime UltimaData,       // data da última parcela vigente = data real da quitação
     int ParcelaMin,
     int TotalParcelas,
     decimal ValorParcela,

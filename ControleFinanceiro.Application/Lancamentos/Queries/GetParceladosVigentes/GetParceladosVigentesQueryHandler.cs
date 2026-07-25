@@ -31,6 +31,7 @@ public class GetParceladosVigentesQueryHandler(
                     CategoriaNome: primeiro.Categoria?.Nome,
                     CartaoNome:    primeiro.Cartao?.Nome,
                     PrimeiraData:  g.Min(l => l.Data),
+                    UltimaData:    g.Max(l => l.Data),
                     ParcelaMin:    g.Min(l => l.ParcelaAtual!.Value),
                     TotalParcelas: primeiro.TotalParcelas ?? g.Count(),
                     ValorParcela:  primeiro.Valor,
