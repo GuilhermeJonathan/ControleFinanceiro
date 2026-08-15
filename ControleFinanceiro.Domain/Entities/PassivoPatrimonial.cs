@@ -20,6 +20,9 @@ public class PassivoPatrimonial
     public decimal? TaxaJurosAnualPct { get; private set; }
     /// <summary>Prazo de quitação em meses (para projeção). Null = sem cronograma (bullet).</summary>
     public int? PrazoMeses { get; private set; }
+    /// <summary>Ativo patrimonial ao qual a dívida está vinculada (ex.: financiamento do imóvel,
+    /// crédito lombardo sobre a carteira). null = dívida sem lastro em ativo. Usado para medir alavancagem.</summary>
+    public Guid? AtivoVinculadoId { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -27,7 +30,8 @@ public class PassivoPatrimonial
 
     public PassivoPatrimonial(
         Guid usuarioId, string nome, MoedaPatrimonio moeda, decimal valor,
-        PrazoDivida prazo, decimal? taxaJurosAnualPct = null, int? prazoMeses = null)
+        PrazoDivida prazo, decimal? taxaJurosAnualPct = null, int? prazoMeses = null,
+        Guid? ativoVinculadoId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -36,10 +40,12 @@ public class PassivoPatrimonial
         Prazo = prazo;
         TaxaJurosAnualPct = taxaJurosAnualPct;
         PrazoMeses = prazoMeses;
+        AtivoVinculadoId = ativoVinculadoId;
     }
 
     public void Atualizar(string nome, MoedaPatrimonio moeda, decimal valor,
-        PrazoDivida prazo, decimal? taxaJurosAnualPct, int? prazoMeses)
+        PrazoDivida prazo, decimal? taxaJurosAnualPct, int? prazoMeses,
+        Guid? ativoVinculadoId = null)
     {
         Nome = nome;
         Moeda = moeda;
@@ -47,6 +53,14 @@ public class PassivoPatrimonial
         Prazo = prazo;
         TaxaJurosAnualPct = taxaJurosAnualPct;
         PrazoMeses = prazoMeses;
+        AtivoVinculadoId = ativoVinculadoId;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta a dívida do ativo (ao excluir o ativo vinculado).</summary>
+    public void DesvincularAtivo()
+    {
+        AtivoVinculadoId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 }

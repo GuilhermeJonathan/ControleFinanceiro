@@ -67,7 +67,7 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
     [Authorize]
     public async Task<IActionResult> SaveTipoInvestimento([FromBody] SaveParamRequest req, CancellationToken ct)
     {
-        var id = await mediator.Send(new SaveTipoInvestimentoCommand(req.Id, req.Nome, req.Icone, req.Ordem, req.Ativo), ct);
+        var id = await mediator.Send(new SaveTipoInvestimentoCommand(req.Id, req.Nome, req.Icone, req.Ordem, req.Ativo, req.Exterior), ct);
         return Ok(new { id });
     }
 
@@ -196,6 +196,6 @@ public class ParametrosController(IMediator mediator, ICotacaoHistoricoRepositor
     }
 }
 
-public record SaveParamRequest(int? Id, string Nome, string? Icone, int Ordem, bool Ativo);
+public record SaveParamRequest(int? Id, string Nome, string? Icone, int Ordem, bool Ativo, bool Exterior = false);
 public record SaveSubtipoRequest(int? Id, int TipoInvestimentoId, string Nome, int Ordem, bool Ativo);
 public record SaveMoedaRequest(int? Id, string Codigo, string Nome, decimal CotacaoBRL, int Ordem, bool Ativo);

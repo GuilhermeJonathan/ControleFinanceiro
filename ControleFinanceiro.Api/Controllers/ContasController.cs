@@ -19,7 +19,8 @@ public record ContaRequest(
     decimal? ValorPortfolio = null,
     decimal? LombardLimite = null,
     decimal? LombardUtilizado = null,
-    string? Status = null);
+    string? Status = null,
+    bool SucessaoResolvida = false);
 
 /// <summary>Contas financeiras do cliente (bancária, investimento/custódia, internacional).</summary>
 [ApiController]
@@ -44,7 +45,7 @@ public class ContasController(IMediator mediator) : ControllerBase
             return BadRequest($"Moeda inválida: {req.Moeda}.");
         var id = await mediator.Send(new SaveContaCommand(null, req.Nome, req.Tipo, moeda, req.Saldo,
             req.Instituicao, req.Pais, req.Identificador, req.EstruturaId,
-            req.ValorPortfolio, req.LombardLimite, req.LombardUtilizado, req.Status), ct);
+            req.ValorPortfolio, req.LombardLimite, req.LombardUtilizado, req.Status, req.SucessaoResolvida), ct);
         return Ok(new { id });
     }
 
@@ -55,7 +56,7 @@ public class ContasController(IMediator mediator) : ControllerBase
             return BadRequest($"Moeda inválida: {req.Moeda}.");
         await mediator.Send(new SaveContaCommand(id, req.Nome, req.Tipo, moeda, req.Saldo,
             req.Instituicao, req.Pais, req.Identificador, req.EstruturaId,
-            req.ValorPortfolio, req.LombardLimite, req.LombardUtilizado, req.Status), ct);
+            req.ValorPortfolio, req.LombardLimite, req.LombardUtilizado, req.Status, req.SucessaoResolvida), ct);
         return NoContent();
     }
 

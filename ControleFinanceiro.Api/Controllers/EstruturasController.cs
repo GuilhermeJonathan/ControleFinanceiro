@@ -123,6 +123,16 @@ public class EstruturasController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
+    public record VincularItemRequest(TipoItemPatrimonial Tipo, Guid ItemId, bool Vincular = true);
+
+    /// <summary>Vincula (ou desvincula) um item já cadastrado (ativo/investimento/conta) a esta estrutura.</summary>
+    [HttpPost("{id:guid}/itens")]
+    public async Task<IActionResult> VincularItem(Guid id, [FromBody] VincularItemRequest req, CancellationToken ct)
+    {
+        await mediator.Send(new VincularItemEstruturaCommand(id, req.Tipo, req.ItemId, req.Vincular), ct);
+        return NoContent();
+    }
+
     // ── Participações (arestas do grafo) ─────────────────────────────────
 
     [HttpPost("participacoes")]

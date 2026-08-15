@@ -9,6 +9,7 @@ public record DeleteAtivoPatrimonialCommand(Guid Id) : IRequest;
 
 public class DeleteAtivoPatrimonialCommandHandler(
     IAtivoPatrimonialRepository repository,
+    IPassivoPatrimonialRepository passivoRepository,
     ICurrentUser currentUser,
     IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteAtivoPatrimonialCommand>
@@ -20,6 +21,14 @@ public class DeleteAtivoPatrimonialCommandHandler(
 
         if (ativo.UsuarioId != currentUser.UserId)
             throw new UnauthorizedAccessException("Acesso negado ao ativo.");
+
+        // Solta dívidas atreladas a este ativo (evita vínculo órfão).
+        var passivos = await passivoRepository.GetByUsuarioAsync(currentUser.UserId, cancellationToken);
+        foreach (var p in passivos.Where(p => p.AtivoVinculadoId == ativo.Id))
+        {
+            p.DesvincularAtivo();
+            passivoRepository.Update(p);
+        }
 
         repository.Remove(ativo);
         await unitOfWork.SaveChangesAsync(cancellationToken);

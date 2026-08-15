@@ -8,7 +8,8 @@ public enum TipoEstrutura
     HoldingParticipacoes = 3,
     Offshore = 4,
     EmpresaOperacional = 5,
-    PPLI = 6,
+    PPLI = 6,    
+    ContaFinanceira = 7,
     Outro = 99,
 }
 

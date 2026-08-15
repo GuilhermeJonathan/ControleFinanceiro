@@ -27,7 +27,9 @@ public record PassivoResumoDto(
     string Moeda,
     decimal Valor,
     int Prazo,
-    decimal ValorBRL);
+    decimal ValorBRL,
+    Guid? AtivoVinculadoId = null,   // ativo ao qual a dívida está atrelada (alavancagem)
+    string? AtivoVinculadoNome = null);
 
 /// <summary>Uma fatia da composição patrimonial (por categoria de bem), já em BRL.</summary>
 public record CategoriaComposicaoDto(string Categoria, decimal TotalBRL, decimal Pct, decimal? RoiAnualPct);
@@ -130,10 +132,13 @@ public class GetResumoPatrimonialQueryHandler(
 
         // ── Dívidas ──
         var totalDividasBRL = passivos.Sum(p => ParaBRL(p.Valor, p.Moeda));
+        var nomePorAtivo = ativos.ToDictionary(a => a.Id, a => a.Nome);
         var passivosDto = passivos
             .Select(p => new PassivoResumoDto(
                 p.Id, p.Nome, p.Moeda.ToString(), p.Valor, (int)p.Prazo,
-                Math.Round(ParaBRL(p.Valor, p.Moeda), 2)))
+                Math.Round(ParaBRL(p.Valor, p.Moeda), 2),
+                p.AtivoVinculadoId,
+                p.AtivoVinculadoId is { } av && nomePorAtivo.TryGetValue(av, out var an) ? an : null))
             .OrderByDescending(p => p.ValorBRL)
             .ToList();
 

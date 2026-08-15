@@ -74,7 +74,7 @@ public class DeleteTipoAtivoCommandHandler(
 
 // ── Save TipoInvestimento ─────────────────────────────────────────────────
 
-public record SaveTipoInvestimentoCommand(int? Id, string Nome, string? Icone, int Ordem, bool Ativo) : IRequest<int>;
+public record SaveTipoInvestimentoCommand(int? Id, string Nome, string? Icone, int Ordem, bool Ativo, bool Exterior = false) : IRequest<int>;
 
 public class SaveTipoInvestimentoCommandHandler(
     ITipoInvestimentoParamRepository repo,
@@ -95,12 +95,12 @@ public class SaveTipoInvestimentoCommandHandler(
                 ?? throw new KeyNotFoundException($"TipoInvestimento {request.Id} não encontrado.");
             if (existing.AssessorId != escopo)
                 throw new UnauthorizedAccessException("Você só pode editar os seus próprios tipos.");
-            existing.Atualizar(request.Nome, request.Ordem, request.Ativo, request.Icone);
+            existing.Atualizar(request.Nome, request.Ordem, request.Ativo, request.Icone, request.Exterior);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
 
-        var entity = new TipoInvestimentoParam(request.Nome, request.Ordem, request.Icone, escopo);
+        var entity = new TipoInvestimentoParam(request.Nome, request.Ordem, request.Icone, escopo, request.Exterior);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;

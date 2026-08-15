@@ -351,6 +351,8 @@ public class DailyJobService(
         using var scope      = scopeFactory.CreateScope();
         var db               = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var priceService     = scope.ServiceProvider.GetRequiredService<IAssetPriceService>();
+        var exteriorPrice    = scope.ServiceProvider.GetRequiredService<IExteriorAssetPriceService>();
+        var tipoRepo         = scope.ServiceProvider.GetRequiredService<ITipoInvestimentoParamRepository>();
         var historicoRepo    = scope.ServiceProvider.GetRequiredService<IPrecoAtivoHistoricoRepository>();
 
         // Mercado fechado no fim de semana — não gasta cota da brapi.dev à toa.
@@ -383,28 +385,37 @@ public class DailyJobService(
             return;
         }
 
-        var tickers = investimentos
-            .Select(i => i.Ticker!.Trim().ToUpperInvariant())
-            .Distinct()
-            .ToList();
+        // Tipos marcados "Exterior" → Yahoo (bolsas globais); demais → brapi (B3).
+        var tiposParam  = await tipoRepo.GetGlobaisAsync(ct);
+        var exteriorIds = tiposParam.Where(t => t.Exterior).Select(t => t.Id).ToHashSet();
+        string Norm(Investimento i) => i.Ticker!.Trim().ToUpperInvariant();
 
-        var prices = await priceService.GetPricesAsync(tickers, ct);
+        var tickersNac = investimentos.Where(i => !exteriorIds.Contains((int)i.Tipo)).Select(Norm).Distinct().ToList();
+        var tickersExt = investimentos.Where(i =>  exteriorIds.Contains((int)i.Tipo)).Select(Norm).Distinct().ToList();
+
+        var prices = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        if (tickersNac.Count > 0)
+            foreach (var kv in await priceService.GetPricesAsync(tickersNac, ct)) prices[kv.Key] = kv.Value;
+        if (tickersExt.Count > 0)
+            foreach (var kv in await exteriorPrice.GetPricesAsync(tickersExt, ct)) prices[kv.Key] = kv.Value;
+
         if (prices.Count == 0)
         {
             logger.LogWarning("[DailyJob] Investimentos: nenhum preço retornado pela API.");
             return;
         }
 
+        var extSet = tickersExt.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var atualizados = 0;
-        foreach (var ticker in tickers)
+        foreach (var ticker in tickersNac.Concat(tickersExt))
         {
             if (!prices.TryGetValue(ticker, out var preco)) continue;
-            // brapi retorna preço unitário; aqui aplicamos direto em valorAtual (simplificação — sem quantidade separada).
-            foreach (var inv in investimentos.Where(i => string.Equals(i.Ticker!.Trim(), ticker, StringComparison.OrdinalIgnoreCase)))
+            foreach (var inv in investimentos.Where(i => string.Equals(Norm(i), ticker, StringComparison.OrdinalIgnoreCase)))
             {
                 if (inv.AtualizarValorAutomatico(preco)) atualizados++;
             }
-            await historicoRepo.AddAsync(new PrecoAtivoHistorico(ticker, preco, "brapi.dev"), ct);
+            var fonte = extSet.Contains(ticker) ? "yahoo" : "brapi.dev";
+            await historicoRepo.AddAsync(new PrecoAtivoHistorico(ticker, preco, fonte), ct);
         }
 
         await db.SaveChangesAsync(ct);

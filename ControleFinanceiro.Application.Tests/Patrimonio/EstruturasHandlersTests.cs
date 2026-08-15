@@ -176,4 +176,35 @@ public class EstruturasHandlersTests
         _repo.Verify(r => r.RemoveParticipacao(aresta), Times.Once);
         _repo.Verify(r => r.Remove(It.Is<Estrutura>(e => e.Id == estId)), Times.Once);
     }
+
+    // ── Vincular item à estrutura ────────────────────────────────────────
+
+    [Fact]
+    public async Task VincularItem_Conta_DefineEstruturaId()
+    {
+        var estId = Guid.NewGuid();
+        _repo.Setup(r => r.GetByIdAsync(estId, It.IsAny<CancellationToken>())).ReturnsAsync(Est(estId, "Holding"));
+        var conta = new ContaFinanceira(UserId, "Conta CH", TipoContaFinanceira.Internacional, MoedaPatrimonio.CHF, 100m);
+        _contaRepo.Setup(r => r.GetByIdAsync(conta.Id, It.IsAny<CancellationToken>())).ReturnsAsync(conta);
+
+        var h = new VincularItemEstruturaCommandHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _contaRepo.Object, _user.Object, _uow.Object);
+        await h.Handle(new VincularItemEstruturaCommand(estId, TipoItemPatrimonial.Conta, conta.Id), CancellationToken.None);
+
+        conta.EstruturaId.Should().Be(estId);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task VincularItem_Desvincular_LimpaEstruturaId()
+    {
+        var estId = Guid.NewGuid();
+        _repo.Setup(r => r.GetByIdAsync(estId, It.IsAny<CancellationToken>())).ReturnsAsync(Est(estId, "Holding"));
+        var conta = new ContaFinanceira(UserId, "Conta", TipoContaFinanceira.Internacional, MoedaPatrimonio.CHF, 100m, estruturaId: estId);
+        _contaRepo.Setup(r => r.GetByIdAsync(conta.Id, It.IsAny<CancellationToken>())).ReturnsAsync(conta);
+
+        var h = new VincularItemEstruturaCommandHandler(_repo.Object, _ativoRepo.Object, _invRepo.Object, _contaRepo.Object, _user.Object, _uow.Object);
+        await h.Handle(new VincularItemEstruturaCommand(estId, TipoItemPatrimonial.Conta, conta.Id, Vincular: false), CancellationToken.None);
+
+        conta.EstruturaId.Should().BeNull();
+    }
 }

@@ -13,7 +13,8 @@ public record CreatePassivoPatrimonialCommand(
     decimal Valor,
     PrazoDivida Prazo,
     decimal? TaxaJurosAnualPct = null,
-    int? PrazoMeses = null) : IRequest<Guid>;
+    int? PrazoMeses = null,
+    Guid? AtivoVinculadoId = null) : IRequest<Guid>;
 
 public class CreatePassivoPatrimonialCommandHandler(
     IPassivoPatrimonialRepository repository,
@@ -30,7 +31,8 @@ public class CreatePassivoPatrimonialCommandHandler(
             request.Valor,
             request.Prazo,
             request.TaxaJurosAnualPct,
-            request.PrazoMeses);
+            request.PrazoMeses,
+            request.AtivoVinculadoId);
 
         await repository.AddAsync(passivo, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

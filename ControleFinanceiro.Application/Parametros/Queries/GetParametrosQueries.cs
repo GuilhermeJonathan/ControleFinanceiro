@@ -10,7 +10,7 @@ namespace ControleFinanceiro.Application.Parametros.Queries;
 /// <param name="PodeEditar">O usuário atual pode editar/excluir este item (admin+global ou assessor+seu custom).</param>
 public record ParamItemDto(
     int Id, string Nome, string? Icone, int Ordem, bool Ativo, bool IsSystem,
-    Guid? AssessorId, bool Oculto, bool PodeEditar);
+    Guid? AssessorId, bool Oculto, bool PodeEditar, bool Exterior = false);
 
 // ── Tipos de Ativo ────────────────────────────────────────────────────────
 
@@ -73,14 +73,14 @@ public class GetTiposInvestimentoQueryHandler(
         if (currentUser.IsAdmin)
         {
             var globais = await repo.GetGlobaisAsync(ct);
-            return globais.Select(x => new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, false, true)).ToList();
+            return globais.Select(x => new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, false, true, x.Exterior)).ToList();
         }
 
         var owner = await ownerResolver.ResolveOwnerAsync(ct);
         if (owner is null)
         {
             var globais = await repo.GetGlobaisAsync(ct);
-            return globais.Select(x => new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, false, false)).ToList();
+            return globais.Select(x => new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, false, false, x.Exterior)).ToList();
         }
 
         var todos      = await repo.GetGlobaisEDoAssessorAsync(owner.Value, ct);
@@ -93,7 +93,7 @@ public class GetTiposInvestimentoQueryHandler(
             var isGlobal = x.AssessorId is null;
             var oculto   = isGlobal && ocultosIds.Contains(x.Id);
             if (!ehDono && oculto) continue;
-            res.Add(new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, oculto, ehDono && !isGlobal));
+            res.Add(new ParamItemDto(x.Id, x.Nome, x.Icone, x.Ordem, x.Ativo, x.IsSystem, x.AssessorId, oculto, ehDono && !isGlobal, x.Exterior));
         }
         return res;
     }

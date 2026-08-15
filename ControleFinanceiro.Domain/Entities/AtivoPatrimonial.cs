@@ -64,4 +64,11 @@ public class AtivoPatrimonial
         EstruturaId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
+
+    /// <summary>Vincula o bem a uma estrutura (a partir da tela da estrutura).</summary>
+    public void VincularEstrutura(Guid estruturaId)
+    {
+        EstruturaId = estruturaId;
+        AtualizadoEm = DateTime.UtcNow;
+    }
 }

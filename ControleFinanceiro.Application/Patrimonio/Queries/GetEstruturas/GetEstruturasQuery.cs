@@ -31,14 +31,18 @@ public record ParticipacaoDto(
 public record BeneficiarioGrafoDto(
     Guid Id, string Nome, int Papel, decimal PercentualDistribuicao, string? CondicaoLiberacao);
 
+/// <summary>Item (ativo/investimento/conta) que está solto em pessoa física, fora de qualquer estrutura.</summary>
+public record ItemIsoladoDto(string Tipo, Guid Id, string Nome, decimal ValorBRL);
+
 public record GrafoEstruturasDto(
     decimal TotalEmEstruturasBRL,
     decimal TotalPessoaFisicaBRL,
     IReadOnlyList<EstruturaDto> Estruturas,
     IReadOnlyList<ParticipacaoDto> Participacoes,
-    IReadOnlyList<BeneficiarioGrafoDto> Beneficiarios)
+    IReadOnlyList<BeneficiarioGrafoDto> Beneficiarios,
+    IReadOnlyList<ItemIsoladoDto> Isolados)
 {
-    public GrafoEstruturasDto() : this(0m, 0m, [], [], []) { }
+    public GrafoEstruturasDto() : this(0m, 0m, [], [], [], []) { }
 }
 
 public record GetEstruturasQuery : IRequest<GrafoEstruturasDto>;
@@ -130,7 +134,17 @@ public class GetEstruturasQueryHandler(
             .Select(b => new BeneficiarioGrafoDto(b.Id, b.Nome, (int)b.Papel, b.PercentualDistribuicao, b.CondicaoLiberacao))
             .ToList();
 
+        // Itens soltos em pessoa física (fora de estruturas) — expõe a "desorganização" pro cliente.
+        var isolados = new List<ItemIsoladoDto>();
+        isolados.AddRange(ativos.Where(a => !a.EstruturaId.HasValue)
+            .Select(a => new ItemIsoladoDto("ativo", a.Id, a.Nome, Math.Round(ParaBRL(a.ValorAtual, a.Moeda), 2))));
+        isolados.AddRange(investimentos.Where(i => !i.EstruturaId.HasValue)
+            .Select(i => new ItemIsoladoDto("investimento", i.Id, i.Nome, Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2))));
+        isolados.AddRange(contasCaixa.Where(c => !c.EstruturaId.HasValue)
+            .Select(c => new ItemIsoladoDto("conta", c.Id, c.Nome, Math.Round(ParaBRL(c.Saldo, c.Moeda), 2))));
+        isolados = isolados.Where(x => x.ValorBRL > 0).OrderByDescending(x => x.ValorBRL).ToList();
+
         return new GrafoEstruturasDto(
-            Math.Round(totalEstruturas, 2), Math.Round(totalPF, 2), dtos, partDtos, beneficiarios);
+            Math.Round(totalEstruturas, 2), Math.Round(totalPF, 2), dtos, partDtos, beneficiarios, isolados);
     }
 }

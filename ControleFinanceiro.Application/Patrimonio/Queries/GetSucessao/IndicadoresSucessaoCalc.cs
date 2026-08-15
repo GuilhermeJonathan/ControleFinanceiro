@@ -41,7 +41,11 @@ public static class IndicadoresSucessaoCalc
             checks.Add(comJurisdicao);
         var internacionais = contas.Contas.Where(c => c.Tipo == 3).ToList();
         if (internacionais.Count > 0)
+        {
             checks.Add(Pct(internacionais.Count(c => !string.IsNullOrWhiteSpace(c.Pais) && !string.IsNullOrWhiteSpace(c.Identificador)), internacionais.Count));
+            // Sucessão resolvida nas contas internacionais (carta de sucessão da jurisdição).
+            checks.Add(Pct(internacionais.Count(c => c.SucessaoResolvida), internacionais.Count));
+        }
 
         var conformidade = checks.Count > 0 ? (int)Math.Round(checks.Average()) : 0;
 

@@ -82,6 +82,13 @@ public class Investimento
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    /// <summary>Vincula o investimento a uma estrutura (a partir da tela da estrutura).</summary>
+    public void VincularEstrutura(Guid estruturaId)
+    {
+        EstruturaId = estruturaId;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
     /// <summary>Solta o investimento da conta de custódia — usado ao excluir a conta.</summary>
     public void DesvincularConta()
     {

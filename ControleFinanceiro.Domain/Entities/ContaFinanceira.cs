@@ -33,6 +33,12 @@ public class ContaFinanceira
     public decimal? LombardUtilizado { get; private set; }
     /// <summary>Status livre. Ex.: "Ativa", "Pré-aprovada", "Em revisão".</summary>
     public string? Status { get; private set; }
+    /// <summary>
+    /// Sucessão resolvida — só faz sentido em contas internacionais (jurisdição com carta de
+    /// sucessão, ex.: Domínio/Suíça). true = beneficiários já definidos, patrimônio protegido.
+    /// Conta nacional entra em inventário → sempre não-resolvida.
+    /// </summary>
+    public bool SucessaoResolvida { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -41,7 +47,8 @@ public class ContaFinanceira
     public ContaFinanceira(
         Guid usuarioId, string nome, TipoContaFinanceira tipo, MoedaPatrimonio moeda, decimal saldo,
         string? instituicao = null, string? pais = null, string? identificador = null, Guid? estruturaId = null,
-        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null)
+        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null,
+        bool sucessaoResolvida = false)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -56,11 +63,13 @@ public class ContaFinanceira
         LombardLimite = lombardLimite;
         LombardUtilizado = lombardUtilizado;
         Status = status;
+        SucessaoResolvida = sucessaoResolvida;
     }
 
     public void Atualizar(string nome, TipoContaFinanceira tipo, MoedaPatrimonio moeda, decimal saldo,
         string? instituicao, string? pais, string? identificador, Guid? estruturaId,
-        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null)
+        decimal? valorPortfolio = null, decimal? lombardLimite = null, decimal? lombardUtilizado = null, string? status = null,
+        bool sucessaoResolvida = false)
     {
         Nome = nome;
         Tipo = tipo;
@@ -74,6 +83,7 @@ public class ContaFinanceira
         LombardLimite = lombardLimite;
         LombardUtilizado = lombardUtilizado;
         Status = status;
+        SucessaoResolvida = sucessaoResolvida;
         AtualizadoEm = DateTime.UtcNow;
     }
 
@@ -81,6 +91,13 @@ public class ContaFinanceira
     public void DesvincularEstrutura()
     {
         EstruturaId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Vincula a conta a uma estrutura (a partir da tela da estrutura).</summary>
+    public void VincularEstrutura(Guid estruturaId)
+    {
+        EstruturaId = estruturaId;
         AtualizadoEm = DateTime.UtcNow;
     }
 }

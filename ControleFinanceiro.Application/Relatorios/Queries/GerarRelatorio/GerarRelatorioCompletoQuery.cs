@@ -26,7 +26,7 @@ public class GerarRelatorioCompletoQueryHandler(
     public async Task<byte[]> Handle(GerarRelatorioCompletoQuery request, CancellationToken ct)
     {
         var nome = string.IsNullOrWhiteSpace(request.ClienteNome) ? "Cliente" : request.ClienteNome!;
-        var assessor = currentUser.RealUserName ?? "Assessor";
+        var assessor = string.IsNullOrWhiteSpace(currentUser.RealUserName) ? "Assessor" : currentUser.RealUserName!;
         var geradoEm = DateTime.UtcNow;
 
         // ── Patrimonial ──
@@ -64,7 +64,11 @@ public class GerarRelatorioCompletoQueryHandler(
         // Marca (consultoria autoritativa; request é fallback).
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, ct);
         var branding = config is not null
-            ? new RelatorioBranding(config.NomeConsultoria, config.LogoBase64, config.CorMarca, config.MensagemRodape)
+            ? new RelatorioBranding(
+                string.IsNullOrWhiteSpace(config.NomeConsultoria) ? request.Branding.NomeConsultoria : config.NomeConsultoria,
+                config.LogoBase64 ?? request.Branding.LogoBase64,
+                config.CorMarca ?? request.Branding.CorMarca,
+                config.MensagemRodape ?? request.Branding.MensagemRodape)
             : request.Branding;
 
         return generator.Gerar(patrimonial, sucessao, branding);

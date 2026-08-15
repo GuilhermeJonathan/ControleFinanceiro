@@ -81,6 +81,7 @@ public static class DependencyInjection
         services.AddHttpClient<ILoginProvisionClient, LoginProvisionClient>();
         services.AddHttpClient<ICurrencyRateService, AwesomeApiCurrencyRateService>();
         services.AddHttpClient<IAssetPriceService, BrapiAssetPriceService>();
+        services.AddHttpClient<IExteriorAssetPriceService, YahooAssetPriceService>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioPatrimonialGenerator, RelatorioPatrimonialGenerator>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioSucessaoGenerator, RelatorioSucessaoGenerator>();
         services.AddScoped<ControleFinanceiro.Application.Relatorios.IRelatorioCompletoGenerator, RelatorioCompletoGenerator>();

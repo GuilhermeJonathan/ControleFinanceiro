@@ -43,7 +43,8 @@ public record PassivoPatrimonialRequest(
     decimal Valor,
     PrazoDivida Prazo,
     decimal? TaxaJurosAnualPct,
-    int? PrazoMeses);
+    int? PrazoMeses,
+    Guid? AtivoVinculadoId = null);
 
 /// <summary>
 /// Módulo de gestão patrimonial (B2B alta renda). Bounded context isolado.
@@ -150,7 +151,7 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
 
         var id = await mediator.Send(
             new CreatePassivoPatrimonialCommand(request.Nome, moeda, request.Valor, request.Prazo,
-                request.TaxaJurosAnualPct, request.PrazoMeses),
+                request.TaxaJurosAnualPct, request.PrazoMeses, request.AtivoVinculadoId),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetResumo), new { }, new { id });
@@ -165,7 +166,7 @@ public class PatrimonioController(IMediator mediator) : ControllerBase
 
         await mediator.Send(
             new UpdatePassivoPatrimonialCommand(id, request.Nome, moeda, request.Valor, request.Prazo,
-                request.TaxaJurosAnualPct, request.PrazoMeses),
+                request.TaxaJurosAnualPct, request.PrazoMeses, request.AtivoVinculadoId),
             cancellationToken);
 
         return NoContent();

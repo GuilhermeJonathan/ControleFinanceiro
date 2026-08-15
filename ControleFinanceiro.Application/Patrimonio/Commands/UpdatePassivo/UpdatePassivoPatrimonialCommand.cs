@@ -13,7 +13,8 @@ public record UpdatePassivoPatrimonialCommand(
     decimal Valor,
     PrazoDivida Prazo,
     decimal? TaxaJurosAnualPct = null,
-    int? PrazoMeses = null) : IRequest;
+    int? PrazoMeses = null,
+    Guid? AtivoVinculadoId = null) : IRequest;
 
 public class UpdatePassivoPatrimonialCommandHandler(
     IPassivoPatrimonialRepository repository,
@@ -30,7 +31,7 @@ public class UpdatePassivoPatrimonialCommandHandler(
             throw new UnauthorizedAccessException("Acesso negado ao passivo.");
 
         passivo.Atualizar(request.Nome, request.Moeda, request.Valor, request.Prazo,
-            request.TaxaJurosAnualPct, request.PrazoMeses);
+            request.TaxaJurosAnualPct, request.PrazoMeses, request.AtivoVinculadoId);
         repository.Update(passivo);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

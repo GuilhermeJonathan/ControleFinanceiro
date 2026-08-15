@@ -49,6 +49,61 @@ public class SaveEstruturaCommandHandler(
     }
 }
 
+// ── Vincular/desvincular item (ativo/investimento/conta) a uma estrutura ──────
+// Permite, a partir da tela da estrutura, puxar itens já cadastrados e associá-los.
+
+public enum TipoItemPatrimonial { Ativo = 1, Investimento = 2, Conta = 3 }
+
+public record VincularItemEstruturaCommand(Guid EstruturaId, TipoItemPatrimonial Tipo, Guid ItemId, bool Vincular = true) : IRequest;
+
+public class VincularItemEstruturaCommandHandler(
+    IEstruturaRepository estruturaRepo,
+    IAtivoPatrimonialRepository ativoRepo,
+    IInvestimentoRepository investimentoRepo,
+    IContaFinanceiraRepository contaRepo,
+    ICurrentUser currentUser,
+    IUnitOfWork uow)
+    : IRequestHandler<VincularItemEstruturaCommand>
+{
+    public async Task Handle(VincularItemEstruturaCommand request, CancellationToken ct)
+    {
+        var est = await estruturaRepo.GetByIdAsync(request.EstruturaId, ct)
+            ?? throw new KeyNotFoundException("Estrutura não encontrada.");
+        if (est.UsuarioId != currentUser.UserId)
+            throw new UnauthorizedAccessException("Acesso negado à estrutura.");
+
+        switch (request.Tipo)
+        {
+            case TipoItemPatrimonial.Ativo:
+            {
+                var a = await ativoRepo.GetByIdAsync(request.ItemId, ct)
+                    ?? throw new KeyNotFoundException("Ativo não encontrado.");
+                if (a.UsuarioId != currentUser.UserId) throw new UnauthorizedAccessException("Acesso negado ao ativo.");
+                if (request.Vincular) a.VincularEstrutura(est.Id); else a.DesvincularEstrutura();
+                break;
+            }
+            case TipoItemPatrimonial.Investimento:
+            {
+                var i = await investimentoRepo.GetByIdAsync(request.ItemId, ct)
+                    ?? throw new KeyNotFoundException("Investimento não encontrado.");
+                if (i.UsuarioId != currentUser.UserId) throw new UnauthorizedAccessException("Acesso negado ao investimento.");
+                if (request.Vincular) i.VincularEstrutura(est.Id); else i.DesvincularEstrutura();
+                break;
+            }
+            case TipoItemPatrimonial.Conta:
+            {
+                var c = await contaRepo.GetByIdAsync(request.ItemId, ct)
+                    ?? throw new KeyNotFoundException("Conta não encontrada.");
+                if (c.UsuarioId != currentUser.UserId) throw new UnauthorizedAccessException("Acesso negado à conta.");
+                if (request.Vincular) c.VincularEstrutura(est.Id); else c.DesvincularEstrutura();
+                break;
+            }
+        }
+
+        await uow.SaveChangesAsync(ct);
+    }
+}
+
 // ── Delete Estrutura ─────────────────────────────────────────────────────────
 // Remove a estrutura + suas participações; ativos/investimentos voltam para pessoa física.
 

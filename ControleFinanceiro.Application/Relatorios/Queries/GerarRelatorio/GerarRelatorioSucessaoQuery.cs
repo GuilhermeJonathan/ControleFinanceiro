@@ -32,7 +32,7 @@ public class GerarRelatorioSucessaoQueryHandler(
 
         var dados = new RelatorioSucessaoDados(
             ClienteNome: string.IsNullOrWhiteSpace(request.ClienteNome) ? "Cliente" : request.ClienteNome!,
-            AssessorNome: currentUser.RealUserName ?? "Assessor",
+            AssessorNome: string.IsNullOrWhiteSpace(currentUser.RealUserName) ? "Assessor" : currentUser.RealUserName!,
             GeradoEm: DateTime.UtcNow,
             Grafo: grafo,
             Sucessao: sucessao,
@@ -41,8 +41,13 @@ public class GerarRelatorioSucessaoQueryHandler(
             Indicadores: indicadores);
 
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, ct);
+        // Marca da consultoria; se o nome estiver em branco, cai para o nome que veio do app (assessor).
         var branding = config is not null
-            ? new RelatorioBranding(config.NomeConsultoria, config.LogoBase64, config.CorMarca, config.MensagemRodape)
+            ? new RelatorioBranding(
+                string.IsNullOrWhiteSpace(config.NomeConsultoria) ? request.Branding.NomeConsultoria : config.NomeConsultoria,
+                config.LogoBase64 ?? request.Branding.LogoBase64,
+                config.CorMarca ?? request.Branding.CorMarca,
+                config.MensagemRodape ?? request.Branding.MensagemRodape)
             : request.Branding;
 
         return generator.Gerar(dados, branding);

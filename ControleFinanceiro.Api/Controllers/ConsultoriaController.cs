@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Consultoria.Commands.SaveConsultoriaConfig;
+using ControleFinanceiro.Application.Consultoria.Queries.GetConsultoriaBranding;
 using ControleFinanceiro.Application.Consultoria.Queries.GetConsultoriaConfig;
 using ControleFinanceiro.Application.Consultoria.Queries.GetConsultoriaLogo;
 using MediatR;
@@ -46,5 +47,30 @@ public class ConsultoriaController(IMediator mediator) : ControllerBase
         if (logo is null) return NotFound();
         Response.Headers.CacheControl = "public, max-age=3600";
         return File(logo.Bytes, logo.ContentType);
+    }
+
+    /// <summary>
+    /// Público: marca da consultoria (nome, cor, se tem logo) para o login whitelabel
+    /// (`/login?a={assessorId}`). O logo em si é servido pelo endpoint acima.
+    /// </summary>
+    [HttpGet("{assessorId:guid}/branding")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Branding(Guid assessorId, CancellationToken cancellationToken)
+    {
+        var b = await mediator.Send(new GetConsultoriaBrandingQuery(assessorId), cancellationToken);
+        if (b is null) return NotFound();
+        Response.Headers.CacheControl = "public, max-age=600";
+        return Ok(b);
+    }
+
+    /// <summary>Público: marca da consultoria pela ROTA/slug (login whitelabel `/login?a={slug}`).</summary>
+    [HttpGet("by-slug/{slug}/branding")]
+    [AllowAnonymous]
+    public async Task<IActionResult> BrandingBySlug(string slug, CancellationToken cancellationToken)
+    {
+        var b = await mediator.Send(new GetConsultoriaBrandingBySlugQuery(slug), cancellationToken);
+        if (b is null) return NotFound();
+        Response.Headers.CacheControl = "public, max-age=600";
+        return Ok(b);
     }
 }

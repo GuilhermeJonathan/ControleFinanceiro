@@ -107,6 +107,39 @@ public class RelatorioSucessaoGenerator : IRelatorioSucessaoGenerator
                         col.Item().Element(c => Secao(c, "Estrutura Patrimonial Lógica", inner =>
                             inner.Svg(GrafoSvg(d.Grafo))));
 
+                    // 2b) Composição do patrimônio (por estrutura + pessoa física)
+                    var comp = d.Grafo.Estruturas
+                        .Where(e => e.ValorDiretoBRL > 0)
+                        .Select(e => (Label: e.Nome, Valor: e.ValorDiretoBRL))
+                        .ToList();
+                    if (d.Grafo.TotalPessoaFisicaBRL > 0)
+                        comp.Add((Label: "Pessoa física", Valor: d.Grafo.TotalPessoaFisicaBRL));
+                    var totalComp = comp.Sum(x => x.Valor);
+                    if (comp.Count > 1 && totalComp > 0)
+                        col.Item().Element(c => Secao(c, "Composição do patrimônio", inner =>
+                        {
+                            inner.Row(row =>
+                            {
+                                row.ConstantItem(170).AlignMiddle().Svg(DonutSvg(comp.Select(x => (double)x.Valor).ToList()));
+                                row.RelativeItem().AlignMiddle().Column(lg =>
+                                {
+                                    lg.Spacing(5);
+                                    for (var i = 0; i < comp.Count; i++)
+                                    {
+                                        var sl = comp[i];
+                                        var pct = sl.Valor / totalComp * 100;
+                                        lg.Item().Row(r =>
+                                        {
+                                            r.ConstantItem(12).AlignMiddle().Height(12).Background(Paleta[i % Paleta.Length]);
+                                            r.RelativeItem().PaddingLeft(6).Text(sl.Label);
+                                            r.ConstantItem(90).AlignRight().Text($"{Money(sl.Valor)}");
+                                            r.ConstantItem(46).AlignRight().Text($"{pct.ToString("0", Pt)}%").Bold();
+                                        });
+                                    }
+                                });
+                            });
+                        }));
+
                     // 3) Planejado × Distribuído
                     if (benef.Any())
                         col.Item().Element(c => Secao(c, "Planejado × Distribuído", inner =>

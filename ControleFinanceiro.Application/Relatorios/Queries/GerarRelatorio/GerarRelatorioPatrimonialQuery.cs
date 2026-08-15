@@ -50,7 +50,7 @@ public class GerarRelatorioPatrimonialQueryHandler(
 
         var dados = new RelatorioPatrimonialDados(
             ClienteNome: string.IsNullOrWhiteSpace(request.ClienteNome) ? "Cliente" : request.ClienteNome!,
-            AssessorNome: currentUser.RealUserName ?? "Assessor",
+            AssessorNome: string.IsNullOrWhiteSpace(currentUser.RealUserName) ? "Assessor" : currentUser.RealUserName!,
             GeradoEm: DateTime.UtcNow,
             Resumo: resumo,
             Projecao: projecao,
@@ -59,9 +59,14 @@ public class GerarRelatorioPatrimonialQueryHandler(
             Planos: planos);
 
         // Marca vem da consultoria configurada pelo assessor (autoritativa); o request é fallback.
+        // Se o nome da consultoria estiver em branco, usa o nome que veio do app (evita cabeçalho vazio).
         var config = await consultoriaRepository.GetByUsuarioAsync(currentUser.RealUserId, cancellationToken);
         var branding = config is not null
-            ? new RelatorioBranding(config.NomeConsultoria, config.LogoBase64, config.CorMarca, config.MensagemRodape)
+            ? new RelatorioBranding(
+                string.IsNullOrWhiteSpace(config.NomeConsultoria) ? request.Branding.NomeConsultoria : config.NomeConsultoria,
+                config.LogoBase64 ?? request.Branding.LogoBase64,
+                config.CorMarca ?? request.Branding.CorMarca,
+                config.MensagemRodape ?? request.Branding.MensagemRodape)
             : request.Branding;
 
         return generator.Gerar(dados, branding);

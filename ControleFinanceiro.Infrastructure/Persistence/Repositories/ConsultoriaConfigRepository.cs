@@ -9,6 +9,9 @@ public class ConsultoriaConfigRepository(AppDbContext db) : IConsultoriaConfigRe
     public Task<ConsultoriaConfig?> GetByUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
         db.ConsultoriaConfigs.FirstOrDefaultAsync(c => c.UsuarioId == usuarioId, ct);
 
+    public Task<ConsultoriaConfig?> GetBySlugAsync(string slug, CancellationToken ct = default) =>
+        db.ConsultoriaConfigs.FirstOrDefaultAsync(c => c.Slug == slug, ct);
+
     public async Task AddAsync(ConsultoriaConfig config, CancellationToken ct = default) =>
         await db.ConsultoriaConfigs.AddAsync(config, ct);
 
