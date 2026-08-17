@@ -52,6 +52,9 @@ public record DeleteBeneficiarioCommand(Guid Id) : IRequest;
 
 public class DeleteBeneficiarioCommandHandler(
     IEstruturaRepository repo,
+    IAtivoPatrimonialRepository ativoRepo,
+    IInvestimentoRepository investimentoRepo,
+    IContaFinanceiraRepository contaRepo,
     ICurrentUser currentUser,
     IUnitOfWork uow)
     : IRequestHandler<DeleteBeneficiarioCommand>
@@ -62,6 +65,15 @@ public class DeleteBeneficiarioCommandHandler(
             ?? throw new KeyNotFoundException("Beneficiário não encontrado.");
         if (entity.UsuarioId != currentUser.UserId)
             throw new UnauthorizedAccessException("Acesso negado ao beneficiário.");
+
+        // Solta os bens que estavam atribuídos a este membro (voltam a "não atribuído").
+        foreach (var a in (await ativoRepo.GetByUsuarioAsync(currentUser.UserId, ct)).Where(x => x.BeneficiarioId == entity.Id))
+        { a.DesvincularBeneficiario(); ativoRepo.Update(a); }
+        foreach (var i in (await investimentoRepo.GetByUsuarioAsync(currentUser.UserId, ct)).Where(x => x.BeneficiarioId == entity.Id))
+        { i.DesvincularBeneficiario(); investimentoRepo.Update(i); }
+        // Contas são tracked em GetByUsuarioAsync → basta modificar (repo não tem Update).
+        foreach (var c in (await contaRepo.GetByUsuarioAsync(currentUser.UserId, ct)).Where(x => x.BeneficiarioId == entity.Id))
+        { c.DesvincularBeneficiario(); }
 
         repo.RemoveBeneficiario(entity);
         await uow.SaveChangesAsync(ct);

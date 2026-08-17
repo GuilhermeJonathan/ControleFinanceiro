@@ -55,6 +55,9 @@ public static class DependencyInjection
         services.AddScoped<IInvestimentoRepository, InvestimentoRepository>();
         services.AddScoped<IEstruturaRepository, EstruturaRepository>();
         services.AddScoped<IContaFinanceiraRepository, ContaFinanceiraRepository>();
+        services.AddScoped<IDocumentoRepository, DocumentoRepository>();
+        services.AddScoped<ITarefaDocumentoRepository, TarefaDocumentoRepository>();
+        services.AddSingleton<IArquivoStorage, SupabaseS3Storage>();
         services.AddScoped<IIndicadoresSucessaoRepository, IndicadoresSucessaoRepository>();
         services.AddScoped<ITipoAtivoParamRepository, TipoAtivoParamRepository>();
         services.AddScoped<ITipoInvestimentoParamRepository, TipoInvestimentoParamRepository>();

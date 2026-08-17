@@ -15,7 +15,8 @@ public record CreateAtivoPatrimonialCommand(
     decimal? ValorizacaoAnualPct,
     decimal ReceitaMensal = 0m,
     decimal DespesaMensal = 0m,
-    Guid? EstruturaId = null) : IRequest<Guid>;
+    Guid? EstruturaId = null,
+    Guid? BeneficiarioId = null) : IRequest<Guid>;
 
 public class CreateAtivoPatrimonialCommandHandler(
     IAtivoPatrimonialRepository repository,
@@ -34,7 +35,8 @@ public class CreateAtivoPatrimonialCommandHandler(
             request.ValorizacaoAnualPct,
             request.ReceitaMensal,
             request.DespesaMensal,
-            request.EstruturaId);
+            request.EstruturaId,
+            request.BeneficiarioId);
 
         await repository.AddAsync(ativo, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

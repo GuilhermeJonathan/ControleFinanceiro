@@ -24,7 +24,7 @@ public record IndicadoresSucessaoDto(
 public record GetIndicadoresSucessaoQuery : IRequest<IndicadoresSucessaoDto>;
 
 public class GetIndicadoresSucessaoQueryHandler(
-    IIndicadoresSucessaoRepository repo, IMediator mediator, ICurrentUser currentUser)
+    IIndicadoresSucessaoRepository repo, ITarefaDocumentoRepository tarefaRepo, IMediator mediator, ICurrentUser currentUser)
     : IRequestHandler<GetIndicadoresSucessaoQuery, IndicadoresSucessaoDto>
 {
     public async Task<IndicadoresSucessaoDto> Handle(GetIndicadoresSucessaoQuery request, CancellationToken ct)
@@ -33,8 +33,11 @@ public class GetIndicadoresSucessaoQueryHandler(
         var sucessao = await mediator.Send(new GetSucessaoQuery(), ct);
         var contas   = await mediator.Send(new GetContasQuery(), ct);
         var planos   = (await mediator.Send(new GetPlanosAcaoQuery(), ct)).ToList();
+        // Tarefas do cliente alimentam a conformidade (exigido × entregue).
+        var tarefas  = await tarefaRepo.GetByClienteAsync(currentUser.UserId, ct);
+        var tConcluidas = tarefas.Count(x => x.Status == StatusTarefaDocumento.Concluida);
 
-        var (govCalc, confCalc) = IndicadoresSucessaoCalc.Calcular(grafo, sucessao, contas, planos);
+        var (govCalc, confCalc) = IndicadoresSucessaoCalc.Calcular(grafo, sucessao, contas, planos, tarefas.Count, tConcluidas);
 
         var ind = await repo.GetByUsuarioAsync(currentUser.UserId, ct);
         var govOv = ind?.GovernancaScore;

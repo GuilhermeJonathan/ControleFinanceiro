@@ -22,6 +22,11 @@ public class AtivoPatrimonial
     public decimal DespesaMensal { get; private set; }
     /// <summary>Estrutura à qual o bem pertence (holding, trust…). null = pessoa física.</summary>
     public Guid? EstruturaId { get; private set; }
+    /// <summary>
+    /// Membro da família (Beneficiário) que detém o bem diretamente, quando NÃO há estrutura.
+    /// Mutuamente exclusivo com <see cref="EstruturaId"/>. null = não atribuído a ninguém específico.
+    /// </summary>
+    public Guid? BeneficiarioId { get; private set; }
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AtualizadoEm { get; private set; }
 
@@ -30,7 +35,8 @@ public class AtivoPatrimonial
     public AtivoPatrimonial(
         Guid usuarioId, string nome, TipoAtivo tipo, MoedaPatrimonio moeda,
         decimal valorAtual, decimal? valorizacaoAnualPct = null,
-        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null)
+        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null,
+        Guid? beneficiarioId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -41,11 +47,14 @@ public class AtivoPatrimonial
         ReceitaMensal = receitaMensal;
         DespesaMensal = despesaMensal;
         EstruturaId = estruturaId;
+        // Estrutura tem precedência: se pertence a uma estrutura, não fica também num membro.
+        BeneficiarioId = estruturaId != null ? null : beneficiarioId;
     }
 
     public void Atualizar(string nome, TipoAtivo tipo, MoedaPatrimonio moeda,
         decimal valorAtual, decimal? valorizacaoAnualPct,
-        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null)
+        decimal receitaMensal = 0m, decimal despesaMensal = 0m, Guid? estruturaId = null,
+        Guid? beneficiarioId = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -55,6 +64,7 @@ public class AtivoPatrimonial
         ReceitaMensal = receitaMensal;
         DespesaMensal = despesaMensal;
         EstruturaId = estruturaId;
+        BeneficiarioId = estruturaId != null ? null : beneficiarioId;
         AtualizadoEm = DateTime.UtcNow;
     }
 
@@ -65,10 +75,26 @@ public class AtivoPatrimonial
         AtualizadoEm = DateTime.UtcNow;
     }
 
-    /// <summary>Vincula o bem a uma estrutura (a partir da tela da estrutura).</summary>
+    /// <summary>Vincula o bem a uma estrutura (a partir da tela da estrutura). Limpa o vínculo com membro.</summary>
     public void VincularEstrutura(Guid estruturaId)
     {
         EstruturaId = estruturaId;
+        BeneficiarioId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Vincula o bem diretamente a um membro da família (Beneficiário). Limpa o vínculo com estrutura.</summary>
+    public void VincularBeneficiario(Guid beneficiarioId)
+    {
+        BeneficiarioId = beneficiarioId;
+        EstruturaId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta o bem do membro — usado ao excluir o beneficiário.</summary>
+    public void DesvincularBeneficiario()
+    {
+        BeneficiarioId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 }

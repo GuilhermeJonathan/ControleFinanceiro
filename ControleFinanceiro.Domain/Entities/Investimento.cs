@@ -21,6 +21,8 @@ public class Investimento
     public decimal? Quantidade { get; private set; }
     /// <summary>Estrutura à qual o investimento pertence (holding, offshore…). null = pessoa física.</summary>
     public Guid? EstruturaId { get; private set; }
+    /// <summary>Membro da família (Beneficiário) que detém o investimento quando NÃO há estrutura. Mutuamente exclusivo com EstruturaId.</summary>
+    public Guid? BeneficiarioId { get; private set; }
     /// <summary>Conta de investimento/custódia à qual o investimento está vinculado. null = solto.</summary>
     public Guid? ContaId { get; private set; }
     public decimal ValorAplicado { get; private set; }
@@ -38,7 +40,7 @@ public class Investimento
         Guid usuarioId, string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
         decimal? rentabilidadeAnualPct = null, decimal? quantidade = null, Guid? estruturaId = null,
-        Guid? contaId = null, string? subclasse = null)
+        Guid? contaId = null, string? subclasse = null, Guid? beneficiarioId = null)
     {
         UsuarioId = usuarioId;
         Nome = nome;
@@ -51,6 +53,7 @@ public class Investimento
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
+        BeneficiarioId = estruturaId != null ? null : beneficiarioId;
         ContaId = contaId;
         Subclasse = subclasse;
     }
@@ -58,7 +61,7 @@ public class Investimento
     public void Atualizar(string nome, TipoInvestimento tipo, MoedaPatrimonio moeda,
         string? corretora, string? ticker, decimal valorAplicado, decimal valorAtual,
         decimal? rentabilidadeAnualPct, decimal? quantidade = null, Guid? estruturaId = null,
-        Guid? contaId = null, string? subclasse = null)
+        Guid? contaId = null, string? subclasse = null, Guid? beneficiarioId = null)
     {
         Nome = nome;
         Tipo = tipo;
@@ -70,6 +73,7 @@ public class Investimento
         ValorAtual = valorAtual;
         RentabilidadeAnualPct = rentabilidadeAnualPct;
         EstruturaId = estruturaId;
+        BeneficiarioId = estruturaId != null ? null : beneficiarioId;
         ContaId = contaId;
         Subclasse = subclasse;
         AtualizadoEm = DateTime.UtcNow;
@@ -82,10 +86,26 @@ public class Investimento
         AtualizadoEm = DateTime.UtcNow;
     }
 
-    /// <summary>Vincula o investimento a uma estrutura (a partir da tela da estrutura).</summary>
+    /// <summary>Vincula o investimento a uma estrutura (a partir da tela da estrutura). Limpa o vínculo com membro.</summary>
     public void VincularEstrutura(Guid estruturaId)
     {
         EstruturaId = estruturaId;
+        BeneficiarioId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Vincula o investimento diretamente a um membro da família (Beneficiário). Limpa o vínculo com estrutura.</summary>
+    public void VincularBeneficiario(Guid beneficiarioId)
+    {
+        BeneficiarioId = beneficiarioId;
+        EstruturaId = null;
+        AtualizadoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>Solta o investimento do membro — usado ao excluir o beneficiário.</summary>
+    public void DesvincularBeneficiario()
+    {
+        BeneficiarioId = null;
         AtualizadoEm = DateTime.UtcNow;
     }
 

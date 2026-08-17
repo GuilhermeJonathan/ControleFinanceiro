@@ -29,10 +29,18 @@ public record ParticipacaoDto(
     int TipoRelacao);
 
 public record BeneficiarioGrafoDto(
-    Guid Id, string Nome, int Papel, decimal PercentualDistribuicao, string? CondicaoLiberacao);
+    Guid Id, string Nome, int Papel, decimal PercentualDistribuicao, string? CondicaoLiberacao,
+    /// <summary>Soma (BRL) dos bens atribuídos diretamente a este membro (fora de estrutura).</summary>
+    decimal ValorDiretoBRL = 0m,
+    int QtdItens = 0);
 
-/// <summary>Item (ativo/investimento/conta) que está solto em pessoa física, fora de qualquer estrutura.</summary>
-public record ItemIsoladoDto(string Tipo, Guid Id, string Nome, decimal ValorBRL);
+/// <summary>
+/// Item (ativo/investimento/conta) fora de estrutura. Pode estar atribuído a um membro da
+/// família (BeneficiarioId) ou totalmente solto (BeneficiarioId null = "não atribuído").
+/// </summary>
+public record ItemIsoladoDto(
+    string Tipo, Guid Id, string Nome, decimal ValorBRL,
+    Guid? BeneficiarioId = null, string? BeneficiarioNome = null);
 
 public record GrafoEstruturasDto(
     decimal TotalEmEstruturasBRL,
@@ -130,18 +138,33 @@ public class GetEstruturasQueryHandler(
         var partDtos = participacoes.Select(p => new ParticipacaoDto(
             p.Id, p.EstruturaPaiId, p.EstruturaFilhaId, p.PercentualParticipacao, (int)p.TipoRelacao)).ToList();
 
-        var beneficiarios = (await estruturaRepo.GetBeneficiariosByUsuarioAsync(userId, ct))
-            .Select(b => new BeneficiarioGrafoDto(b.Id, b.Nome, (int)b.Papel, b.PercentualDistribuicao, b.CondicaoLiberacao))
+        var beneEntities = (await estruturaRepo.GetBeneficiariosByUsuarioAsync(userId, ct)).ToList();
+        var beneNome = beneEntities.ToDictionary(b => b.Id, b => b.Nome);
+
+        // Valor atribuído por MEMBRO (bens fora de estrutura, com BeneficiarioId).
+        var valorMembro = beneEntities.ToDictionary(b => b.Id, _ => 0m);
+        var qtdMembro   = beneEntities.ToDictionary(b => b.Id, _ => 0);
+        foreach (var a in ativos.Where(a => a.BeneficiarioId.HasValue && valorMembro.ContainsKey(a.BeneficiarioId!.Value)))
+        { valorMembro[a.BeneficiarioId!.Value] += ParaBRL(a.ValorAtual, a.Moeda); qtdMembro[a.BeneficiarioId!.Value]++; }
+        foreach (var i in investimentos.Where(i => i.BeneficiarioId.HasValue && valorMembro.ContainsKey(i.BeneficiarioId!.Value)))
+        { valorMembro[i.BeneficiarioId!.Value] += ParaBRL(i.ValorAtual, i.Moeda); qtdMembro[i.BeneficiarioId!.Value]++; }
+        foreach (var c in contasCaixa.Where(c => c.BeneficiarioId.HasValue && valorMembro.ContainsKey(c.BeneficiarioId!.Value)))
+        { valorMembro[c.BeneficiarioId!.Value] += ParaBRL(c.Saldo, c.Moeda); qtdMembro[c.BeneficiarioId!.Value]++; }
+
+        var beneficiarios = beneEntities
+            .Select(b => new BeneficiarioGrafoDto(b.Id, b.Nome, (int)b.Papel, b.PercentualDistribuicao, b.CondicaoLiberacao,
+                Math.Round(valorMembro[b.Id], 2), qtdMembro[b.Id]))
             .ToList();
 
-        // Itens soltos em pessoa física (fora de estruturas) — expõe a "desorganização" pro cliente.
+        // Itens fora de estrutura — expõe a "desorganização". Cada um pode estar atribuído a um membro.
+        string? NomeMembro(Guid? bid) => bid.HasValue ? beneNome.GetValueOrDefault(bid.Value) : null;
         var isolados = new List<ItemIsoladoDto>();
         isolados.AddRange(ativos.Where(a => !a.EstruturaId.HasValue)
-            .Select(a => new ItemIsoladoDto("ativo", a.Id, a.Nome, Math.Round(ParaBRL(a.ValorAtual, a.Moeda), 2))));
+            .Select(a => new ItemIsoladoDto("ativo", a.Id, a.Nome, Math.Round(ParaBRL(a.ValorAtual, a.Moeda), 2), a.BeneficiarioId, NomeMembro(a.BeneficiarioId))));
         isolados.AddRange(investimentos.Where(i => !i.EstruturaId.HasValue)
-            .Select(i => new ItemIsoladoDto("investimento", i.Id, i.Nome, Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2))));
+            .Select(i => new ItemIsoladoDto("investimento", i.Id, i.Nome, Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2), i.BeneficiarioId, NomeMembro(i.BeneficiarioId))));
         isolados.AddRange(contasCaixa.Where(c => !c.EstruturaId.HasValue)
-            .Select(c => new ItemIsoladoDto("conta", c.Id, c.Nome, Math.Round(ParaBRL(c.Saldo, c.Moeda), 2))));
+            .Select(c => new ItemIsoladoDto("conta", c.Id, c.Nome, Math.Round(ParaBRL(c.Saldo, c.Moeda), 2), c.BeneficiarioId, NomeMembro(c.BeneficiarioId))));
         isolados = isolados.Where(x => x.ValorBRL > 0).OrderByDescending(x => x.ValorBRL).ToList();
 
         return new GrafoEstruturasDto(

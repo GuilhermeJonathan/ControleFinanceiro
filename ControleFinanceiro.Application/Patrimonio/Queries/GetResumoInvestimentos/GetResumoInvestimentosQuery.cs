@@ -23,7 +23,8 @@ public record InvestimentoResumoDto(
     Guid? EstruturaId,
     Guid? ContaId,
     decimal RetornoTotalPct,      // acumulado = (atual - aplicado) / aplicado
-    decimal? RetornoAnualPct);    // anualizado (rentab. anual informada, ou derivado do período)
+    decimal? RetornoAnualPct,     // anualizado (rentab. anual informada, ou derivado do período)
+    Guid? BeneficiarioId = null); // membro da família que detém (quando fora de estrutura)
 
 public record TotalInvestPorMoedaDto(string Moeda, decimal TotalAplicado, decimal TotalAtual, int Quantidade);
 
@@ -88,7 +89,7 @@ public class GetResumoInvestimentosQueryHandler(
                 Math.Round(ParaBRL(i.ValorAplicado, i.Moeda), 2),
                 Math.Round(ParaBRL(i.ValorAtual, i.Moeda), 2),
                 i.ValorAtualizadoEm, i.Quantidade, i.EstruturaId, i.ContaId,
-                retTotal, retAnual);
+                retTotal, retAnual, i.BeneficiarioId);
         }).ToList();
 
         // Retorno total anualizado do portfólio = média dos anuais ponderada pelo valor atual (BRL).

@@ -79,6 +79,22 @@ public static class ConviteEmailBuilder
             {Botao("Responder", link, cor)}
             """);
 
+    // ── Tarefa (assessor pede uma ação ao cliente) ──────────────────────────────
+
+    public static string CorpoTarefa(string marca, string cor, string? logo,
+        string nomeCliente, string titulo, string? descricao, string link) =>
+        Wrap(marca, cor, logo, $"""
+            <p style="font-size:18px;font-weight:700;color:#f1f5f9;margin:0 0 8px">Olá, {Esc(nomeCliente)}!</p>
+            <p style="color:#94a3b8;line-height:1.6;margin:0">
+              <strong style="color:#e2e8f0">{Esc(marca)}</strong> pediu uma ação para você:
+            </p>
+            <div style="background:#1e293b;border-radius:10px;padding:16px;margin:20px 0">
+              <p style="color:#e2e8f0;font-size:15px;font-weight:700;line-height:1.5;margin:0">📋 {Esc(titulo)}</p>
+              {(string.IsNullOrWhiteSpace(descricao) ? "" : $"<p style=\"color:#94a3b8;font-size:14px;line-height:1.6;margin:8px 0 0\">{Esc(descricao!)}</p>")}
+            </div>
+            {Botao("Abrir no app", link, cor)}
+            """);
+
     // ── Resumo mensal ──────────────────────────────────────────────────────────
 
     public static string CorpoRelatorioMensal(string marca, string cor, string? logo,

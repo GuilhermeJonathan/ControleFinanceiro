@@ -10,7 +10,7 @@ public record ContaDto(
     decimal Saldo, string? Identificador, Guid? EstruturaId, string? EstruturaNome,
     decimal ValorBRL, int QtdInvestimentos, bool AgregaInvestimentos,
     decimal? ValorPortfolio, decimal? LombardLimite, decimal? LombardUtilizado, decimal? LombardDisponivel, string? Status,
-    bool Internacional, bool SucessaoResolvida);
+    bool Internacional, bool SucessaoResolvida, Guid? BeneficiarioId = null);
 
 public record ContasResultDto(IReadOnlyList<ContaDto> Contas, decimal TotalBRL);
 
@@ -61,7 +61,7 @@ public class GetContasQueryHandler(
                 c.EstruturaId.HasValue && nomeEstrutura.TryGetValue(c.EstruturaId.Value, out var ne) ? ne : null,
                 Math.Round(valorBRL, 2), ligados.Count, agrega,
                 c.ValorPortfolio, c.LombardLimite, c.LombardUtilizado, lombardDisp, c.Status,
-                internacional, internacional && c.SucessaoResolvida));
+                internacional, internacional && c.SucessaoResolvida, c.BeneficiarioId));
         }
 
         return new ContasResultDto(

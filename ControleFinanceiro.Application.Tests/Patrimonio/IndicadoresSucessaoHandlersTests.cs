@@ -15,6 +15,7 @@ namespace ControleFinanceiro.Application.Tests.Patrimonio;
 public class IndicadoresSucessaoHandlersTests
 {
     private readonly Mock<IIndicadoresSucessaoRepository> _repo = new();
+    private readonly Mock<ITarefaDocumentoRepository> _tarefaRepo = new();
     private readonly Mock<IMediator> _mediator = new();
     private readonly Mock<ICurrentUser> _user = new();
     private readonly Mock<IUnitOfWork> _uow = new();
@@ -23,6 +24,7 @@ public class IndicadoresSucessaoHandlersTests
     public IndicadoresSucessaoHandlersTests()
     {
         _user.Setup(u => u.UserId).Returns(UserId);
+        _tarefaRepo.Setup(r => r.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<TarefaDocumento>());
         _mediator.Setup(m => m.Send(It.IsAny<GetEstruturasQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GrafoEstruturasDto());
         _mediator.Setup(m => m.Send(It.IsAny<GetSucessaoQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(new SucessaoDto());
         _mediator.Setup(m => m.Send(It.IsAny<GetContasQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ContasResultDto([], 0m));
@@ -33,7 +35,7 @@ public class IndicadoresSucessaoHandlersTests
     public async Task Get_SemRegistro_UsaCalculado()
     {
         _repo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync((IndicadoresSucessao?)null);
-        var h = new GetIndicadoresSucessaoQueryHandler(_repo.Object, _mediator.Object, _user.Object);
+        var h = new GetIndicadoresSucessaoQueryHandler(_repo.Object, _tarefaRepo.Object, _mediator.Object, _user.Object);
 
         var r = await h.Handle(new GetIndicadoresSucessaoQuery(), CancellationToken.None);
 
@@ -45,7 +47,7 @@ public class IndicadoresSucessaoHandlersTests
     public async Task Get_ComOverride_UsaOverride()
     {
         _repo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new IndicadoresSucessao(UserId, 88, 77));
-        var h = new GetIndicadoresSucessaoQueryHandler(_repo.Object, _mediator.Object, _user.Object);
+        var h = new GetIndicadoresSucessaoQueryHandler(_repo.Object, _tarefaRepo.Object, _mediator.Object, _user.Object);
 
         var r = await h.Handle(new GetIndicadoresSucessaoQuery(), CancellationToken.None);
 

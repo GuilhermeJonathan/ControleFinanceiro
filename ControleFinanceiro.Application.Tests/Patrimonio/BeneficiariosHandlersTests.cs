@@ -72,4 +72,50 @@ public class BeneficiariosHandlersTests
         cap.EstruturaId.Should().Be(EstId);
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task DeleteBeneficiario_DesvinculaBensAtribuidos()
+    {
+        var benId = Guid.NewGuid();
+        var ben = new Beneficiario(UserId, "Filho", PapelBeneficiario.Filho, 50m, null);
+        typeof(Beneficiario).GetProperty(nameof(Beneficiario.Id))!.SetValue(ben, benId);
+        _repo.Setup(r => r.GetBeneficiarioByIdAsync(benId, It.IsAny<CancellationToken>())).ReturnsAsync(ben);
+
+        var ativo = new AtivoPatrimonial(UserId, "Casa", TipoAtivo.Imovel, MoedaPatrimonio.BRL, 1000m);
+        ativo.VincularBeneficiario(benId);
+        var conta = new ContaFinanceira(UserId, "Corrente", TipoContaFinanceira.Corrente, MoedaPatrimonio.BRL, 500m);
+        conta.VincularBeneficiario(benId);
+
+        var ativoRepo = new Mock<IAtivoPatrimonialRepository>();
+        ativoRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { ativo });
+        var invRepo = new Mock<IInvestimentoRepository>();
+        invRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(Array.Empty<Investimento>());
+        var contaRepo = new Mock<IContaFinanceiraRepository>();
+        contaRepo.Setup(r => r.GetByUsuarioAsync(UserId, It.IsAny<CancellationToken>())).ReturnsAsync(new List<ContaFinanceira> { conta });
+
+        var h = new DeleteBeneficiarioCommandHandler(_repo.Object, ativoRepo.Object, invRepo.Object, contaRepo.Object, _user.Object, _uow.Object);
+        await h.Handle(new DeleteBeneficiarioCommand(benId), CancellationToken.None);
+
+        ativo.BeneficiarioId.Should().BeNull();
+        conta.BeneficiarioId.Should().BeNull();
+        ativoRepo.Verify(r => r.Update(ativo), Times.Once);
+        _repo.Verify(r => r.RemoveBeneficiario(ben), Times.Once);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteBeneficiario_NaoEncontrado_ShouldThrow_SemEfeitos()
+    {
+        _repo.Setup(r => r.GetBeneficiarioByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Beneficiario?)null);
+        var ativoRepo = new Mock<IAtivoPatrimonialRepository>();
+        var invRepo = new Mock<IInvestimentoRepository>();
+        var contaRepo = new Mock<IContaFinanceiraRepository>();
+
+        var h = new DeleteBeneficiarioCommandHandler(_repo.Object, ativoRepo.Object, invRepo.Object, contaRepo.Object, _user.Object, _uow.Object);
+        var act = () => h.Handle(new DeleteBeneficiarioCommand(Guid.NewGuid()), CancellationToken.None);
+
+        await act.Should().ThrowAsync<KeyNotFoundException>();
+        _repo.Verify(r => r.RemoveBeneficiario(It.IsAny<Beneficiario>()), Times.Never);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

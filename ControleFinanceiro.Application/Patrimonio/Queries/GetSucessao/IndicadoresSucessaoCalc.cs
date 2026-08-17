@@ -11,7 +11,8 @@ namespace ControleFinanceiro.Application.Patrimonio.Queries.GetSucessao;
 public static class IndicadoresSucessaoCalc
 {
     public static (int Governanca, int Conformidade) Calcular(
-        GrafoEstruturasDto grafo, SucessaoDto sucessao, ContasResultDto contas, IReadOnlyList<PlanoAcaoDto> planos)
+        GrafoEstruturasDto grafo, SucessaoDto sucessao, ContasResultDto contas, IReadOnlyList<PlanoAcaoDto> planos,
+        int tarefasTotal = 0, int tarefasConcluidas = 0)
     {
         var estruturas = grafo.Estruturas;
         var benef = sucessao.Beneficiarios;
@@ -46,6 +47,9 @@ public static class IndicadoresSucessaoCalc
             // Sucessão resolvida nas contas internacionais (carta de sucessão da jurisdição).
             checks.Add(Pct(internacionais.Count(c => c.SucessaoResolvida), internacionais.Count));
         }
+        // Docs/ações exigidos × entregues: proporção de tarefas concluídas (pedidas pelo assessor).
+        if (tarefasTotal > 0)
+            checks.Add(Pct(tarefasConcluidas, tarefasTotal));
 
         var conformidade = checks.Count > 0 ? (int)Math.Round(checks.Average()) : 0;
 

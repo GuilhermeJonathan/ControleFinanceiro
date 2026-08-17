@@ -19,7 +19,8 @@ public record UpdateInvestimentoCommand(
     decimal? Quantidade = null,
     Guid? EstruturaId = null,
     Guid? ContaId = null,
-    string? Subclasse = null) : IRequest;
+    string? Subclasse = null,
+    Guid? BeneficiarioId = null) : IRequest;
 
 public class UpdateInvestimentoCommandHandler(
     IInvestimentoRepository repository,
@@ -37,7 +38,7 @@ public class UpdateInvestimentoCommandHandler(
 
         inv.Atualizar(request.Nome, request.Tipo, request.Moeda, request.Corretora, request.Ticker,
             request.ValorAplicado, request.ValorAtual, request.RentabilidadeAnualPct, request.Quantidade,
-            request.EstruturaId, request.ContaId, request.Subclasse);
+            request.EstruturaId, request.ContaId, request.Subclasse, request.BeneficiarioId);
 
         repository.Update(inv);
         await unitOfWork.SaveChangesAsync(cancellationToken);

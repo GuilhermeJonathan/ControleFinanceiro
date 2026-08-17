@@ -23,7 +23,8 @@ public record SaveContaCommand(
     decimal? LombardLimite = null,
     decimal? LombardUtilizado = null,
     string? Status = null,
-    bool SucessaoResolvida = false) : IRequest<Guid>;
+    bool SucessaoResolvida = false,
+    Guid? BeneficiarioId = null) : IRequest<Guid>;
 
 public class SaveContaCommandHandler(
     IContaFinanceiraRepository repo,
@@ -56,7 +57,7 @@ public class SaveContaCommandHandler(
             existing.Atualizar(request.Nome.Trim(), request.Tipo, request.Moeda, request.Saldo,
                 request.Instituicao, request.Pais, request.Identificador, request.EstruturaId,
                 request.ValorPortfolio, request.LombardLimite, request.LombardUtilizado, request.Status,
-                request.SucessaoResolvida);
+                request.SucessaoResolvida, request.BeneficiarioId);
             await uow.SaveChangesAsync(ct);
             return existing.Id;
         }
@@ -64,7 +65,7 @@ public class SaveContaCommandHandler(
         var entity = new ContaFinanceira(currentUser.UserId, request.Nome.Trim(), request.Tipo,
             request.Moeda, request.Saldo, request.Instituicao, request.Pais, request.Identificador, request.EstruturaId,
             request.ValorPortfolio, request.LombardLimite, request.LombardUtilizado, request.Status,
-            request.SucessaoResolvida);
+            request.SucessaoResolvida, request.BeneficiarioId);
         await repo.AddAsync(entity, ct);
         await uow.SaveChangesAsync(ct);
         return entity.Id;

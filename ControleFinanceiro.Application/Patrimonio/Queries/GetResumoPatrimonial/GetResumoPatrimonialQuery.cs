@@ -19,7 +19,8 @@ public record AtivoResumoDto(
     decimal FluxoLiquidoMensal,
     decimal? RoiAnualPct,        // retorno total anual = yield + valorização
     decimal? YieldAnualPct,      // só o fluxo de caixa (receita − despesa) / valor
-    Guid? EstruturaId);          // estrutura à qual o bem pertence (null = pessoa física)
+    Guid? EstruturaId,           // estrutura à qual o bem pertence (null = pessoa física)
+    Guid? BeneficiarioId = null); // membro da família que detém (quando fora de estrutura)
 
 public record PassivoResumoDto(
     Guid Id,
@@ -162,7 +163,8 @@ public class GetResumoPatrimonialQueryHandler(
                 a.ReceitaMensal - a.DespesaMensal,
                 RetornoTotal(valorBRL, fluxoAnual, a.ValorizacaoAnualPct),
                 yieldPct,
-                a.EstruturaId);
+                a.EstruturaId,
+                a.BeneficiarioId);
         }).ToList();
 
         var patrimonioLiquido = totalBensBRL - totalDividasBRL;
