@@ -17,7 +17,9 @@ public record ClienteAssessoriaDto(
     string? Email,
     string? EmailConvidado,
     DateTime? ExpiraEm,
-    bool Expirado);
+    bool Expirado,
+    string? Telefone,
+    string? Observacoes);
 
 public record GetClientesAssessoriaQuery : IRequest<IEnumerable<ClienteAssessoriaDto>>;
 
@@ -48,7 +50,8 @@ public class GetClientesAssessoriaQueryHandler(
             resultado.Add(new ClienteAssessoriaDto(
                 v.Id, v.ClienteId, v.NomeCliente, v.CodigoConvite,
                 v.AceitoEm != null, v.Ativo, v.CriadoEm, v.AceitoEm, avatar,
-                email, v.EmailConvidado, v.ExpiraEm, v.Expirado));
+                email, v.EmailConvidado, v.ExpiraEm, v.Expirado,
+                v.Telefone, v.Observacoes));
         }
         return resultado;
     }

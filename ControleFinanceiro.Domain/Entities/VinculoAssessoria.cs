@@ -14,8 +14,10 @@ public class VinculoAssessoria
     public DateTime CriadoEm { get; private set; } = DateTime.UtcNow;
     public DateTime? AceitoEm { get; private set; }    // null = convite pendente
     public DateTime? RevogadoEm { get; private set; }  // preenchido = acesso encerrado
-    public string? NomeCliente { get; private set; }   // guardado no aceite para exibir na UI
+    public string? NomeCliente { get; private set; }   // guardado no aceite para exibir na UI (o assessor pode ajustar depois)
     public string? NomeAssessor { get; private set; }  // guardado na criação para exibir ao cliente
+    public string? Telefone { get; private set; }      // contato (WhatsApp) que o assessor mantém do cliente
+    public string? Observacoes { get; private set; }   // nota interna do assessor sobre o cliente (não visível ao cliente)
     public string? EmailConvidado { get; private set; } // preenchido quando o convite é enviado por e-mail
     public DateTime? ExpiraEm { get; private set; }      // convite pendente expira; null = sem expiração (legado)
     public DateTime? UltimoRelatorioMensalEm { get; private set; } // controle do e-mail mensal automático
@@ -46,6 +48,19 @@ public class VinculoAssessoria
         ClienteId = clienteId;
         NomeCliente = nomeCliente;
         AceitoEm = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Assessor ajusta os dados de contato que mantém do cliente: nome de exibição,
+    /// telefone/WhatsApp e uma nota interna. Não altera os dados de login do cliente.
+    /// </summary>
+    public void AtualizarContato(string? nomeCliente, string? telefone, string? observacoes)
+    {
+        static string? Limpar(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim();
+        var nome = Limpar(nomeCliente);
+        if (nome != null) NomeCliente = nome; // nunca apaga o nome capturado no aceite
+        Telefone = Limpar(telefone);
+        Observacoes = Limpar(observacoes);
     }
 
     /// <summary>Marca que o relatório mensal foi enviado (evita reenvio no mesmo mês).</summary>

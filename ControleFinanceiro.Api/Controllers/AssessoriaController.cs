@@ -1,5 +1,6 @@
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConviteAssessoria;
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConvitePublico;
+using ControleFinanceiro.Application.Assessoria.Commands.AtualizarClienteAssessoria;
 using ControleFinanceiro.Application.Assessoria.Commands.CriarRecomendacao;
 using ControleFinanceiro.Application.Assessoria.Commands.MarcarRespostasVistas;
 using ControleFinanceiro.Application.Assessoria.Commands.ReenviarConvite;
@@ -112,6 +113,14 @@ public class AssessoriaController(IMediator mediator) : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Assessor: edita os dados de contato/observações que mantém do cliente.</summary>
+    [HttpPatch("clientes/{id:guid}/contato")]
+    public async Task<IActionResult> AtualizarContato(Guid id, [FromBody] AtualizarContatoRequest body, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new AtualizarClienteAssessoriaCommand(id, body.NomeCliente, body.Telefone, body.Observacoes), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Assessor ou cliente: revoga o vínculo.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Revogar(Guid id, CancellationToken cancellationToken)
@@ -185,3 +194,4 @@ public record AceitarConviteAssessoriaRequest(string Codigo, string NomeCliente)
 public record EnviarConviteEmailRequest(string Email);
 public record CriarRecomendacaoRequest(Guid ClienteId, int Tipo, string Texto, Guid? CategoriaId);
 public record ResponderRecomendacaoRequest(bool Aceitar, string? Comentario);
+public record AtualizarContatoRequest(string? NomeCliente, string? Telefone, string? Observacoes);

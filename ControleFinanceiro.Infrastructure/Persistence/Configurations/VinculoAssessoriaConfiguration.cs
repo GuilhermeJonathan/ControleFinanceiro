@@ -16,6 +16,8 @@ public class VinculoAssessoriaConfiguration : IEntityTypeConfiguration<VinculoAs
         builder.HasIndex(v => v.ClienteId);
         builder.Property(v => v.NomeCliente).HasMaxLength(200);
         builder.Property(v => v.NomeAssessor).HasMaxLength(200);
+        builder.Property(v => v.Telefone).HasMaxLength(40);
+        builder.Property(v => v.Observacoes).HasMaxLength(2000);
         builder.Property(v => v.EmailConvidado).HasMaxLength(200);
         builder.Ignore(v => v.Ativo);
     }

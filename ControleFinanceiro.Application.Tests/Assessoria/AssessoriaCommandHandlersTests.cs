@@ -1,4 +1,5 @@
 using ControleFinanceiro.Application.Assessoria.Commands.AceitarConviteAssessoria;
+using ControleFinanceiro.Application.Assessoria.Commands.AtualizarClienteAssessoria;
 using ControleFinanceiro.Application.Assessoria.Commands.GerarConviteAssessoria;
 using ControleFinanceiro.Application.Assessoria.Commands.RevogarVinculoAssessoria;
 using ControleFinanceiro.Application.Common.Interfaces;
@@ -187,6 +188,69 @@ public class AssessoriaCommandHandlersTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             handler.Handle(new RevogarVinculoAssessoriaCommand(Guid.NewGuid()), CancellationToken.None));
+        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // ── AtualizarContato ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AtualizarContato_PeloAssessor_ShouldUpdateAndSave()
+    {
+        var vinculo = VinculoAssessoria.Criar(AssessorId, "ABC123");
+        vinculo.Aceitar(ClienteId, "Marina");
+        _repoMock.Setup(r => r.GetByIdAsync(vinculo.Id, It.IsAny<CancellationToken>())).ReturnsAsync(vinculo);
+        // currentUser.RealUserId == AssessorId (setup do construtor)
+
+        var handler = new AtualizarClienteAssessoriaCommandHandler(_repoMock.Object, _currentUserMock.Object, _uowMock.Object);
+        await handler.Handle(new AtualizarClienteAssessoriaCommand(vinculo.Id, "Marina Souza", "+55 11 99999-0000", "Prefere contato à tarde."), CancellationToken.None);
+
+        vinculo.NomeCliente.Should().Be("Marina Souza");
+        vinculo.Telefone.Should().Be("+55 11 99999-0000");
+        vinculo.Observacoes.Should().Be("Prefere contato à tarde.");
+        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AtualizarContato_NomeVazio_ShouldPreserveNomeExistente()
+    {
+        var vinculo = VinculoAssessoria.Criar(AssessorId, "ABC123");
+        vinculo.Aceitar(ClienteId, "Marina");
+        _repoMock.Setup(r => r.GetByIdAsync(vinculo.Id, It.IsAny<CancellationToken>())).ReturnsAsync(vinculo);
+
+        var handler = new AtualizarClienteAssessoriaCommandHandler(_repoMock.Object, _currentUserMock.Object, _uowMock.Object);
+        await handler.Handle(new AtualizarClienteAssessoriaCommand(vinculo.Id, "   ", null, null), CancellationToken.None);
+
+        vinculo.NomeCliente.Should().Be("Marina"); // não apaga o nome capturado no aceite
+        vinculo.Telefone.Should().BeNull();
+        vinculo.Observacoes.Should().BeNull();
+        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AtualizarContato_PorTerceiro_ShouldThrowUnauthorizedAndNotSave()
+    {
+        var vinculo = VinculoAssessoria.Criar(AssessorId, "ABC123");
+        vinculo.Aceitar(ClienteId, "Marina");
+        _repoMock.Setup(r => r.GetByIdAsync(vinculo.Id, It.IsAny<CancellationToken>())).ReturnsAsync(vinculo);
+        _currentUserMock.Setup(c => c.RealUserId).Returns(Guid.NewGuid());
+
+        var handler = new AtualizarClienteAssessoriaCommandHandler(_repoMock.Object, _currentUserMock.Object, _uowMock.Object);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            handler.Handle(new AtualizarClienteAssessoriaCommand(vinculo.Id, "Hacker", null, null), CancellationToken.None));
+        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AtualizarContato_VinculoInexistente_ShouldThrowKeyNotFound()
+    {
+        _repoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((VinculoAssessoria?)null);
+
+        var handler = new AtualizarClienteAssessoriaCommandHandler(_repoMock.Object, _currentUserMock.Object, _uowMock.Object);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            handler.Handle(new AtualizarClienteAssessoriaCommand(Guid.NewGuid(), "X", null, null), CancellationToken.None));
         _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }
