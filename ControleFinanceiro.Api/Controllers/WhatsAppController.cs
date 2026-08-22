@@ -22,10 +22,7 @@ public class WhatsAppController(
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     IConfiguration config,
-    IWebHostEnvironment env,
-    IVendaRepository vendaRepo,
-    IProdutoRepository produtoRepo,
-    IUserNameLookup userNameLookup) : ControllerBase
+    IWebHostEnvironment env) : ControllerBase
 {
     // ── Endpoints de teste (somente em Development) ───────────────────────────
 
@@ -239,14 +236,6 @@ public class WhatsAppController(
 
             // Usa o número cadastrado no vínculo (não o from do webhook, que pode ter formato diferente)
             var replyTo = vinculo.PhoneNumber;
-
-            // ── Verifica se é uma venda ───────────────────────────────────────────────
-            Console.WriteLine($"[WhatsApp] texto=\"{text}\" | isVenda={WhatsAppMessageParser.IsVenda(text)}");
-            if (WhatsAppMessageParser.IsVenda(text))
-            {
-                await ProcessVendaAsync(from, text, vinculo, ct);
-                return;
-            }
 
             // Faz o parse da mensagem
             var parsed = WhatsAppMessageParser.Parse(text);
@@ -636,18 +625,6 @@ public class WhatsAppController(
         return null;
     }
 
-    // ── Processa venda via WhatsApp ───────────────────────────────────────────
-
-    // Formata número "5511999990000" → "+55 (11) 99999-0000"
-    private static string FormatPhone(string digits)
-    {
-        if (digits.Length == 13 && digits.StartsWith("55")) // +55 DD 9XXXX-XXXX
-            return $"+55 ({digits[2..4]}) {digits[4..9]}-{digits[9..]}";
-        if (digits.Length == 12 && digits.StartsWith("55")) // +55 DD XXXX-XXXX
-            return $"+55 ({digits[2..4]}) {digits[4..8]}-{digits[8..]}";
-        return $"+{digits}";
-    }
-
     // Remove vírgulas separadoras de palavras que o Whisper insere na transcrição
     // (ex: "Venda, produto, teste, 160,00" → "Venda produto teste 160,00")
     // Preserva vírgula decimal ("160,00") pois não é seguida de espaço.
@@ -655,61 +632,6 @@ public class WhatsAppController(
         System.Text.RegularExpressions.Regex
             .Replace(text.Trim().TrimEnd('.', '!', '?'), @",\s+", " ");
 
-    private async Task ProcessVendaAsync(
-        string from, string text, WhatsAppVinculo vinculo, CancellationToken ct)
-    {
-        var replyTo = vinculo.PhoneNumber;
-
-        var parsed = WhatsAppMessageParser.ParseVenda(text);
-        if (!parsed.Success)
-        {
-            await sender.SendTextAsync(from,
-                $"❌ {parsed.Erro}\nExemplo: *venda produto A a 50,00*", ct);
-            return;
-        }
-
-        // Injeta o userId
-        HttpContext.Items["EffectiveUserId"] = vinculo.UserId;
-        HttpContext.Items["RealUserId"]      = vinculo.UserId;
-
-        // Busca ou cria o produto
-        var produto = await produtoRepo.GetByNomeAsync(vinculo.UserId, parsed.ProdutoNome, ct);
-        bool produtoNovo = false;
-
-        if (produto is null)
-        {
-            produto = new Produto(vinculo.UserId, parsed.ProdutoNome, parsed.Valor);
-            await produtoRepo.AddAsync(produto, ct);
-            await unitOfWork.SaveChangesAsync(ct);
-            produtoNovo = true;
-            Console.WriteLine($"[WhatsApp][Venda] novo produto criado: \"{parsed.ProdutoNome}\" id={produto.Id}");
-        }
-
-        // Cria a venda
-        var nomeUsuario = await userNameLookup.GetNomeAsync(vinculo.UserId, ct)
-                          ?? FormatPhone(vinculo.PhoneNumber);
-
-        var venda = new Venda(
-            usuarioId:     vinculo.UserId,
-            produtoId:     produto.Id,
-            descricao:     parsed.ProdutoNome,
-            valor:         parsed.Valor,
-            data:          parsed.Data,
-            origem:        OrigemVenda.WhatsApp,
-            criadoPorNome: nomeUsuario);
-
-        await vendaRepo.AddAsync(venda, ct);
-        await unitOfWork.SaveChangesAsync(ct);
-
-        var novoProdutoLabel = produtoNovo ? "\n_(produto criado automaticamente)_" : "";
-        await sender.SendTextAsync(replyTo,
-            $"🛒 *Venda registrada!*\n" +
-            $"Produto: {parsed.ProdutoNome}\n" +
-            $"Valor: R$ {parsed.Valor:N2}\n" +
-            $"Status: Pendente{novoProdutoLabel}", ct);
-
-        Console.WriteLine($"[WhatsApp][Venda] userId={vinculo.UserId} | produto={parsed.ProdutoNome} | valor={parsed.Valor}");
-    }
 }
 
 public record VincularRequest(string PhoneNumber);
